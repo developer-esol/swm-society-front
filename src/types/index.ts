@@ -10,3 +10,5 @@ export type {
 export type { Review, ReviewInput, ReviewsResponse, CreateReviewData, UpdateReviewData } from './review';
 export type { CommunityPost } from './community';
 export type { PageResponse, ApiError, LoadingState, PaginationParams } from './common';
+export type { CartItem, Cart } from './cart';
+export type { WishlistItem, Wishlist } from './wishlist';

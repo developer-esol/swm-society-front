@@ -3,6 +3,7 @@ import { Box, Typography, Container, Button as MuiButton } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import WishlistCard from '../components/WishlistCard';
 import { wishlistService } from '../api/services/wishlistService';
+import { cartService } from '../api/services/cartService';
 import type { WishlistItem } from '../types/wishlist';
 
 const WishlistPage: React.FC = () => {
@@ -42,9 +43,27 @@ const WishlistPage: React.FC = () => {
   };
 
   const handleAddToCart = (item: WishlistItem) => {
-    const cartQuantity = quantities[item.stockId] || 1;
-    console.log('Add to cart:', { ...item, cartQuantity });
-    alert(`${item.productName} (x${cartQuantity}) added to cart!`);
+    const cartQuantity = quantities[item.stockId] || item.quantity;
+    // Add to cart with the selected quantity
+    cartService.addItem({
+      ...item,
+      quantity: cartQuantity,
+    });
+    // Redirect to cart page
+    navigate('/cart');
+  };
+
+  const handleProceedToCart = () => {
+    // Add all wishlist items to cart with their selected quantities
+    wishlistItems.forEach((item) => {
+      const cartQuantity = quantities[item.stockId] || item.quantity;
+      cartService.addItem({
+        ...item,
+        quantity: cartQuantity,
+      });
+    });
+    // Redirect to cart page
+    navigate('/cart');
   };
 
   // Calculate totals - this runs every time quantities change
@@ -218,6 +237,7 @@ const WishlistPage: React.FC = () => {
               </MuiButton>
               <MuiButton
                 variant="contained"
+                onClick={handleProceedToCart}
                 sx={{
                   backgroundColor: '#dc2626',
                   color: 'white',

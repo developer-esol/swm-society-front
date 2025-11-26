@@ -76,7 +76,7 @@ const WishlistCard: React.FC<WishlistCardProps> = ({
         py: 3,
         px: 2,
         borderBottom: '1px solid #e0e0e0',
-        alignItems: 'center',
+        alignItems: 'flex-start',
         '&:last-child': {
           borderBottom: 'none',
         },
@@ -198,12 +198,7 @@ const WishlistCard: React.FC<WishlistCardProps> = ({
           </IconButton>
         </Box>
 
-        {/* Max Quantity Info */}
-        <Typography sx={{ fontSize: '0.75rem', color: 'grey.500', mt: 0.5 }}>
-          Max: {effectiveMaxQuantity}
-        </Typography>
-
-        {/* Subtotal - Made more prominent */}
+        {/* Subtotal */}
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 2, pt: 1.5, borderTop: '1px solid #f0f0f0' }}>
           <Typography sx={{ fontSize: '0.85rem', color: 'grey.600', fontWeight: 500 }}>
             Item Total:
@@ -220,10 +215,28 @@ const WishlistCard: React.FC<WishlistCardProps> = ({
           display: 'flex',
           flexDirection: 'column',
           gap: 1,
-          alignItems: 'center',
+          alignItems: 'stretch',
+          justifyContent: 'flex-start',
         }}
       >
-        {/* Add to Cart Button */}
+        {/* Delete Button - Aligned at Top */}
+        <IconButton
+          size="small"
+          onClick={handleDelete}
+          disabled={isDeleting}
+          sx={{
+            color: '#dc2626',
+            padding: '6px',
+            alignSelf: 'flex-end',
+            '&:hover': {
+              backgroundColor: 'rgba(220, 38, 38, 0.1)',
+            },
+          }}
+        >
+          <TrashIcon sx={{ fontSize: 20 }} />
+        </IconButton>
+
+        {/* Add to Cart Button - Aligned with Item Total */}
         <MuiButton
           variant="contained"
           size="small"
@@ -237,6 +250,8 @@ const WishlistCard: React.FC<WishlistCardProps> = ({
             px: 2.5,
             py: 0.75,
             minWidth: '120px',
+            alignSelf: 'flex-end',
+            mt: 4.2,
             '&:hover': {
               backgroundColor: '#333',
             },
@@ -248,22 +263,6 @@ const WishlistCard: React.FC<WishlistCardProps> = ({
         >
           Add to Cart
         </MuiButton>
-
-        {/* Delete Button */}
-        <IconButton
-          size="small"
-          onClick={handleDelete}
-          disabled={isDeleting}
-          sx={{
-            color: '#dc2626',
-            padding: '6px',
-            '&:hover': {
-              backgroundColor: 'rgba(220, 38, 38, 0.1)',
-            },
-          }}
-        >
-          <TrashIcon sx={{ fontSize: 20 }} />
-        </IconButton>
       </Box>
     </Box>
   );

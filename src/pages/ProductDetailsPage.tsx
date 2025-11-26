@@ -17,11 +17,13 @@ import { Add, Remove, Info, Favorite, FavoriteBorder } from '@mui/icons-material
 // Import hooks, components and services
 import { useStocks, useProduct } from '../hooks/useStock';
 import { useWishlist } from '../hooks/useWishlist';
+import { cartService } from '../api/services/cartService';
 import ReviewCard from '../components/ReviewCard';
 import { reviewService } from '../api/services/reviewService';
 import type { Stock, Product } from '../types/product';
 import type { Review } from '../types/review';
 import type { WishlistItem } from '../types/wishlist';
+import type { CartItem } from '../types/cart';
 
 
 const ProductDetails: React.FC = () => {
@@ -97,8 +99,32 @@ const ProductDetails: React.FC = () => {
 
   // Mock cart function (replace with real implementation)
   const addToCart = (product: Product, quantity: number, size: string, color: string) => {
-    console.log('Adding to cart:', { product, quantity, size, color });
-    // Implement cart logic
+    if (!currentStock) {
+      alert('Please select a size and color');
+      return;
+    }
+
+    if (quantity > currentStock.quantity) {
+      alert(`Only ${currentStock.quantity} items available in stock`);
+      return;
+    }
+
+    // Add to cart using cartService
+    const cartItem: CartItem = {
+      stockId: currentStock.id,
+      productId: product.id,
+      productName: product.name,
+      productImage: product.image || '',
+      price: currentStock.price,
+      color: color,
+      size: size,
+      quantity: quantity,
+      maxQuantity: currentStock.quantity, // Available stock for this size/color
+      addedAt: new Date().toISOString(),
+    };
+
+    cartService.addItem(cartItem);
+    navigate('/cart');
   };
 
   // Check if product is in wishlist when stock changes
