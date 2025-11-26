@@ -17,6 +17,7 @@ import { Add, Remove, Info, Favorite, FavoriteBorder } from '@mui/icons-material
 // Import hooks, components and services
 import { useStocks, useProduct } from '../hooks/useStock';
 import { useWishlist } from '../hooks/useWishlist';
+import { cartService } from '../api/services/cartService';
 import ReviewCard from '../components/ReviewCard';
 import { reviewService } from '../api/services/reviewService';
 import type { Stock, Product } from '../types/product';
@@ -97,8 +98,21 @@ const ProductDetails: React.FC = () => {
 
   // Mock cart function (replace with real implementation)
   const addToCart = (product: Product, quantity: number, size: string, color: string) => {
-    console.log('Adding to cart:', { product, quantity, size, color });
-    // Implement cart logic
+    if (!currentStock) return;
+    
+    // Add to cart using cartService
+    cartService.addItem({
+      stockId: currentStock.id,
+      productId: product.id,
+      productName: product.name,
+      productImage: product.image || '',
+      price: currentStock.price,
+      color: color,
+      size: size,
+      quantity: quantity,
+      maxQuantity: currentStock.quantity, // Available stock for this size/color
+      addedAt: new Date().toISOString(),
+    });
   };
 
   // Check if product is in wishlist when stock changes
