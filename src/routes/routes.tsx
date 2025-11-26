@@ -7,12 +7,12 @@ import HereMyVoiceStoryPage from '../pages/HereMyVoiceStoryPage';
 import Shop from '../pages/ShopPage';
 import ProductDetailsPage from '../pages/ProductDetailsPage';
 import CommunityPage from '../pages/CommunityPage';
+import WishlistPage from '../pages/WishlistPage';
 
 
 // Temporary placeholder components - replace with actual imports when components are created
 const LoginPage = () => <div><h1>Login</h1></div>;
 const CartPage = () => <div><h1>Cart</h1></div>;
-const WishlistPage = () => <div><h1>Wishlist</h1></div>;
 const NotFoundPage = () => <div><h1>404 - Page Not Found</h1></div>;
 
 export const routes: RouteObject[] = [

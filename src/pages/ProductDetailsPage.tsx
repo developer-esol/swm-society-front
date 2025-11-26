@@ -12,24 +12,28 @@ import {
   TextField,
   Rating,
 } from '@mui/material';
-import { Add, Remove, Info } from '@mui/icons-material';
+import { Add, Remove, Info, Favorite, FavoriteBorder } from '@mui/icons-material';
 
 // Import hooks, components and services
 import { useStocks, useProduct } from '../hooks/useStock';
+import { useWishlist } from '../hooks/useWishlist';
 import ReviewCard from '../components/ReviewCard';
 import { reviewService } from '../api/services/reviewService';
 import type { Stock, Product } from '../types/product';
 import type { Review } from '../types/review';
+import type { WishlistItem } from '../types/wishlist';
 
 
 const ProductDetails: React.FC = () => {
   const { productId } = useParams<{ productId: string }>();
   const navigate = useNavigate();
+  const { addItem, removeItem, isInWishlist } = useWishlist();
   
   // State for product selection
   const [selectedSize, setSelectedSize] = useState<string>('');
   const [selectedColor, setSelectedColor] = useState<string>('');
   const [quantity, setQuantity] = useState<number>(1);
+  const [inWishlist, setInWishlist] = useState<boolean>(false);
   
   // State for reviews
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -91,16 +95,18 @@ const ProductDetails: React.FC = () => {
     s.isActive
   );
 
-  // Mock cart and wishlist functions (replace with real implementations)
+  // Mock cart function (replace with real implementation)
   const addToCart = (product: Product, quantity: number, size: string, color: string) => {
     console.log('Adding to cart:', { product, quantity, size, color });
     // Implement cart logic
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const isInWishlist = (_productId: string) => false; // Replace with real implementation
-  const addToWishlist = (product: Product) => console.log('Adding to wishlist:', product);
-  const removeFromWishlist = (productId: string) => console.log('Removing from wishlist:', productId);
+  // Check if product is in wishlist when stock changes
+  useEffect(() => {
+    if (currentStock) {
+      setInWishlist(isInWishlist(currentStock.id));
+    }
+  }, [currentStock, isInWishlist]);
 
   if (productLoading || stocksLoading) {
     return (
@@ -159,13 +165,29 @@ const ProductDetails: React.FC = () => {
   };
 
   const handleWishlistToggle = () => {
-    if (isInWishlist(product.id)) {
-      removeFromWishlist(product.id);
+    if (!currentStock) {
+      alert('Please select a size and color first');
+      return;
+    }
+
+    if (inWishlist) {
+      removeItem(currentStock.id);
+      setInWishlist(false);
     } else {
-      addToWishlist({
-        ...product,
-        image: product.image
-      } as unknown as Product);
+      const wishlistItem: WishlistItem = {
+        stockId: currentStock.id,
+        productId: product.id,
+        productName: product.name,
+        productImage: product.image || '',
+        price: currentStock.price,
+        color: selectedColor,
+        size: selectedSize,
+        quantity: quantity, // Use the selected quantity, not the total stock quantity
+        maxQuantity: currentStock.quantity, // Maximum available for this size/color
+        addedAt: new Date().toISOString(),
+      };
+      addItem(wishlistItem);
+      setInWishlist(true);
     }
   };
 
@@ -446,16 +468,17 @@ const ProductDetails: React.FC = () => {
                 variant="outlined"
                 size="large"
                 onClick={handleWishlistToggle}
+                startIcon={inWishlist ? <Favorite /> : <FavoriteBorder />}
                 sx={{
-                  borderColor: 'grey.400',
-                  color: 'black',
+                  borderColor: inWishlist ? '#dc2626' : 'grey.400',
+                  color: inWishlist ? '#dc2626' : 'black',
                   '&:hover': {
-                    borderColor: 'black',
-                    bgcolor: 'grey.50',
+                    borderColor: '#dc2626',
+                    bgcolor: 'rgba(220, 38, 38, 0.05)',
                   }
                 }}
               >
-                {isInWishlist(product.id) ? 'Remove from Wishlist' : 'Add to Wishlist'}
+                {inWishlist ? 'Remove from Wishlist' : 'Add to Wishlist'}
               </MuiButton>
             </Box>
 
