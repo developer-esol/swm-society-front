@@ -10,6 +10,8 @@ export interface CommunityPost {
   userAvatar?: string;
   image: string;
   caption: string;
+  description: string;
+  productId: string;
   products?: Array<{
     name: string;
     collection: string;

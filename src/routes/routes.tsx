@@ -6,10 +6,10 @@ import ThomasMushetStoryPage from '../pages/ThomasMushetStoryPage';
 import HereMyVoiceStoryPage from '../pages/HereMyVoiceStoryPage';
 import Shop from '../pages/ShopPage';
 import ProductDetailsPage from '../pages/ProductDetailsPage';
+import CommunityPage from '../pages/CommunityPage';
 
 
 // Temporary placeholder components - replace with actual imports when components are created
-const Community = () => <div><h1>Community</h1></div>;
 const LoginPage = () => <div><h1>Login</h1></div>;
 const CartPage = () => <div><h1>Cart</h1></div>;
 const WishlistPage = () => <div><h1>Wishlist</h1></div>;
@@ -34,7 +34,7 @@ export const routes: RouteObject[] = [
       },
       {
         path: 'community',
-        element: <Community />,
+        element: <CommunityPage />,
       },
       {
         path: 'project-zero-story',
