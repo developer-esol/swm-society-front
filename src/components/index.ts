@@ -5,3 +5,4 @@ export { NavLink } from './NavLink';
 export { MobileMenu } from './MobileMenu';
 export { NavigationBar } from './NavigationBar';
 export { ProductCard } from './ProductCard';
+export { default as ReviewCard } from './ReviewCard';

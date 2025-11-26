@@ -5,12 +5,30 @@ export interface Product {
   brandName: string;
   description: string;
   price: number;
-  image: string;
+  image?: string;
+  imageurl?: string;
   inStock: boolean;
   isActive: boolean;
   tags: string[];
   createdAt: string;
   updatedAt: string;
+  deliveryMethod?: string;
+  // Optional fields for detailed product views
+  stocks?: Stock[];
+  rating?: number;
+  reviewCount?: number;
+  images?: string[];
+  collection?: string;
+  category?: string;
+  sizes?: string[];
+  colors?: string[];
+  [key: string]: unknown; // Allow additional properties for flexibility
+}
+
+export interface ProductDetailsResponse {
+  product: Product;
+  relatedProducts?: Product[];
+  success: boolean;
 }
 
 export interface ProductFilters {
