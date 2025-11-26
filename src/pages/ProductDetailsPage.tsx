@@ -9,12 +9,18 @@ import {
   Chip,
   IconButton,
   Divider,
+  TextField,
+  Rating,
 } from '@mui/material';
 import { Add, Remove, Info } from '@mui/icons-material';
 
-// Import hooks
+// Import hooks, components and services
 import { useStocks, useProduct } from '../hooks/useStock';
-import type { Stock } from '../types/product';
+import ReviewCard from '../components/ReviewCard';
+import { reviewService } from '../api/services/reviewService';
+import type { Stock, Product } from '../types/product';
+import type { Review } from '../types/review';
+
 
 const ProductDetails: React.FC = () => {
   const { productId } = useParams<{ productId: string }>();
@@ -24,6 +30,27 @@ const ProductDetails: React.FC = () => {
   const [selectedSize, setSelectedSize] = useState<string>('');
   const [selectedColor, setSelectedColor] = useState<string>('');
   const [quantity, setQuantity] = useState<number>(1);
+  
+  // State for reviews
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [reviewRating, setReviewRating] = useState(0);
+  const [reviewTitle, setReviewTitle] = useState('');
+  const [reviewComment, setReviewComment] = useState('');
+  const currentUserId = 'user1'; // Replace with actual logged-in user ID
+
+  // Load reviews from service on component mount
+  useEffect(() => {
+    const loadReviews = async () => {
+      try {
+        const loadedReviews = await reviewService.getReviewsByProduct();
+        setReviews(loadedReviews);
+      } catch (error) {
+        console.error('Failed to load reviews:', error);
+      }
+    };
+
+    loadReviews();
+  }, []);
 
   // Get product data using custom hook
   const { data: product, isLoading: productLoading } = useProduct(productId);
@@ -65,13 +92,14 @@ const ProductDetails: React.FC = () => {
   );
 
   // Mock cart and wishlist functions (replace with real implementations)
-  const addToCart = (product: any, quantity: number, size: string, color: string) => {
+  const addToCart = (product: Product, quantity: number, size: string, color: string) => {
     console.log('Adding to cart:', { product, quantity, size, color });
     // Implement cart logic
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const isInWishlist = (_productId: string) => false; // Replace with real implementation
-  const addToWishlist = (product: any) => console.log('Adding to wishlist:', product);
+  const addToWishlist = (product: Product) => console.log('Adding to wishlist:', product);
   const removeFromWishlist = (productId: string) => console.log('Removing from wishlist:', productId);
 
   if (productLoading || stocksLoading) {
@@ -119,10 +147,10 @@ const ProductDetails: React.FC = () => {
         ...product,
         color: selectedColor,
         size: selectedSize,
-        image: product.image,
+        image: (product as unknown as { imageurl?: string; image?: string }).imageurl || product.image,
         stockId: currentStock.id,
         stockPrice: currentStock.price
-      },
+      } as unknown as Product,
       quantity,
       selectedSize,
       selectedColor
@@ -137,7 +165,7 @@ const ProductDetails: React.FC = () => {
       addToWishlist({
         ...product,
         image: product.image
-      });
+      } as unknown as Product);
     }
   };
 
@@ -151,6 +179,42 @@ const ProductDetails: React.FC = () => {
     const maxQuantity = currentStock?.quantity || 0;
     if (quantity < maxQuantity) {
       setQuantity(quantity + 1);
+    }
+  };
+
+  const handleSubmitReview = async () => {
+    if (!reviewTitle.trim() || !reviewComment.trim() || reviewRating === 0) {
+      alert('Please fill in all fields');
+      return;
+    }
+
+    try {
+      const newReview = await reviewService.createReview({
+        userId: currentUserId,
+        userName: 'Current User',
+        rating: reviewRating,
+        title: reviewTitle,
+        comment: reviewComment,
+        verified: true,
+      });
+
+      setReviews([newReview, ...reviews]);
+      setReviewRating(0);
+      setReviewTitle('');
+      setReviewComment('');
+    } catch (error) {
+      console.error('Failed to submit review:', error);
+      alert('Failed to submit review. Please try again.');
+    }
+  };
+
+  const handleDeleteReview = async (reviewId: string) => {
+    try {
+      await reviewService.deleteReview(reviewId);
+      setReviews(reviews.filter((r) => r.id !== reviewId));
+    } catch (error) {
+      console.error('Failed to delete review:', error);
+      throw error;
     }
   };
 
@@ -189,18 +253,6 @@ const ProductDetails: React.FC = () => {
               position: 'relative'
             }}
           >
-            <IconButton
-              onClick={handleWishlistToggle}
-              sx={{
-                position: 'absolute',
-                top: 16,
-                right: 16,
-                bgcolor: 'white',
-                '&:hover': { bgcolor: 'grey.100' }
-              }}
-            >
-              {isInWishlist(product.id) ? '❤️' : '🤍'}
-            </IconButton>
           </Box>
 
           {/* Product Details */}
@@ -448,6 +500,109 @@ const ProductDetails: React.FC = () => {
                     ' 80% of the revenue generated from this capsule collection will go directly to A-Star Foundation and Project Zero, helping fund programs that provide young students with the mentorship, resources, and guidance they need.'}
                 </Typography>
               </Box>
+            </Box>
+          </Box>
+        </Box>
+      </Container>
+
+      {/* Customer Reviews Section */}
+      <Container maxWidth="lg" sx={{ py: 6, borderTop: '1px solid #e0e0e0' }}>
+        <Box sx={{ mb: 6 }}>
+          <Box
+            sx={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              mb: 4,
+            }}
+          >
+            <Typography variant="h5" sx={{ fontWeight: 700 }}>
+              Customer Reviews
+            </Typography>
+            <Typography variant="body2" sx={{ color: '#9e9e9e' }}>
+              {reviews.length} reviews
+            </Typography>
+          </Box>
+
+          {/* Review List */}
+          <Box sx={{ mb: 6 }}>
+            {reviews.length > 0 ? (
+              reviews.map((review) => (
+                <ReviewCard
+                  key={review.id}
+                  review={review}
+                  currentUserId={currentUserId}
+                  onDelete={handleDeleteReview}
+                />
+              ))
+            ) : (
+              <Typography sx={{ color: '#9e9e9e', textAlign: 'center', py: 4 }}>
+                No reviews yet. Be the first to review!
+              </Typography>
+            )}
+          </Box>
+
+          {/* Write a Review Section */}
+          <Box sx={{ borderTop: '1px solid #e0e0e0', pt: 4 }}>
+            <Typography variant="h6" sx={{ fontWeight: 600, mb: 3 }}>
+              Write a Review
+            </Typography>
+
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              {/* Rating */}
+              <Box>
+                <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>
+                  Rating
+                </Typography>
+                <Rating
+                  value={reviewRating}
+                  onChange={(_, newValue) => {
+                    setReviewRating(newValue || 0);
+                  }}
+                  size="large"
+                />
+              </Box>
+
+              {/* Title */}
+              <TextField
+                label="Review Title"
+                placeholder="Summarize your experience"
+                value={reviewTitle}
+                onChange={(e) => setReviewTitle(e.target.value)}
+                fullWidth
+                variant="outlined"
+                size="small"
+              />
+
+              {/* Comment */}
+              <TextField
+                label="Your Review"
+                placeholder="Share your experience with this product"
+                value={reviewComment}
+                onChange={(e) => setReviewComment(e.target.value)}
+                fullWidth
+                variant="outlined"
+                multiline
+                rows={4}
+              />
+
+              {/* Submit Button */}
+              <MuiButton
+                variant="contained"
+                onClick={handleSubmitReview}
+                sx={{
+                  textTransform: 'none',
+                  padding: '10px 24px',
+                  fontWeight: 600,
+                  alignSelf: 'flex-start',
+                  bgcolor: '#dc2626',
+                  '&:hover': {
+                    bgcolor: '#b91c1c',
+                  }
+                }}
+              >
+                Submit Review
+              </MuiButton>
             </Box>
           </Box>
         </Box>
