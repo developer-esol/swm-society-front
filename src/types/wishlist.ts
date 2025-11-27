@@ -13,6 +13,7 @@ export interface WishlistItem {
   quantity: number; // Selected quantity by user
   maxQuantity: number; // Maximum available quantity for this size/color combination
   addedAt: string;
+  expiresAt?: string; // Optional 30-day expiration date for wishlist items
 }
 
 export interface Wishlist {
