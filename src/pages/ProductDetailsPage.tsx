@@ -60,15 +60,17 @@ const ProductDetails: React.FC = () => {
   useEffect(() => {
     const loadReviews = async () => {
       try {
-        const loadedReviews = await reviewService.getReviewsByProduct();
+        const loadedReviews = await reviewService.getReviewsByProduct(productId!);
         setReviews(loadedReviews);
       } catch (error) {
         console.error('Failed to load reviews:', error);
       }
     };
 
-    loadReviews();
-  }, []);
+    if (productId) {
+      loadReviews();
+    }
+  }, [productId]);
 
   // Load product data with color images from service
   useEffect(() => {
@@ -323,6 +325,7 @@ const ProductDetails: React.FC = () => {
 
     try {
       const newReview = await reviewService.createReview({
+        productId: productId!,
         userId: currentUserId,
         userName: 'Current User',
         rating: reviewRating,
