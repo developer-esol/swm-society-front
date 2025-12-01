@@ -199,4 +199,36 @@ export const communityService = {
   getMockPosts: (): CommunityPost[] => {
     return [...mockCommunityPosts];
   },
+
+  /**
+   * Get community posts by user ID
+   * @param userId - User ID
+   * @returns Array of community posts for the user
+   */
+  getByUserId: (userId: string): Promise<CommunityPost[]> => {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        const userPosts = mockCommunityPosts.filter((p) => p.userId === userId);
+        resolve([...userPosts]);
+      }, 300);
+    });
+  },
+
+  /**
+   * Delete a community post
+   * @param postId - Post ID
+   * @returns Success status
+   */
+  deletePost: (postId: string): Promise<boolean> => {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        const index = mockCommunityPosts.findIndex((p) => p.id === postId);
+        if (index > -1) {
+          mockCommunityPosts.splice(index, 1);
+          resolve(true);
+        }
+        resolve(false);
+      }, 300);
+    });
+  },
 };

@@ -43,6 +43,7 @@ const LoyaltyWalletPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [tabValue, setTabValue] = useState(0);
   const [showAllTransactions, setShowAllTransactions] = useState(false);
+  const [filterType, setFilterType] = useState<'all' | 'earned' | 'redeemed'>('all');
 
   // Load loyalty wallet data
   useEffect(() => {
@@ -64,6 +65,20 @@ const LoyaltyWalletPage: React.FC = () => {
 
   const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
+  };
+
+  const getFilteredTransactions = () => {
+    if (!loyaltyData) return [];
+    
+    let filtered = loyaltyData.transactions;
+    
+    if (filterType === 'earned') {
+      filtered = filtered.filter(t => t.type === 'earned');
+    } else if (filterType === 'redeemed') {
+      filtered = filtered.filter(t => t.type === 'redeemed');
+    }
+    
+    return filtered;
   };
 
   if (isLoading) {
@@ -261,32 +276,41 @@ const LoyaltyWalletPage: React.FC = () => {
                 <Box sx={{ display: 'flex', gap: 1 }}>
                   <Chip
                     label="All"
-                    variant="filled"
+                    variant={filterType === 'all' ? 'filled' : 'outlined'}
+                    onClick={() => setFilterType('all')}
                     sx={{
-                      bgcolor: '#fecaca',
-                      color: '#7f1d1d',
+                      bgcolor: filterType === 'all' ? '#fecaca' : 'transparent',
+                      color: filterType === 'all' ? '#7f1d1d' : '#6b7280',
+                      borderColor: filterType === 'all' ? '#fecaca' : '#d1d5db',
                       fontWeight: 600,
-                      '&:hover': { bgcolor: '#fca5a5' }
+                      cursor: 'pointer',
+                      '&:hover': { bgcolor: filterType === 'all' ? '#fca5a5' : '#f9fafb' }
                     }}
                   />
                   <Chip
                     label="Earned"
-                    variant="outlined"
+                    variant={filterType === 'earned' ? 'filled' : 'outlined'}
+                    onClick={() => setFilterType('earned')}
                     sx={{
-                      color: '#6b7280',
-                      borderColor: '#d1d5db',
-                      fontWeight: 500,
-                      '&:hover': { bgcolor: '#f9fafb' }
+                      bgcolor: filterType === 'earned' ? '#fecaca' : 'transparent',
+                      color: filterType === 'earned' ? '#7f1d1d' : '#6b7280',
+                      borderColor: filterType === 'earned' ? '#fecaca' : '#d1d5db',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      '&:hover': { bgcolor: filterType === 'earned' ? '#fca5a5' : '#f9fafb' }
                     }}
                   />
                   <Chip
                     label="Redeemed"
-                    variant="outlined"
+                    variant={filterType === 'redeemed' ? 'filled' : 'outlined'}
+                    onClick={() => setFilterType('redeemed')}
                     sx={{
-                      color: '#6b7280',
-                      borderColor: '#d1d5db',
-                      fontWeight: 500,
-                      '&:hover': { bgcolor: '#f9fafb' }
+                      bgcolor: filterType === 'redeemed' ? '#fecaca' : 'transparent',
+                      color: filterType === 'redeemed' ? '#7f1d1d' : '#6b7280',
+                      borderColor: filterType === 'redeemed' ? '#fecaca' : '#d1d5db',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      '&:hover': { bgcolor: filterType === 'redeemed' ? '#fca5a5' : '#f9fafb' }
                     }}
                   />
                 </Box>
@@ -295,15 +319,15 @@ const LoyaltyWalletPage: React.FC = () => {
               {/* Transaction List */}
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
                 {(showAllTransactions 
-                  ? loyaltyData.transactions 
-                  : loyaltyData.transactions.slice(0, 4)
+                  ? getFilteredTransactions()
+                  : getFilteredTransactions().slice(0, 4)
                 ).map((transaction) => (
                   <TransactionItem key={transaction.id} transaction={transaction} />
                 ))}
               </Box>
 
               {/* View All Button */}
-              {loyaltyData.transactions.length > 4 && (
+              {getFilteredTransactions().length > 4 && (
                 <Box sx={{ textAlign: 'center', mt: 4 }}>
                   <Button
                     onClick={() => setShowAllTransactions(!showAllTransactions)}

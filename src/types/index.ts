@@ -13,3 +13,4 @@ export type { PageResponse, ApiError, LoadingState, PaginationParams } from './c
 export type { CartItem, Cart } from './cart';
 export type { WishlistItem, Wishlist } from './wishlist';
 export type { LoyaltyTransaction, LoyaltyWallet, RedeemRewardRequest, RedeemRewardResponse } from './loyalty';
+export type { Order, OrderItem, OrdersResponse } from './order';
