@@ -81,6 +81,9 @@ const WishlistPage: React.FC = () => {
     delete newQuantities[stockId];
     setQuantities(newQuantities);
 
+    // Also remove from cart
+    cartService.removeItem(stockId);
+
     // Dispatch custom event to notify ProductCards to update their heart icons
     window.dispatchEvent(new Event('wishlist-updated'));
   };

@@ -1,8 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { Card, CardMedia, CardContent, Typography, Box, Chip, IconButton } from '@mui/material';
-import { Favorite, FavoriteBorder } from '@mui/icons-material';
+import React from 'react';
+import { Card, CardMedia, CardContent, Typography, Box, Chip } from '@mui/material';
 import { Link } from 'react-router-dom';
-import { useWishlist } from '../hooks/useWishlist';
 import type { Product } from '../types';
 
 interface ProductCardProps {
@@ -10,105 +8,6 @@ interface ProductCardProps {
 }
 
 export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
-  const { addItem, removeItem, getWishlist } = useWishlist();
-  const [inWishlist, setInWishlist] = useState(false);
-
-  // Check wishlist status on mount and listen for storage changes
-  useEffect(() => {
-    const checkWishlistStatus = () => {
-      const wishlist = getWishlist();
-      const productInWishlist = wishlist.items.find(item => item.productId === product.id);
-      setInWishlist(!!productInWishlist);
-    };
-
-    // Check on mount
-    checkWishlistStatus();
-
-    // Listen for storage changes from other tabs/components
-    const handleStorageChange = () => {
-      checkWishlistStatus();
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-    // Also listen for custom events from same-tab changes
-    window.addEventListener('wishlist-updated', handleStorageChange);
-
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-      window.removeEventListener('wishlist-updated', handleStorageChange);
-    };
-  }, [product.id, getWishlist]);
-
-  const handleWishlistClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    const wishlist = getWishlist();
-    const productInWishlist = wishlist.items.find(item => item.productId === product.id);
-    
-    if (productInWishlist) {
-      // Remove from wishlist
-      removeItem(productInWishlist.stockId);
-      setInWishlist(false);
-    } else {
-      // Add to wishlist - try first available in-stock variant
-      if (product.stocks && product.stocks.length > 0) {
-        // Find first stock with quantity > 0
-        const availableStock = product.stocks.find(s => s.quantity > 0);
-        
-        if (availableStock) {
-          // Product has available stock
-          addItem({
-            stockId: availableStock.id,
-            productId: product.id,
-            productName: product.name,
-            productImage: product.image || '',
-            price: availableStock.price,
-            color: availableStock.color,
-            size: availableStock.size,
-            quantity: 1,
-            maxQuantity: availableStock.quantity,
-            addedAt: new Date().toISOString(),
-          });
-        } else {
-          // All stocks are out of stock - use first stock but mark as out of stock
-          const stock = product.stocks[0];
-          addItem({
-            stockId: stock.id,
-            productId: product.id,
-            productName: product.name,
-            productImage: product.image || '',
-            price: stock.price,
-            color: stock.color,
-            size: stock.size,
-            quantity: 1,
-            maxQuantity: 0,
-            isOutOfStock: true,
-            addedAt: new Date().toISOString(),
-          });
-        }
-        setInWishlist(true);
-      } else {
-        // No stock data available - mark as out of stock
-        addItem({
-          stockId: `${product.id}-default`,
-          productId: product.id,
-          productName: product.name,
-          productImage: product.image || '',
-          price: product.price,
-          color: 'Default',
-          size: 'One Size',
-          quantity: 1,
-          maxQuantity: 0,
-          isOutOfStock: true,
-          addedAt: new Date().toISOString(),
-        });
-        setInWishlist(true);
-      }
-    }
-    // Dispatch custom event to notify other components
-    window.dispatchEvent(new Event('wishlist-updated'));
-  };
   return (
     <Card
       component={Link}
@@ -136,22 +35,6 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             objectFit: 'cover',
           }}
         />
-        <IconButton
-          onClick={handleWishlistClick}
-          sx={{
-            position: 'absolute',
-            top: 8,
-            right: 8,
-            backgroundColor: 'rgba(255, 255, 255, 0.9)',
-            color: inWishlist ? '#dc2626' : 'grey.400',
-            '&:hover': {
-              backgroundColor: 'rgba(255, 255, 255, 1)',
-              color: '#dc2626',
-            }
-          }}
-        >
-          {inWishlist ? <Favorite sx={{ fontSize: 24 }} /> : <FavoriteBorder sx={{ fontSize: 24 }} />}
-        </IconButton>
       </Box>
       <CardContent sx={{ flexGrow: 1, p: 2 }}>
         <Typography

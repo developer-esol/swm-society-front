@@ -240,6 +240,25 @@ const ProductDetails: React.FC = () => {
       return;
     }
 
+    // Add to wishlist first
+    if (!inWishlist) {
+      const wishlistItem: WishlistItem = {
+        stockId: currentStock.id,
+        productId: product.id,
+        productName: product.name,
+        productImage: product.image || '',
+        price: currentStock.price,
+        color: selectedColor,
+        size: selectedSize,
+        quantity: quantity,
+        maxQuantity: currentStock.quantity,
+        addedAt: new Date().toISOString(),
+        expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+      };
+      addItem(wishlistItem);
+      setInWishlist(true);
+    }
+
     addToCart(
       {
         ...product,
@@ -258,11 +277,14 @@ const ProductDetails: React.FC = () => {
 
   const handleWishlistToggle = () => {
     if (inWishlist) {
-      // Remove from wishlist
+      // Remove from wishlist AND cart
       if (currentStock) {
         removeItem(currentStock.id);
+        // Also remove from cart
+        cartService.removeItem(currentStock.id);
       } else {
         removeItem(product.id); // Use product ID if out of stock
+        cartService.removeItem(product.id);
       }
       setInWishlist(false);
     } else {
