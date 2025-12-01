@@ -4,10 +4,11 @@ import {
     Toolbar,
     IconButton,
     Box,
-    Typography,
     Badge,
+    Menu,
+    MenuItem,
 } from '@mui/material';
-import { Menu, ShoppingCart, Favorite, AccountCircle } from '@mui/icons-material';
+import { Menu as MenuIcon, ShoppingCart, Favorite, AccountCircle } from '@mui/icons-material';
 import { Link } from 'react-router-dom';
 import { DropdownMenu } from './DropdownMenu';
 import { NavLink } from './NavLink';
@@ -15,10 +16,11 @@ import { MobileMenu } from './MobileMenu';
 import { useBrands } from '../hooks/useBrands';
 
 export const NavigationBar: React.FC = () => {
-    const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+    const [isAuthenticated, setIsAuthenticated] = useState<boolean>(true);
     const [totalItems] = useState<number>(0);
     const [wishlistItems] = useState<number>(0);
     const [mobileOpen, setMobileOpen] = useState(false);
+    const [profileAnchor, setProfileAnchor] = useState<null | HTMLElement>(null);
 
 
     // tanstack query to fetch brands
@@ -28,9 +30,18 @@ export const NavigationBar: React.FC = () => {
     const logout = () => {
         // Placeholder logout function
         setIsAuthenticated(false);
+        setProfileAnchor(null);
     }
     
     const handleMobileToggle = () => setMobileOpen(!mobileOpen);
+    
+    const handleProfileClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+        setProfileAnchor(event.currentTarget);
+    };
+    
+    const handleProfileClose = () => {
+        setProfileAnchor(null);
+    };
 
     return (
         <>
@@ -70,21 +81,136 @@ export const NavigationBar: React.FC = () => {
                     {/* Right Icons */}
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                         {isAuthenticated ? (
-                            <Typography
-                                variant="body1"
-                                sx={{ 
-                                    cursor: 'pointer', 
-                                    mr: 1,
-                                    fontSize: { xs: '1rem', md: '1.125rem' },
-                                }}
-                                onClick={logout}
-                            >
-                                Logout
-                            </Typography>
+                            <>
+                                <IconButton
+                                    onClick={handleProfileClick}
+                                    color="inherit"
+                                    sx={{ fontSize: '1.75rem' }}
+                                >
+                                    <AccountCircle fontSize="inherit" />
+                                </IconButton>
+                                <Menu
+                                    anchorEl={profileAnchor}
+                                    open={Boolean(profileAnchor)}
+                                    onClose={handleProfileClose}
+                                    PaperProps={{
+                                        sx: {
+                                            bgcolor: '#f9fafb',
+                                            color: '#6b7280',
+                                            mt: 1.5,
+                                            minWidth: '180px',
+                                            boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)',
+                                            borderRadius: '8px',
+                                            border: '1px solid #e5e7eb',
+                                        }
+                                    }}
+                                >
+                                    <MenuItem
+                                        component={Link}
+                                        to="/orders"
+                                        onClick={handleProfileClose}
+                                        sx={{
+                                            color: '#6b7280',
+                                            fontSize: '0.95rem',
+                                            py: 1.5,
+                                            px: 2.5,
+                                            '&:hover': {
+                                                bgcolor: '#f3f4f6',
+                                                color: '#374151',
+                                            },
+                                            fontWeight: 500,
+                                        }}
+                                    >
+                                        Your Orders
+                                    </MenuItem>
+                                    <MenuItem
+                                        component={Link}
+                                        to="/posts"
+                                        onClick={handleProfileClose}
+                                        sx={{
+                                            color: '#6b7280',
+                                            fontSize: '0.95rem',
+                                            py: 1.5,
+                                            px: 2.5,
+                                            '&:hover': {
+                                                bgcolor: '#f3f4f6',
+                                                color: '#374151',
+                                            },
+                                            fontWeight: 500,
+                                        }}
+                                    >
+                                        Your posts
+                                    </MenuItem>
+                                    <MenuItem
+                                        component={Link}
+                                        to="/loyalty-wallet"
+                                        onClick={handleProfileClose}
+                                        sx={{
+                                            color: '#6b7280',
+                                            fontSize: '0.95rem',
+                                            py: 1.5,
+                                            px: 2.5,
+                                            '&:hover': {
+                                                bgcolor: '#f3f4f6',
+                                                color: '#374151',
+                                            },
+                                            fontWeight: 500,
+                                        }}
+                                    >
+                                        Loyalty Wallet
+                                    </MenuItem>
+                                    <MenuItem
+                                        onClick={() => {
+                                            logout();
+                                        }}
+                                        sx={{
+                                            color: '#6b7280',
+                                            fontSize: '0.95rem',
+                                            py: 1.5,
+                                            px: 2.5,
+                                            '&:hover': {
+                                                bgcolor: '#f3f4f6',
+                                                color: '#374151',
+                                            },
+                                            fontWeight: 500,
+                                        }}
+                                    >
+                                        Sign Out
+                                    </MenuItem>
+                                </Menu>
+                            </>
                         ) : (
-                            <IconButton component={Link} to="/login" color="inherit" sx={{ fontSize: '1.75rem' }}>
-                                <AccountCircle fontSize="inherit" />
-                            </IconButton>
+                            <>
+                                <IconButton
+                                    onClick={handleProfileClick}
+                                    color="inherit"
+                                    sx={{ fontSize: '1.75rem' }}
+                                >
+                                    <AccountCircle fontSize="inherit" />
+                                </IconButton>
+                                <Menu
+                                    anchorEl={profileAnchor}
+                                    open={Boolean(profileAnchor)}
+                                    onClose={handleProfileClose}
+                                    PaperProps={{
+                                        sx: {
+                                            bgcolor: 'white',
+                                            color: 'black',
+                                            mt: 1,
+                                            minWidth: '150px',
+                                        }
+                                    }}
+                                >
+                                    <MenuItem
+                                        component={Link}
+                                        to="/login"
+                                        onClick={handleProfileClose}
+                                        sx={{ color: 'black', fontWeight: 500 }}
+                                    >
+                                        Login
+                                    </MenuItem>
+                                </Menu>
+                            </>
                         )}
 
                         <IconButton component={Link} to="/wishlist" color="inherit" sx={{ fontSize: '1.75rem' }}>
@@ -105,7 +231,7 @@ export const NavigationBar: React.FC = () => {
                             onClick={handleMobileToggle}
                             color="inherit"
                         >
-                            <Menu />
+                            <MenuIcon />
                         </IconButton>
                     </Box>
                 </Toolbar>
