@@ -48,11 +48,11 @@ const ProductDetails: React.FC = () => {
   const [reviewComment, setReviewComment] = useState('');
   const currentUserId = 'user1'; // Replace with actual logged-in user ID
 
-  // Auto-refresh stock status every 3 seconds to detect refills
+  // Auto-refresh stock status every 30 seconds to detect refills (reduced from 3s to prevent flickering)
   useEffect(() => {
     const interval = setInterval(() => {
       setRefreshTrigger(prev => prev + 1);
-    }, 3000);
+    }, 30000);
     return () => clearInterval(interval);
   }, []);
 
@@ -284,7 +284,7 @@ const ProductDetails: React.FC = () => {
         };
         addItem(wishlistItem);
       } else {
-        // Product is out of stock - add without size/color requirement
+        // Product is out of stock - add without size/color requirement and disable cart button
         const wishlistItem: WishlistItem = {
           stockId: product.id,
           productId: product.id,
@@ -295,6 +295,7 @@ const ProductDetails: React.FC = () => {
           size: '',
           quantity: 1,
           maxQuantity: 0,
+          isOutOfStock: true, // Mark as out of stock
           addedAt: new Date().toISOString(),
           expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
         };
@@ -633,13 +634,13 @@ const ProductDetails: React.FC = () => {
                 variant="contained"
                 size="large"
                 onClick={handleAddToCart}
-                disabled={!currentStock || currentStock.quantity === 0}
+                disabled={!currentStock || currentStock.quantity === 0 || (inWishlist && !currentStock)}
                 sx={{
                   flex: 1,
-                  bgcolor: !currentStock || currentStock.quantity === 0 ? '#f0f0f0' : colors.button.primary,
-                  color: !currentStock || currentStock.quantity === 0 ? '#ccc' : colors.text.secondary,
+                  bgcolor: (!currentStock || currentStock.quantity === 0 || (inWishlist && !currentStock)) ? '#f0f0f0' : colors.button.primary,
+                  color: (!currentStock || currentStock.quantity === 0 || (inWishlist && !currentStock)) ? '#ccc' : colors.text.secondary,
                   '&:hover': {
-                    bgcolor: !currentStock || currentStock.quantity === 0 ? '#f0f0f0' : colors.button.primaryHover,
+                    bgcolor: (!currentStock || currentStock.quantity === 0 || (inWishlist && !currentStock)) ? '#f0f0f0' : colors.button.primaryHover,
                   },
                   '&:disabled': {
                     bgcolor: '#f0f0f0',

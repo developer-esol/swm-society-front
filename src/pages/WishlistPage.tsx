@@ -14,11 +14,11 @@ const WishlistPage: React.FC = () => {
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
-  // Refresh stock status every 3 seconds to detect stock refills
+  // Refresh stock status every 30 seconds to detect stock refills (reduced from 3s to prevent flickering)
   useEffect(() => {
     const interval = setInterval(() => {
       setRefreshTrigger(prev => prev + 1);
-    }, 3000);
+    }, 30000);
     return () => clearInterval(interval);
   }, []);
 
@@ -80,6 +80,9 @@ const WishlistPage: React.FC = () => {
     const newQuantities = { ...quantities };
     delete newQuantities[stockId];
     setQuantities(newQuantities);
+
+    // Dispatch custom event to notify ProductCards to update their heart icons
+    window.dispatchEvent(new Event('wishlist-updated'));
   };
 
   const handleUpdateQuantity = (stockId: string, quantity: number) => {

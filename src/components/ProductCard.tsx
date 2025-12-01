@@ -13,11 +13,30 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const { addItem, removeItem, getWishlist } = useWishlist();
   const [inWishlist, setInWishlist] = useState(false);
 
+  // Check wishlist status on mount and listen for storage changes
   useEffect(() => {
-    // Check if any stock of this product is in wishlist
-    const wishlist = getWishlist();
-    const isProductInWishlist = wishlist.items.some(item => item.productId === product.id);
-    setInWishlist(isProductInWishlist);
+    const checkWishlistStatus = () => {
+      const wishlist = getWishlist();
+      const productInWishlist = wishlist.items.find(item => item.productId === product.id);
+      setInWishlist(!!productInWishlist);
+    };
+
+    // Check on mount
+    checkWishlistStatus();
+
+    // Listen for storage changes from other tabs/components
+    const handleStorageChange = () => {
+      checkWishlistStatus();
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    // Also listen for custom events from same-tab changes
+    window.addEventListener('wishlist-updated', handleStorageChange);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('wishlist-updated', handleStorageChange);
+    };
   }, [product.id, getWishlist]);
 
   const handleWishlistClick = (e: React.MouseEvent) => {
@@ -28,27 +47,49 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     const productInWishlist = wishlist.items.find(item => item.productId === product.id);
     
     if (productInWishlist) {
+      // Remove from wishlist
       removeItem(productInWishlist.stockId);
       setInWishlist(false);
     } else {
-      // Try to add first available stock variant
+      // Add to wishlist - try first available in-stock variant
       if (product.stocks && product.stocks.length > 0) {
-        const stock = product.stocks[0];
-        addItem({
-          stockId: stock.id,
-          productId: product.id,
-          productName: product.name,
-          productImage: product.image || '',
-          price: stock.price,
-          color: stock.color,
-          size: stock.size,
-          quantity: 1, // Default quantity
-          maxQuantity: stock.quantity, // Available stock for this size/color
-          addedAt: new Date().toISOString(),
-        });
+        // Find first stock with quantity > 0
+        const availableStock = product.stocks.find(s => s.quantity > 0);
+        
+        if (availableStock) {
+          // Product has available stock
+          addItem({
+            stockId: availableStock.id,
+            productId: product.id,
+            productName: product.name,
+            productImage: product.image || '',
+            price: availableStock.price,
+            color: availableStock.color,
+            size: availableStock.size,
+            quantity: 1,
+            maxQuantity: availableStock.quantity,
+            addedAt: new Date().toISOString(),
+          });
+        } else {
+          // All stocks are out of stock - use first stock but mark as out of stock
+          const stock = product.stocks[0];
+          addItem({
+            stockId: stock.id,
+            productId: product.id,
+            productName: product.name,
+            productImage: product.image || '',
+            price: stock.price,
+            color: stock.color,
+            size: stock.size,
+            quantity: 1,
+            maxQuantity: 0,
+            isOutOfStock: true,
+            addedAt: new Date().toISOString(),
+          });
+        }
         setInWishlist(true);
       } else {
-        // Fallback if no stocks available
+        // No stock data available - mark as out of stock
         addItem({
           stockId: `${product.id}-default`,
           productId: product.id,
@@ -58,12 +99,15 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           color: 'Default',
           size: 'One Size',
           quantity: 1,
-          maxQuantity: 99, // Default max when stock info unavailable
+          maxQuantity: 0,
+          isOutOfStock: true,
           addedAt: new Date().toISOString(),
         });
         setInWishlist(true);
       }
     }
+    // Dispatch custom event to notify other components
+    window.dispatchEvent(new Event('wishlist-updated'));
   };
   return (
     <Card
