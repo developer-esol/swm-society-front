@@ -22,17 +22,20 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           transform: 'translateY(-4px)',
           boxShadow: '0 8px 25px rgba(0,0,0,0.15)',
         },
+        position: 'relative',
       }}
     >
-      <CardMedia
-        component="img"
-        height="300"
-        image={product.image}
-        alt={product.name}
-        sx={{
-          objectFit: 'cover',
-        }}
-      />
+      <Box sx={{ position: 'relative' }}>
+        <CardMedia
+          component="img"
+          height="300"
+          image={product.image}
+          alt={product.name}
+          sx={{
+            objectFit: 'cover',
+          }}
+        />
+      </Box>
       <CardContent sx={{ flexGrow: 1, p: 2 }}>
         <Typography
           variant="h6"

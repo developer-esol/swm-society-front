@@ -241,7 +241,7 @@ const CommunityPage: React.FC = () => {
       )}
 
       {/* Share Your Style Section */}
-      <Box ref={shareYourStyleRef} sx={{ bgcolor: '#fafafa', width: '100%', py: 2 }}>
+      <Box sx={{ bgcolor: '#fafafa', width: '100%', py: 2 }}>
         <Container maxWidth="lg">
           <Box sx={{ textAlign: 'center' }}>
             {/* Section Title */}
