@@ -22,6 +22,7 @@ export interface Product {
   category?: string;
   sizes?: string[];
   colors?: string[];
+  colorImages?: Record<string, string>; // Map color names to image URLs
   [key: string]: unknown; // Allow additional properties for flexibility
 }
 

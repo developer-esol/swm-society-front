@@ -2,9 +2,9 @@ import { useQuery } from '@tanstack/react-query';
 import { stockService } from '../api/services/stockService';
 import { productsService } from '../api/services';
 
-export const useStocks = (productId: string | undefined) => {
+export const useStocks = (productId: string | undefined, refreshTrigger?: number) => {
   return useQuery({
-    queryKey: ['stocks', productId],
+    queryKey: ['stocks', productId, refreshTrigger],
     queryFn: () => stockService.getStocksByProductId(productId!),
     enabled: !!productId,
   });

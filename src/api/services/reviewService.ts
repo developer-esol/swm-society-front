@@ -1,9 +1,10 @@
 import type { Review } from '../../types/review';
 
-// Mock/Dummy review data
+// Mock/Dummy review data with productId
 const mockReviews: Review[] = [
   {
     id: '1',
+    productId: '1',
     userId: 'user1',
     userName: 'James K.',
     rating: 5,
@@ -14,6 +15,7 @@ const mockReviews: Review[] = [
   },
   {
     id: '2',
+    productId: '1',
     userId: 'user2',
     userName: 'Sarah M.',
     rating: 4,
@@ -24,6 +26,7 @@ const mockReviews: Review[] = [
   },
   {
     id: '3',
+    productId: '1',
     userId: 'user3',
     userName: 'David L.',
     rating: 5,
@@ -32,19 +35,42 @@ const mockReviews: Review[] = [
     createdAt: new Date(Date.now() - 21 * 24 * 60 * 60 * 1000).toISOString(),
     verified: true,
   },
+  {
+    id: '4',
+    productId: '2',
+    userId: 'user4',
+    userName: 'Emma R.',
+    rating: 5,
+    title: 'Perfect fit and comfort',
+    comment: 'This is exactly what I was looking for. Highly satisfied!',
+    createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+    verified: true,
+  },
+  {
+    id: '5',
+    productId: '2',
+    userId: 'user5',
+    userName: 'Michael T.',
+    rating: 4,
+    title: 'Very good quality',
+    comment: 'Great value for money. Would recommend.',
+    createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
+    verified: true,
+  },
 ];
 
 export const reviewService = {
   /**
-   * Get all reviews for a product
-   * @param productId - Product ID
-   * @returns Array of reviews
+   * Get all reviews for a specific product
+   * @param productId - Product ID to filter reviews
+   * @returns Array of reviews for the product
    */
-  getReviewsByProduct: (): Promise<Review[]> => {
+  getReviewsByProduct: (productId: string): Promise<Review[]> => {
     // Mock delay to simulate API call
     return new Promise((resolve) => {
       setTimeout(() => {
-        resolve(mockReviews);
+        const productReviews = mockReviews.filter((review) => review.productId === productId);
+        resolve(productReviews);
       }, 300);
     });
   },

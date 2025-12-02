@@ -6,30 +6,40 @@ import {
   Typography,
   Button as MuiButton,
   Link as MuiLink,
-  Chip,
   IconButton,
   Divider,
   TextField,
   Rating,
 } from '@mui/material';
-import { Add, Remove, Info } from '@mui/icons-material';
+import { Add, Remove, Info, Favorite, FavoriteBorder } from '@mui/icons-material';
 
 // Import hooks, components and services
 import { useStocks, useProduct } from '../hooks/useStock';
+import { useWishlist } from '../hooks/useWishlist';
+import { cartService } from '../api/services/cartService';
+import { projectZeroProductService } from '../api/services/projectZeroProductService';
 import ReviewCard from '../components/ReviewCard';
 import { reviewService } from '../api/services/reviewService';
+import { colors } from '../theme';
 import type { Stock, Product } from '../types/product';
 import type { Review } from '../types/review';
+import type { WishlistItem } from '../types/wishlist';
+import type { CartItem } from '../types/cart';
 
 
 const ProductDetails: React.FC = () => {
   const { productId } = useParams<{ productId: string }>();
   const navigate = useNavigate();
+  const { addItem, removeItem, isInWishlist } = useWishlist();
   
   // State for product selection
   const [selectedSize, setSelectedSize] = useState<string>('');
   const [selectedColor, setSelectedColor] = useState<string>('');
   const [quantity, setQuantity] = useState<number>(1);
+  const [inWishlist, setInWishlist] = useState<boolean>(false);
+  const [productData, setProductData] = useState<Product | null>(null);
+  const [displayImage, setDisplayImage] = useState<string>('');
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
   
   // State for reviews
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -38,25 +48,83 @@ const ProductDetails: React.FC = () => {
   const [reviewComment, setReviewComment] = useState('');
   const currentUserId = 'user1'; // Replace with actual logged-in user ID
 
+  // Auto-refresh stock status every 30 seconds to detect refills (reduced from 3s to prevent flickering)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setRefreshTrigger(prev => prev + 1);
+    }, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
   // Load reviews from service on component mount
   useEffect(() => {
     const loadReviews = async () => {
       try {
-        const loadedReviews = await reviewService.getReviewsByProduct();
+        const loadedReviews = await reviewService.getReviewsByProduct(productId!);
         setReviews(loadedReviews);
       } catch (error) {
         console.error('Failed to load reviews:', error);
       }
     };
 
-    loadReviews();
-  }, []);
+    if (productId) {
+      loadReviews();
+    }
+  }, [productId]);
+
+  // Load product data with color images from service
+  useEffect(() => {
+    const loadProductData = async () => {
+      try {
+        const products = await projectZeroProductService.getProducts();
+        const currentProduct = products.find(p => p.id === productId);
+        if (currentProduct) {
+          console.log('Product loaded:', currentProduct);
+          setProductData(currentProduct);
+          setDisplayImage(currentProduct.image || '');
+        }
+      } catch (error) {
+        console.error('Failed to load product data:', error);
+      }
+    };
+
+    loadProductData();
+  }, [productId]);
+
+  // Update display image when color is selected
+  useEffect(() => {
+    if (!selectedColor || !productData) return;
+    
+    console.log('Color selected:', selectedColor);
+    console.log('Product data:', productData);
+    
+    if (productData?.colorImages) {
+      // Try exact match first
+      let colorImage: string | undefined = productData.colorImages[selectedColor];
+      
+      // If not found, try case-insensitive match
+      if (!colorImage) {
+        const normalizedColor = selectedColor.toLowerCase();
+        const matchingKey = Object.keys(productData.colorImages).find(
+          key => key.toLowerCase() === normalizedColor
+        );
+        colorImage = matchingKey ? productData.colorImages[matchingKey] : undefined;
+      }
+      
+      if (colorImage) {
+        console.log('Setting display image to:', colorImage);
+        setDisplayImage(colorImage);
+      } else {
+        console.log('No color image found. Available keys:', Object.keys(productData.colorImages));
+      }
+    }
+  }, [selectedColor, productData]);
 
   // Get product data using custom hook
   const { data: product, isLoading: productLoading } = useProduct(productId);
 
-  // Get stock data using custom hook
-  const { data: stocks = [], isLoading: stocksLoading } = useStocks(productId);
+  // Get stock data using custom hook - includes refresh trigger for auto-refresh
+  const { data: stocks = [], isLoading: stocksLoading } = useStocks(productId, refreshTrigger);
 
   // Set initial selections when stocks are loaded
   useEffect(() => {
@@ -91,16 +159,46 @@ const ProductDetails: React.FC = () => {
     s.isActive
   );
 
-  // Mock cart and wishlist functions (replace with real implementations)
+  // Mock cart function (replace with real implementation)
   const addToCart = (product: Product, quantity: number, size: string, color: string) => {
-    console.log('Adding to cart:', { product, quantity, size, color });
-    // Implement cart logic
+    if (!currentStock) {
+      alert('Please select a size and color');
+      return;
+    }
+
+    if (quantity > currentStock.quantity) {
+      alert(`Only ${currentStock.quantity} items available in stock`);
+      return;
+    }
+
+    // Add to cart using cartService
+    const cartItem: CartItem = {
+      stockId: currentStock.id,
+      productId: product.id,
+      productName: product.name,
+      productImage: product.image || '',
+      price: currentStock.price,
+      color: color,
+      size: size,
+      quantity: quantity,
+      maxQuantity: currentStock.quantity, // Available stock for this size/color
+      addedAt: new Date().toISOString(),
+    };
+
+    cartService.addItem(cartItem);
+    navigate('/cart');
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const isInWishlist = (_productId: string) => false; // Replace with real implementation
-  const addToWishlist = (product: Product) => console.log('Adding to wishlist:', product);
-  const removeFromWishlist = (productId: string) => console.log('Removing from wishlist:', productId);
+  // Check if product is in wishlist when stock changes or product loads
+  useEffect(() => {
+    if (currentStock) {
+      // Product is in stock - check by stockId
+      setInWishlist(isInWishlist(currentStock.id));
+    } else if (product) {
+      // Product is out of stock - check by productId
+      setInWishlist(isInWishlist(product.id));
+    }
+  }, [currentStock, product, isInWishlist]);
 
   if (productLoading || stocksLoading) {
     return (
@@ -142,6 +240,25 @@ const ProductDetails: React.FC = () => {
       return;
     }
 
+    // Add to wishlist first
+    if (!inWishlist) {
+      const wishlistItem: WishlistItem = {
+        stockId: currentStock.id,
+        productId: product.id,
+        productName: product.name,
+        productImage: product.image || '',
+        price: currentStock.price,
+        color: selectedColor,
+        size: selectedSize,
+        quantity: quantity,
+        maxQuantity: currentStock.quantity,
+        addedAt: new Date().toISOString(),
+        expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+      };
+      addItem(wishlistItem);
+      setInWishlist(true);
+    }
+
     addToCart(
       {
         ...product,
@@ -159,13 +276,54 @@ const ProductDetails: React.FC = () => {
   };
 
   const handleWishlistToggle = () => {
-    if (isInWishlist(product.id)) {
-      removeFromWishlist(product.id);
+    if (inWishlist) {
+      // Remove from wishlist AND cart
+      if (currentStock) {
+        removeItem(currentStock.id);
+        // Also remove from cart
+        cartService.removeItem(currentStock.id);
+      } else {
+        removeItem(product.id); // Use product ID if out of stock
+        cartService.removeItem(product.id);
+      }
+      setInWishlist(false);
     } else {
-      addToWishlist({
-        ...product,
-        image: product.image
-      } as unknown as Product);
+      // Add to wishlist
+      if (currentStock) {
+        // Product is in stock - add with size/color
+        const wishlistItem: WishlistItem = {
+          stockId: currentStock.id,
+          productId: product.id,
+          productName: product.name,
+          productImage: product.image || '',
+          price: currentStock.price,
+          color: selectedColor,
+          size: selectedSize,
+          quantity: quantity,
+          maxQuantity: currentStock.quantity,
+          addedAt: new Date().toISOString(),
+          expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+        };
+        addItem(wishlistItem);
+      } else {
+        // Product is out of stock - add without size/color requirement and disable cart button
+        const wishlistItem: WishlistItem = {
+          stockId: product.id,
+          productId: product.id,
+          productName: product.name,
+          productImage: product.image || '',
+          price: product.price,
+          color: '',
+          size: '',
+          quantity: 1,
+          maxQuantity: 0,
+          isOutOfStock: true, // Mark as out of stock
+          addedAt: new Date().toISOString(),
+          expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+        };
+        addItem(wishlistItem);
+      }
+      setInWishlist(true);
     }
   };
 
@@ -190,6 +348,7 @@ const ProductDetails: React.FC = () => {
 
     try {
       const newReview = await reviewService.createReview({
+        productId: productId!,
         userId: currentUserId,
         userName: 'Current User',
         rating: reviewRating,
@@ -237,25 +396,72 @@ const ProductDetails: React.FC = () => {
             gap: { xs: 4, md: 8 },
           }}
         >
-          {/* Product Images */}
-          <Box
-            sx={{
-              width: '100%',
-              height: { xs: 400, md: 600 },
-              bgcolor: 'grey.100',
-              borderRadius: 2,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              backgroundImage: `url(${product.image})`,
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
-              position: 'relative'
-            }}
-          >
+          {/* Left Column - Product Images and Recommendations */}
+          <Box>
+            {/* Product Images */}
+            <Box
+              sx={{
+                width: '100%',
+                height: { xs: 400, md: 500 },
+                bgcolor: 'grey.100',
+                borderRadius: 2,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundImage: `url(${displayImage || product.image})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                position: 'relative',
+                mb: 3,
+              }}
+            >
+            </Box>
+
+            {/* Color Variants Below Main Image */}
+            <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+              {availableColors.map((color) => {
+                // Try exact match first, then case-insensitive match
+                let colorImage = productData?.colorImages?.[color];
+                if (!colorImage && productData?.colorImages) {
+                  const normalizedColor = color.toLowerCase();
+                  const matchingKey = Object.keys(productData.colorImages).find(
+                    key => key.toLowerCase() === normalizedColor
+                  );
+                  colorImage = matchingKey ? productData.colorImages[matchingKey] : undefined;
+                }
+                
+                return (
+                  <Box
+                    key={color}
+                    onClick={() => setSelectedColor(color)}
+                    sx={{
+                      width: '80px',
+                      height: '80px',
+                      borderRadius: '4px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      cursor: 'pointer',
+                      transition: 'all 0.3s',
+                      border: selectedColor === color ? '3px solid #dc2626' : '1px solid #e0e0e0',
+                      backgroundImage: colorImage ? `url(${colorImage})` : 'none',
+                      backgroundSize: 'cover',
+                      backgroundPosition: 'center',
+                      '&:hover': {
+                        borderColor: '#dc2626',
+                        transform: 'scale(1.05)',
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                      }
+                    }}
+                  >
+                  </Box>
+                );
+              })}
+            </Box>
+
           </Box>
 
-          {/* Product Details */}
+          {/* Right Column - Product Details */}
           <Box>
             {/* Header */}
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
@@ -282,6 +488,18 @@ const ProductDetails: React.FC = () => {
               </MuiLink>
             </Box>
 
+            {/* Rating Display */}
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+              <Rating
+                value={reviews.length > 0 ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length : 0}
+                readOnly
+                precision={0.1}
+              />
+              <Typography variant="body2" sx={{ color: 'grey.600' }}>
+                {reviews.length} {reviews.length === 1 ? 'review' : 'reviews'}
+              </Typography>
+            </Box>
+
             {/* Stock Status */}
             <Box sx={{ mb: 2 }}>
               <Typography variant="body2" color={stocks.length > 0 ? 'success.main' : 'error.main'}>
@@ -303,27 +521,33 @@ const ProductDetails: React.FC = () => {
             {/* Size Selection */}
             {availableSizes.length > 0 && (
               <Box sx={{ mb: 3 }}>
-                <Typography variant="h6" sx={{ fontWeight: 500, mb: 1 }}>
+                <Typography variant="h6" sx={{ fontWeight: 500, mb: 2 }}>
                   Size
                 </Typography>
-                <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                  {availableSizesForColor.map(size => (
-                    <Chip
+                <Box sx={{ display: 'flex', gap: 0.5 }}>
+                  {availableSizesForColor.map((size) => (
+                    <MuiButton
                       key={size}
-                      label={size}
-                      clickable
                       onClick={() => setSelectedSize(size)}
-                      variant={selectedSize === size ? 'filled' : 'outlined'}
+                      variant={selectedSize === size ? 'contained' : 'outlined'}
                       sx={{
-                        bgcolor: selectedSize === size ? 'black' : 'transparent',
+                        minWidth: '60px',
+                        height: '45px',
+                        bgcolor: selectedSize === size ? 'black' : 'white',
                         color: selectedSize === size ? 'white' : 'black',
-                        borderColor: selectedSize === size ? 'black' : 'grey.400',
+                        borderColor: 'transparent',
+                        border: 'none',
+                        textTransform: 'none',
+                        fontSize: '0.9rem',
+                        fontWeight: 500,
+                        borderRadius: '4px',
                         '&:hover': {
                           bgcolor: selectedSize === size ? 'grey.800' : 'grey.100',
-                          borderColor: 'grey.600',
                         }
                       }}
-                    />
+                    >
+                      {size}
+                    </MuiButton>
                   ))}
                 </Box>
               </Box>
@@ -332,27 +556,33 @@ const ProductDetails: React.FC = () => {
             {/* Color Selection */}
             {availableColors.length > 0 && (
               <Box sx={{ mb: 3 }}>
-                <Typography variant="h6" sx={{ fontWeight: 500, mb: 1 }}>
+                <Typography variant="h6" sx={{ fontWeight: 500, mb: 2 }}>
                   Color
                 </Typography>
-                <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                  {availableColorsForSize.map(color => (
-                    <Chip
+                <Box sx={{ display: 'flex', gap: 0.5 }}>
+                  {availableColorsForSize.map((color) => (
+                    <MuiButton
                       key={color}
-                      label={color}
-                      clickable
                       onClick={() => setSelectedColor(color)}
-                      variant={selectedColor === color ? 'filled' : 'outlined'}
+                      variant={selectedColor === color ? 'contained' : 'outlined'}
                       sx={{
-                        bgcolor: selectedColor === color ? 'black' : 'transparent',
+                        minWidth: '80px',
+                        height: '45px',
+                        bgcolor: selectedColor === color ? 'black' : 'white',
                         color: selectedColor === color ? 'white' : 'black',
-                        borderColor: selectedColor === color ? 'black' : 'grey.400',
+                        borderColor: 'transparent',
+                        border: 'none',
+                        textTransform: 'none',
+                        fontSize: '0.9rem',
+                        fontWeight: 500,
+                        borderRadius: '4px',
                         '&:hover': {
                           bgcolor: selectedColor === color ? 'grey.800' : 'grey.100',
-                          borderColor: 'grey.600',
                         }
                       }}
-                    />
+                    >
+                      {color}
+                    </MuiButton>
                   ))}
                 </Box>
               </Box>
@@ -426,17 +656,17 @@ const ProductDetails: React.FC = () => {
                 variant="contained"
                 size="large"
                 onClick={handleAddToCart}
-                disabled={!currentStock || currentStock.quantity === 0}
+                disabled={!currentStock || currentStock.quantity === 0 || (inWishlist && !currentStock)}
                 sx={{
                   flex: 1,
-                  bgcolor: '#dc2626',
-                  color: 'white',
+                  bgcolor: (!currentStock || currentStock.quantity === 0 || (inWishlist && !currentStock)) ? '#f0f0f0' : colors.button.primary,
+                  color: (!currentStock || currentStock.quantity === 0 || (inWishlist && !currentStock)) ? '#ccc' : colors.text.secondary,
                   '&:hover': {
-                    bgcolor: '#b91c1c',
+                    bgcolor: (!currentStock || currentStock.quantity === 0 || (inWishlist && !currentStock)) ? '#f0f0f0' : colors.button.primaryHover,
                   },
                   '&:disabled': {
-                    bgcolor: 'grey.300',
-                    color: 'grey.500',
+                    bgcolor: '#f0f0f0',
+                    color: '#ccc',
                   }
                 }}
               >
@@ -446,16 +676,17 @@ const ProductDetails: React.FC = () => {
                 variant="outlined"
                 size="large"
                 onClick={handleWishlistToggle}
+                startIcon={inWishlist ? <Favorite /> : <FavoriteBorder />}
                 sx={{
-                  borderColor: 'grey.400',
-                  color: 'black',
+                  borderColor: inWishlist ? colors.button.primary : 'grey.400',
+                  color: inWishlist ? colors.button.primary : colors.text.primary,
                   '&:hover': {
-                    borderColor: 'black',
-                    bgcolor: 'grey.50',
+                    borderColor: colors.button.primary,
+                    bgcolor: `rgba(${parseInt(colors.button.primary.slice(1,3), 16)}, ${parseInt(colors.button.primary.slice(3,5), 16)}, ${parseInt(colors.button.primary.slice(5,7), 16)}, 0.05)`,
                   }
                 }}
               >
-                {isInWishlist(product.id) ? 'Remove from Wishlist' : 'Add to Wishlist'}
+                {inWishlist ? 'Remove from Wishlist' : 'Add to Wishlist'}
               </MuiButton>
             </Box>
 
@@ -508,6 +739,27 @@ const ProductDetails: React.FC = () => {
       {/* Customer Reviews Section */}
       <Container maxWidth="lg" sx={{ py: 6, borderTop: '1px solid #e0e0e0' }}>
         <Box sx={{ mb: 6 }}>
+          {/* Review Summary */}
+          <Box sx={{ mb: 4, pb: 4, borderBottom: '1px solid #e0e0e0' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+              <Box>
+                <Typography variant="h5" sx={{ fontWeight: 700, mb: 1 }}>
+                  Customer Reviews
+                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                  <Rating
+                    value={reviews.length > 0 ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length : 0}
+                    readOnly
+                    precision={0.1}
+                  />
+                  <Typography variant="body2" sx={{ color: '#9e9e9e' }}>
+                    {reviews.length} {reviews.length === 1 ? 'review' : 'reviews'}
+                  </Typography>
+                </Box>
+              </Box>
+            </Box>
+          </Box>
+
           <Box
             sx={{
               display: 'flex',
@@ -516,11 +768,8 @@ const ProductDetails: React.FC = () => {
               mb: 4,
             }}
           >
-            <Typography variant="h5" sx={{ fontWeight: 700 }}>
-              Customer Reviews
-            </Typography>
-            <Typography variant="body2" sx={{ color: '#9e9e9e' }}>
-              {reviews.length} reviews
+            <Typography variant="h6" sx={{ fontWeight: 700 }}>
+              Latest Reviews
             </Typography>
           </Box>
 
