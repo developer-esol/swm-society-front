@@ -7,7 +7,6 @@ import {
   Button as MuiButton,
   Link as MuiLink,
   IconButton,
-  Divider,
   TextField,
   Rating,
 } from '@mui/material';
@@ -690,6 +689,44 @@ const ProductDetails: React.FC = () => {
               </MuiButton>
             </Box>
 
+            {/* Shipping & Returns Info with Links */}
+            <Box sx={{ mb: 4, py: 3, borderTop: '1px solid #e5e7eb', borderBottom: '1px solid #e5e7eb' }}>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <Box>
+                  <Typography variant="body2" sx={{ fontWeight: 500, color: '#111', mb: 0.5 }}>
+                    Shipping:
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: '#666', mb: 1 }}>
+                    Free shipping on orders over £100. Standard delivery 3-5 working days.
+                  </Typography>
+                  <MuiLink
+                    component="button"
+                    variant="body2"
+                    onClick={() => navigate('/shipping-info')}
+                    sx={{ color: '#d32f2f', textDecoration: 'none', cursor: 'pointer', '&:hover': { textDecoration: 'underline' } }}
+                  >
+                    View shipping details
+                  </MuiLink>
+                </Box>
+                <Box>
+                  <Typography variant="body2" sx={{ fontWeight: 500, color: '#111', mb: 0.5 }}>
+                    Returns:
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: '#666', mb: 1 }}>
+                    Free 30-day returns for unworn items.
+                  </Typography>
+                  <MuiLink
+                    component="button"
+                    variant="body2"
+                    onClick={() => navigate('/shipping-info')}
+                    sx={{ color: '#d32f2f', textDecoration: 'none', cursor: 'pointer', '&:hover': { textDecoration: 'underline' } }}
+                  >
+                    View return policy
+                  </MuiLink>
+                </Box>
+              </Box>
+            </Box>
+
             {/* Stock Information */}
             <Box sx={{ mb: 4 }}>
               <Typography variant="body2" color="text.secondary">
@@ -704,27 +741,7 @@ const ProductDetails: React.FC = () => {
 
             {/* Shipping & Returns */}
             <Box sx={{ pt: 3 }}>
-              <Divider sx={{ mb: 3 }} />
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                <Box sx={{ display: 'flex', alignItems: 'flex-start' }}>
-                  <Typography variant="body1" sx={{ fontWeight: 500, width: '30%', minWidth: 100 }}>
-                    Shipping:
-                  </Typography>
-                  <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                    Free shipping on orders over £100. Standard delivery 3-5 working days.
-                  </Typography>
-                </Box>
-                <Box sx={{ display: 'flex', alignItems: 'flex-start' }}>
-                  <Typography variant="body1" sx={{ fontWeight: 500, width: '30%', minWidth: 100 }}>
-                    Returns:
-                  </Typography>
-                  <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                    Free 30-day returns for unworn items.
-                  </Typography>
-                </Box>
-              </Box>
-
-              <Box sx={{ mt: 3, pt: 2 }}>
+              <Box sx={{ mt: 0, pt: 0 }}>
                 <Typography variant="body2" sx={{ color: 'text.secondary', lineHeight: 1.6 }}>
                   Part of the {product.brandName} collection.
                   {product.brandName === "Project ZerO" && 
