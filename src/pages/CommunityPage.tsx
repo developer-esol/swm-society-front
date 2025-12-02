@@ -20,6 +20,8 @@ const CommunityPage: React.FC = () => {
   const [allPosts, setAllPosts] = useState<CommunityPost[]>([]);
   const [showPostForm, setShowPostForm] = useState(false);
   const initialPostsCount = 3;
+  const postsRef = React.useRef<HTMLDivElement>(null);
+  const shareYourStyleRef = React.useRef<HTMLDivElement>(null);
 
   // Load initial posts
   useEffect(() => {
@@ -42,6 +44,13 @@ const CommunityPage: React.FC = () => {
   const handleViewMore = () => {
     setPosts(allPosts);
     setShowAll(true);
+  };
+
+  const handleShareYourLook = () => {
+    if (shareYourStyleRef.current) {
+      const offsetTop = shareYourStyleRef.current.offsetTop - 100;
+      window.scrollTo({ top: offsetTop, behavior: 'smooth' });
+    }
   };
 
   const handleLikePost = async (postId: string) => {
@@ -80,8 +89,78 @@ const CommunityPage: React.FC = () => {
 
   return (
     <Box sx={{ bgcolor: colors.background.default, width: '100%', minHeight: '100vh' }}>
-      {/* Add top padding to account for fixed navbar */}
-      <Box sx={{ pt: { xs: 10, md: 12 } }} />
+      {/* Community Hero Section */}
+      <Box
+        sx={{
+          position: 'relative',
+          width: '100%',
+          height: { xs: '450px', md: '550px' },
+          backgroundImage: 'url(/community.jpg)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center 30%',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          textAlign: 'center',
+          '&::before': {
+            content: '""',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            bgcolor: 'rgba(0, 0, 0, 0.3)',
+            zIndex: 1,
+          }
+        }}
+      >
+        <Box sx={{ position: 'relative', zIndex: 2, px: 2 }}>
+          <Typography
+            variant="h2"
+            sx={{
+              fontWeight: 'bold',
+              color: 'white',
+              mb: 2,
+              fontSize: { xs: '2rem', md: '3rem' },
+              letterSpacing: '0.05em',
+            }}
+          >
+            Join Our Style Community
+          </Typography>
+          <Typography
+            variant="h6"
+            sx={{
+              color: 'white',
+              mb: 3,
+              fontSize: { xs: '0.95rem', md: '1.125rem' },
+              maxWidth: '600px',
+              mx: 'auto',
+              lineHeight: 1.8,
+            }}
+          >
+            Connect through fashion that makes a statement. Share your looks and be part of a movement that values style with meaning.
+          </Typography>
+          <MuiButton
+            variant="contained"
+            onClick={handleShareYourLook}
+            sx={{
+              bgcolor: colors.button.primary,
+              color: 'white',
+              px: 4,
+              py: 1.5,
+              fontSize: '1rem',
+              fontWeight: 600,
+              '&:hover': {
+                bgcolor: colors.button.primaryHover,
+              },
+              textTransform: 'none',
+            }}
+          >
+            Share Your Look
+          </MuiButton>
+        </Box>
+      </Box>
 
       <Container maxWidth="lg" sx={{ py: 3 }}>
         {/* Section Title */}
@@ -101,6 +180,7 @@ const CommunityPage: React.FC = () => {
         {posts.length > 0 ? (
           <>
             <Box
+              ref={postsRef}
               sx={{
                 display: 'grid',
                 gridTemplateColumns: {
