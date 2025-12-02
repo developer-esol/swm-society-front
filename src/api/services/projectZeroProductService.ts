@@ -1,9 +1,9 @@
 import { apiClient } from '../apiClient';
-import type { Product, ProductFilters, CreateProductData, UpdateProductData } from '../../types';
+import type { Product, CreateProductData, UpdateProductData } from '../../types';
 
 export const projectZeroProductService = {
   // READ operations
-  async getProducts(filters?: ProductFilters): Promise<Product[]> {
+  async getProducts(): Promise<Product[]> {
     const allProducts: Product[] = [
       // Project ZerO's Collection
       {
@@ -17,6 +17,10 @@ export const projectZeroProductService = {
         inStock: true,
         isActive: true,
         tags: ['jacket', 'puffer', 'collaboration'],
+        colorImages: {
+          'Red': '/d1.jpg',
+          'Black': '/blackjacket.jpg',
+        },
         createdAt: '2024-01-01T00:00:00Z',
         updatedAt: '2024-01-01T00:00:00Z'
       },
@@ -31,6 +35,10 @@ export const projectZeroProductService = {
         inStock: true,
         isActive: true,
         tags: ['jacket', 'collaboration'],
+        colorImages: {
+          'White': '/d2.jpg',
+          'Black': '/blackjacket.jpg',
+        },
         createdAt: '2024-01-01T00:00:00Z',
         updatedAt: '2024-01-01T00:00:00Z'
       },
@@ -45,6 +53,10 @@ export const projectZeroProductService = {
         inStock: true,
         isActive: true,
         tags: ['jacket', 'pullover', 'collaboration'],
+        colorImages: {
+          'White': '/d4.jpg',
+          'Black': '/blackjacket.jpg',
+        },
         createdAt: '2024-01-01T00:00:00Z',
         updatedAt: '2024-01-01T00:00:00Z'
       },
@@ -59,6 +71,10 @@ export const projectZeroProductService = {
         inStock: true,
         isActive: true,
         tags: ['hoodie', 'collaboration', 'old-english'],
+        colorImages: {
+          'Black': '/blackjacket.jpg',
+          'White': '/JACKET4a_grande.webp',
+        },
         createdAt: '2024-01-01T00:00:00Z',
         updatedAt: '2024-01-01T00:00:00Z'
       },
@@ -74,6 +90,9 @@ export const projectZeroProductService = {
         inStock: true,
         isActive: true,
         tags: ['jacket', 'basketball', 'knicks'],
+        colorImages: {
+          'Black': '/blackjacket.jpg',
+        },
         createdAt: '2024-01-01T00:00:00Z',
         updatedAt: '2024-01-01T00:00:00Z'
       },
@@ -88,6 +107,9 @@ export const projectZeroProductService = {
         inStock: true,
         isActive: true,
         tags: ['hoodie', 'basketball', 'athletic'],
+        colorImages: {
+          'Black': '/blackjacket.jpg',
+        },
         createdAt: '2024-01-01T00:00:00Z',
         updatedAt: '2024-01-01T00:00:00Z'
       },
@@ -103,6 +125,9 @@ export const projectZeroProductService = {
         inStock: true,
         isActive: true,
         tags: ['jacket', 'denim', 'statement'],
+        colorImages: {
+          'Black': '/blackjacket.jpg',
+        },
         createdAt: '2024-01-01T00:00:00Z',
         updatedAt: '2024-01-01T00:00:00Z'
       },
@@ -117,6 +142,10 @@ export const projectZeroProductService = {
         inStock: true,
         isActive: true,
         tags: ['jacket', 'coach', 'white'],
+        colorImages: {
+          'White': '/JACKET4a_grande.webp',
+          'Black': '/blackjacket.jpg',
+        },
         createdAt: '2024-01-01T00:00:00Z',
         updatedAt: '2024-01-01T00:00:00Z'
       }

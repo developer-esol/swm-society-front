@@ -8,6 +8,7 @@ import {
 } from '@mui/material';
 import { Delete as TrashIcon, Add as AddIcon, Remove as RemoveIcon } from '@mui/icons-material';
 import { Link } from 'react-router-dom';
+import { colors } from '../theme';
 import type { WishlistItem } from '../types/wishlist';
 
 interface WishlistCardProps {
@@ -24,6 +25,9 @@ const WishlistCard: React.FC<WishlistCardProps> = ({
   onUpdateQuantity,
 }) => {
   const [isDeleting, setIsDeleting] = useState(false);
+  
+  // Check if item is out of stock
+  const isOutOfStock = item.maxQuantity === 0;
   
   // Use maxQuantity if available, otherwise default to 99 (reasonable max)
   const effectiveMaxQuantity = item.maxQuantity > 0 ? item.maxQuantity : 99;
@@ -76,7 +80,7 @@ const WishlistCard: React.FC<WishlistCardProps> = ({
         py: 3,
         px: 2,
         borderBottom: '1px solid #e0e0e0',
-        alignItems: 'center',
+        alignItems: 'flex-start',
         '&:last-child': {
           borderBottom: 'none',
         },
@@ -124,17 +128,19 @@ const WishlistCard: React.FC<WishlistCardProps> = ({
           </Typography>
         </Link>
 
-        {/* Price Per Item */}
-        <Typography
-          sx={{
-            fontWeight: 600,
-            color: 'black',
-            mb: 1.5,
-            fontSize: '0.9rem',
-          }}
-        >
-          £{item.price.toFixed(2)}
-        </Typography>
+        {/* Price Per Item - Only show when in stock */}
+        {!isOutOfStock && (
+          <Typography
+            sx={{
+              fontWeight: 600,
+              color: 'black',
+              mb: 1.5,
+              fontSize: '0.9rem',
+            }}
+          >
+            £{item.price.toFixed(2)}
+          </Typography>
+        )}
 
         {/* Color and Size in one row */}
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
@@ -168,12 +174,17 @@ const WishlistCard: React.FC<WishlistCardProps> = ({
           <IconButton
             size="small"
             onClick={decreaseQuantity}
+            disabled={isOutOfStock || localQuantity <= 1}
             sx={{
-              border: '1px solid #e0e0e0',
+              border: isOutOfStock ? '1px solid #f0f0f0' : '1px solid #e0e0e0',
               borderRadius: '4px',
               padding: '4px',
               '&:hover': {
                 backgroundColor: '#f5f5f5',
+              },
+              '&:disabled': {
+                backgroundColor: '#f0f0f0',
+                color: '#ccc',
               },
             }}
           >
@@ -185,12 +196,17 @@ const WishlistCard: React.FC<WishlistCardProps> = ({
           <IconButton
             size="small"
             onClick={increaseQuantity}
+            disabled={isOutOfStock || localQuantity >= effectiveMaxQuantity}
             sx={{
-              border: '1px solid #e0e0e0',
+              border: isOutOfStock ? '1px solid #f0f0f0' : '1px solid #e0e0e0',
               borderRadius: '4px',
               padding: '4px',
               '&:hover': {
                 backgroundColor: '#f5f5f5',
+              },
+              '&:disabled': {
+                backgroundColor: '#f0f0f0',
+                color: '#ccc',
               },
             }}
           >
@@ -198,17 +214,14 @@ const WishlistCard: React.FC<WishlistCardProps> = ({
           </IconButton>
         </Box>
 
-        {/* Max Quantity Info */}
-        <Typography sx={{ fontSize: '0.75rem', color: 'grey.500', mt: 0.5 }}>
-          Max: {effectiveMaxQuantity}
-        </Typography>
-
-        {/* Subtotal - Made more prominent */}
+        {/* Subtotal */}
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 2, pt: 1.5, borderTop: '1px solid #f0f0f0' }}>
-          <Typography sx={{ fontSize: '0.85rem', color: 'grey.600', fontWeight: 500 }}>
-            Item Total:
-          </Typography>
-          <Typography sx={{ fontWeight: 700, color: '#dc2626', fontSize: '1.1rem' }}>
+          {!isOutOfStock && (
+            <Typography sx={{ fontSize: '0.85rem', color: 'grey.600', fontWeight: 500 }}>
+              Item Total:
+            </Typography>
+          )}
+          <Typography sx={{ fontWeight: 700, color: isOutOfStock ? '#ccc' : colors.button.primary, fontSize: '1.1rem' }}>
             £{(item.price * localQuantity).toFixed(2)}
           </Typography>
         </Box>
@@ -220,50 +233,55 @@ const WishlistCard: React.FC<WishlistCardProps> = ({
           display: 'flex',
           flexDirection: 'column',
           gap: 1,
-          alignItems: 'center',
+          alignItems: 'stretch',
+          justifyContent: 'flex-start',
         }}
       >
-        {/* Add to Cart Button */}
-        <MuiButton
-          variant="contained"
-          size="small"
-          disabled={isDeleting}
-          onClick={handleAddToCart}
-          sx={{
-            backgroundColor: 'black',
-            color: 'white',
-            textTransform: 'none',
-            fontSize: '0.8rem',
-            px: 2.5,
-            py: 0.75,
-            minWidth: '120px',
-            '&:hover': {
-              backgroundColor: '#333',
-            },
-            '&:disabled': {
-              backgroundColor: '#ccc',
-              color: '#999',
-            },
-          }}
-        >
-          Add to Cart
-        </MuiButton>
-
-        {/* Delete Button */}
+        {/* Delete Button - Aligned at Top */}
         <IconButton
           size="small"
           onClick={handleDelete}
           disabled={isDeleting}
           sx={{
-            color: '#dc2626',
+            color: colors.button.primary,
             padding: '6px',
+            alignSelf: 'flex-end',
             '&:hover': {
-              backgroundColor: 'rgba(220, 38, 38, 0.1)',
+              backgroundColor: `rgba(${parseInt(colors.button.primary.slice(1,3), 16)}, ${parseInt(colors.button.primary.slice(3,5), 16)}, ${parseInt(colors.button.primary.slice(5,7), 16)}, 0.1)`,
             },
           }}
         >
           <TrashIcon sx={{ fontSize: 20 }} />
         </IconButton>
+
+        {/* Add to Cart Button - Aligned with Item Total */}
+        <MuiButton
+          variant="contained"
+          size="small"
+          disabled={isDeleting || isOutOfStock}
+          onClick={handleAddToCart}
+          sx={{
+            backgroundColor: isOutOfStock ? '#f0f0f0' : 'black',
+            color: isOutOfStock ? '#ccc' : 'white',
+            textTransform: 'none',
+            fontSize: '0.8rem',
+            px: 2.5,
+            py: 0.75,
+            minWidth: '120px',
+            alignSelf: 'flex-end',
+            mt: 4.2,
+            '&:hover': {
+              backgroundColor: isOutOfStock ? '#f0f0f0' : '#333',
+            },
+            '&:disabled': {
+              backgroundColor: '#f0f0f0',
+              color: '#ccc',
+            },
+          }}
+          title={isOutOfStock ? 'Out of stock - cannot add to cart' : ''}
+        >
+          {isOutOfStock ? 'Out of Stock' : 'Add to Cart'}
+        </MuiButton>
       </Box>
     </Box>
   );

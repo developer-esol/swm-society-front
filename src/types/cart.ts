@@ -1,6 +1,3 @@
-/**
- * Cart-related types
- */
 
 export interface CartItem {
   stockId: string;
@@ -10,7 +7,7 @@ export interface CartItem {
   price: number;
   color: string;
   size: string;
-  quantity: number;
+  quantity: number; // Selected quantity by user
   maxQuantity: number; // Maximum available quantity for this size/color combination
   addedAt: string;
 }
@@ -19,3 +16,4 @@ export interface Cart {
   items: CartItem[];
   totalItems: number;
 }
+

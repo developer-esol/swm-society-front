@@ -4,12 +4,59 @@ import { useNavigate } from 'react-router-dom';
 import WishlistCard from '../components/WishlistCard';
 import { wishlistService } from '../api/services/wishlistService';
 import { cartService } from '../api/services/cartService';
+import { stockService } from '../api/services/stockService';
+import { colors } from '../theme';
 import type { WishlistItem } from '../types/wishlist';
 
 const WishlistPage: React.FC = () => {
   const navigate = useNavigate();
   const [wishlistItems, setWishlistItems] = useState<WishlistItem[]>([]);
   const [quantities, setQuantities] = useState<Record<string, number>>({});
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  // Refresh stock status every 30 seconds to detect stock refills (reduced from 3s to prevent flickering)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setRefreshTrigger(prev => prev + 1);
+    }, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Update wishlist items with latest stock information
+  useEffect(() => {
+    const updateWishlistWithLatestStock = async () => {
+      const wishlist = wishlistService.getWishlist();
+      const updatedItems: WishlistItem[] = [];
+
+      for (const item of wishlist.items) {
+        try {
+          // Fetch latest stock info
+          const stocks = await stockService.getStocksByProductId(item.productId);
+          const matchingStock = stocks.find(
+            (s) => s.size === item.size && s.color === item.color
+          );
+
+          if (matchingStock && matchingStock.quantity > 0) {
+            // Stock is now available - update maxQuantity
+            updatedItems.push({
+              ...item,
+              maxQuantity: matchingStock.quantity,
+            });
+          } else {
+            // Still out of stock
+            updatedItems.push(item);
+          }
+        } catch {
+          // Keep original item if fetch fails
+          updatedItems.push(item);
+        }
+      }
+
+      setWishlistItems(updatedItems);
+    };
+
+    updateWishlistWithLatestStock();
+  }, [refreshTrigger]);
 
   useEffect(() => {
     // Load wishlist items on component mount
@@ -33,6 +80,12 @@ const WishlistPage: React.FC = () => {
     const newQuantities = { ...quantities };
     delete newQuantities[stockId];
     setQuantities(newQuantities);
+
+    // Also remove from cart
+    cartService.removeItem(stockId);
+
+    // Dispatch custom event to notify ProductCards to update their heart icons
+    window.dispatchEvent(new Event('wishlist-updated'));
   };
 
   const handleUpdateQuantity = (stockId: string, quantity: number) => {
@@ -43,6 +96,11 @@ const WishlistPage: React.FC = () => {
   };
 
   const handleAddToCart = (item: WishlistItem) => {
+    // Prevent adding out-of-stock items to cart
+    if (item.maxQuantity === 0) {
+      alert('This product is out of stock and cannot be added to cart');
+      return;
+    }
     const cartQuantity = quantities[item.stockId] || item.quantity;
     // Add to cart with the selected quantity
     cartService.addItem({
@@ -56,6 +114,13 @@ const WishlistPage: React.FC = () => {
   const handleAddAllToCart = () => {
     // Add all wishlist items to cart with their selected quantities
     wishlistItems.forEach(item => {
+  const handleProceedToCart = () => {
+    // Add only in-stock wishlist items to cart with their selected quantities
+    wishlistItems.forEach((item) => {
+      // Skip out-of-stock items (maxQuantity === 0)
+      if (item.maxQuantity === 0) {
+        return;
+      }
       const cartQuantity = quantities[item.stockId] || item.quantity;
       cartService.addItem({
         ...item,
@@ -69,13 +134,19 @@ const WishlistPage: React.FC = () => {
   // Calculate totals - this runs every time quantities change
   const calculateTotal = () => {
     return wishlistItems.reduce((total, item) => {
+      // Exclude out-of-stock items (maxQuantity === 0) from total
+      if (item.maxQuantity === 0) {
+        return total;
+      }
       const qty = quantities[item.stockId] || 1;
       return total + (item.price * qty);
     }, 0);
   };
 
+  // Count only in-stock items
+  const totalItems = wishlistItems.filter(item => item.maxQuantity > 0).length;
+  const outOfStockItems = wishlistItems.filter(item => item.maxQuantity === 0).length;
   const totalAmount = calculateTotal();
-  const totalItems = wishlistItems.length;
 
   return (
     <Container maxWidth="lg" sx={{ py: 6 }}>
@@ -98,6 +169,7 @@ const WishlistPage: React.FC = () => {
           }}
         >
           {totalItems} {totalItems === 1 ? 'item' : 'items'}
+          {outOfStockItems > 0 && ` + ${outOfStockItems} out of stock`}
         </Typography>
       </Box>
 
@@ -137,13 +209,13 @@ const WishlistPage: React.FC = () => {
             variant="contained"
             onClick={() => navigate('/shop')}
             sx={{
-              backgroundColor: '#dc2626',
-              color: 'white',
+              backgroundColor: colors.button.primary,
+              color: colors.text.secondary,
               textTransform: 'none',
               px: 4,
               py: 1.5,
               '&:hover': {
-                backgroundColor: '#b91c1c',
+                backgroundColor: colors.button.primaryHover,
               },
             }}
           >
@@ -189,12 +261,22 @@ const WishlistPage: React.FC = () => {
               {/* Items Count */}
               <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1.5 }}>
                 <Typography sx={{ fontSize: '0.85rem', color: 'grey.600' }}>
-                  Total Items:
+                  In-Stock Items:
                 </Typography>
                 <Typography sx={{ fontSize: '0.85rem', fontWeight: 600, color: 'black' }}>
-                  {wishlistItems.length}
+                  {totalItems}
                 </Typography>
               </Box>
+              {outOfStockItems > 0 && (
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1.5 }}>
+                  <Typography sx={{ fontSize: '0.85rem', color: 'grey.600' }}>
+                    Out of Stock:
+                  </Typography>
+                  <Typography sx={{ fontSize: '0.85rem', fontWeight: 600, color: colors.button.primaryDisabled }}>
+                    {outOfStockItems}
+                  </Typography>
+                </Box>
+              )}
 
               {/* Divider */}
               <Box sx={{ height: '1px', backgroundColor: '#e0e0e0', mb: 1.5 }} />
@@ -208,7 +290,7 @@ const WishlistPage: React.FC = () => {
                   sx={{
                     fontSize: '1.3rem',
                     fontWeight: 700,
-                    color: '#dc2626',
+                    color: colors.button.primary,
                   }}
                 >
                   £ {totalAmount.toFixed(2)}
@@ -222,13 +304,13 @@ const WishlistPage: React.FC = () => {
                 variant="outlined"
                 onClick={() => navigate('/shop')}
                 sx={{
-                  color: 'black',
-                  borderColor: 'black',
+                  color: colors.text.primary,
+                  borderColor: colors.text.primary,
                   textTransform: 'none',
                   px: 4,
                   py: 1.2,
                   '&:hover': {
-                    borderColor: 'black',
+                    borderColor: colors.text.primary,
                     backgroundColor: 'rgba(0,0,0,0.05)',
                   },
                 }}
@@ -237,15 +319,20 @@ const WishlistPage: React.FC = () => {
               </MuiButton>
               <MuiButton
                 variant="contained"
-                onClick={handleAddAllToCart}
+                onClick={handleProceedToCart}
+                disabled={totalItems === 0}
                 sx={{
-                  backgroundColor: '#dc2626',
-                  color: 'white',
+                  backgroundColor: totalItems === 0 ? colors.button.primaryDisabled : colors.button.primary,
+                  color: colors.text.secondary,
                   textTransform: 'none',
                   px: 4,
                   py: 1.2,
                   '&:hover': {
-                    backgroundColor: '#b91c1c',
+                    backgroundColor: totalItems === 0 ? colors.button.primaryDisabled : colors.button.primaryHover,
+                  },
+                  '&:disabled': {
+                    backgroundColor: colors.button.primaryDisabled,
+                    color: colors.text.secondary,
                   },
                 }}
               >

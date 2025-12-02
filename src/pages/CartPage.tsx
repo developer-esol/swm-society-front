@@ -17,7 +17,7 @@ const CartPage: React.FC = () => {
 
     // Initialize quantities from cart items
     const quantitiesMap: Record<string, number> = {};
-    cart.items.forEach(item => {
+    cart.items.forEach((item: CartItem) => {
       quantitiesMap[item.stockId] = item.quantity;
     });
     setQuantities(quantitiesMap);

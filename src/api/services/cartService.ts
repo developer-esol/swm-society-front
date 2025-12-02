@@ -12,7 +12,7 @@ export const cartService = {
       if (!storedCart) {
         return { items: [], totalItems: 0 };
       }
-      const parsed = JSON.parse(storedCart);
+      const parsed = JSON.parse(storedCart) as Cart;
       return {
         items: parsed.items || [],
         totalItems: parsed.items?.length || 0,
@@ -27,7 +27,7 @@ export const cartService = {
    */
   addItem(item: CartItem): void {
     const cart = this.getCart();
-    const existingItem = cart.items.find(i => i.stockId === item.stockId);
+    const existingItem = cart.items.find((i: CartItem) => i.stockId === item.stockId);
 
     if (existingItem) {
       // If item already in cart, increase quantity (but respect max)
@@ -49,7 +49,7 @@ export const cartService = {
    */
   removeItem(stockId: string): void {
     const cart = this.getCart();
-    cart.items = cart.items.filter(item => item.stockId !== stockId);
+    cart.items = cart.items.filter((item: CartItem) => item.stockId !== stockId);
     cart.totalItems = cart.items.length;
     localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
   },
@@ -59,7 +59,7 @@ export const cartService = {
    */
   updateItemQuantity(stockId: string, quantity: number): void {
     const cart = this.getCart();
-    const item = cart.items.find(i => i.stockId === stockId);
+    const item = cart.items.find((i: CartItem) => i.stockId === stockId);
 
     if (item) {
       // Validate quantity against max available
@@ -73,7 +73,7 @@ export const cartService = {
    */
   isInCart(stockId: string): boolean {
     const cart = this.getCart();
-    return cart.items.some(item => item.stockId === stockId);
+    return cart.items.some((item: CartItem) => item.stockId === stockId);
   },
 
   /**
@@ -96,6 +96,7 @@ export const cartService = {
    */
   getCartTotal(): number {
     const cart = this.getCart();
-    return cart.items.reduce((total, item) => total + (item.price * item.quantity), 0);
+    return cart.items.reduce((total: number, item: CartItem) => total + (item.price * item.quantity), 0);
   },
 };
+

@@ -47,7 +47,7 @@ const Shop: React.FC = () => {
   // Determine which products to use based on active collection
   let allProducts: Product[] = [];
   let isLoading = false;
-  let error: any = null;
+  let error: Error | null = null;
 
   if (activeCollection === 'Hear My Voice') {
     allProducts = hmvQuery.data || [];
@@ -293,15 +293,17 @@ const Shop: React.FC = () => {
                     <Chip
                       key={size}
                       label={size}
-                      clickable
                       onClick={() => toggleSize(size)}
-                      variant={selectedSizes.includes(size) ? 'filled' : 'outlined'}
                       sx={{
-                        bgcolor: selectedSizes.includes(size) ? 'black' : 'transparent',
-                        color: selectedSizes.includes(size) ? 'white' : 'black',
-                        borderColor: selectedSizes.includes(size) ? 'black' : 'grey.400',
+                        bgcolor: selectedSizes.includes(size) ? '#dc2626' : '#f3f4f6',
+                        color: selectedSizes.includes(size) ? 'white' : '#374151',
+                        border: selectedSizes.includes(size) ? '2px solid #dc2626' : '1px solid #d1d5db',
+                        fontWeight: 500,
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease',
                         '&:hover': {
-                          bgcolor: selectedSizes.includes(size) ? 'grey.800' : 'grey.100',
+                          bgcolor: selectedSizes.includes(size) ? '#b91c1c' : '#e5e7eb',
+                          borderColor: '#dc2626',
                         }
                       }}
                     />
@@ -319,15 +321,17 @@ const Shop: React.FC = () => {
                     <Chip
                       key={color}
                       label={color}
-                      clickable
                       onClick={() => toggleColor(color)}
-                      variant={selectedColors.includes(color) ? 'filled' : 'outlined'}
                       sx={{
-                        bgcolor: selectedColors.includes(color) ? 'black' : 'transparent',
-                        color: selectedColors.includes(color) ? 'white' : 'black',
-                        borderColor: selectedColors.includes(color) ? 'black' : 'grey.400',
+                        bgcolor: selectedColors.includes(color) ? '#dc2626' : '#f3f4f6',
+                        color: selectedColors.includes(color) ? 'white' : '#374151',
+                        border: selectedColors.includes(color) ? '2px solid #dc2626' : '1px solid #d1d5db',
+                        fontWeight: 500,
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease',
                         '&:hover': {
-                          bgcolor: selectedColors.includes(color) ? 'grey.800' : 'grey.100',
+                          bgcolor: selectedColors.includes(color) ? '#b91c1c' : '#e5e7eb',
+                          borderColor: '#dc2626',
                         }
                       }}
                     />

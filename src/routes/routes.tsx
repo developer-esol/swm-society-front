@@ -9,6 +9,9 @@ import ProductDetailsPage from '../pages/ProductDetailsPage';
 import CommunityPage from '../pages/CommunityPage';
 import WishlistPage from '../pages/WishlistPage';
 import CartPage from '../pages/CartPage';
+import LoyaltyWalletPage from '../pages/LoyaltyWalletPage';
+import YourOrdersPage from '../pages/YourOrdersPage';
+import YourPostsPage from '../pages/YourPostsPage';
 
 
 // Temporary placeholder components - replace with actual imports when components are created
@@ -70,6 +73,18 @@ export const routes: RouteObject[] = [
       {
         path: 'wishlist',
         element: <WishlistPage />,
+      },
+      {
+        path: 'loyalty-wallet',
+        element: <LoyaltyWalletPage />,
+      },
+      {
+        path: 'orders',
+        element: <YourOrdersPage />,
+      },
+      {
+        path: 'posts',
+        element: <YourPostsPage />,
       },
       {
         path: '*',
