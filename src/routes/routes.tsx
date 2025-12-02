@@ -9,6 +9,7 @@ import ProductDetailsPage from '../pages/ProductDetailsPage';
 import CommunityPage from '../pages/CommunityPage';
 import WishlistPage from '../pages/WishlistPage';
 import CartPage from '../pages/CartPage';
+import CheckoutPage from '../pages/CheckoutPage';
 import LoyaltyWalletPage from '../pages/LoyaltyWalletPage';
 import YourOrdersPage from '../pages/YourOrdersPage';
 import YourPostsPage from '../pages/YourPostsPage';
@@ -69,6 +70,10 @@ export const routes: RouteObject[] = [
       {
         path: 'cart',
         element: <CartPage />,
+      },
+      {
+        path: 'checkout',
+        element: <CheckoutPage />,
       },
       {
         path: 'wishlist',
