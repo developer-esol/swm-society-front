@@ -1,7 +1,3 @@
-/**
- * Cart service for managing shopping cart in localStorage
- */
-
 import type { CartItem, Cart } from '../../types/cart';
 
 const CART_STORAGE_KEY = 'swm_cart';

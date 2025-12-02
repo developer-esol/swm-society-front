@@ -1,11 +1,3 @@
-/**
- * Cart-related types
- * Re-exported from cartService to maintain single source of truth
- */
-
-/**
- * Cart-related types
- */
 
 export interface CartItem {
   stockId: string;
