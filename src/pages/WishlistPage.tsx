@@ -111,9 +111,6 @@ const WishlistPage: React.FC = () => {
     navigate('/cart');
   };
 
-  const handleAddAllToCart = () => {
-    // Add all wishlist items to cart with their selected quantities
-    wishlistItems.forEach(item => {
   const handleProceedToCart = () => {
     // Add only in-stock wishlist items to cart with their selected quantities
     wishlistItems.forEach((item) => {
