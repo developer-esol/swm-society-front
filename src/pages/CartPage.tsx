@@ -348,6 +348,7 @@ const CartPage: React.FC = () => {
               <MuiButton
                 variant="contained"
                 fullWidth
+                onClick={() => navigate('/checkout')}
                 sx={{
                   backgroundColor: 'black',
                   color: 'white',
