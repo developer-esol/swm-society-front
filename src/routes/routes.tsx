@@ -14,6 +14,7 @@ import LoginPage from '../pages/LoginPage';
 import RegisterPage from '../pages/RegisterPage';
 import CheckoutPage from '../pages/CheckoutPage';
 import ShippingInfoPage from '../pages/ShippingInfoPage';
+import ReturnPolicyPage from '../pages/ReturnPolicyPage';
 import LoyaltyWalletPage from '../pages/LoyaltyWalletPage';
 import YourOrdersPage from '../pages/YourOrdersPage';
 import YourPostsPage from '../pages/YourPostsPage';
@@ -85,6 +86,10 @@ export const routes: RouteObject[] = [
       {
         path: 'shipping-info',
         element: <ShippingInfoPage />,
+      },
+      {
+        path: 'return-policy',
+        element: <ReturnPolicyPage />,
       },
       {
         path: 'wishlist',

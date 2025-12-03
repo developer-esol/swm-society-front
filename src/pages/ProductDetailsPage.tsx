@@ -718,7 +718,7 @@ const ProductDetails: React.FC = () => {
                   <MuiLink
                     component="button"
                     variant="body2"
-                    onClick={() => navigate('/shipping-info')}
+                    onClick={() => navigate('/return-policy')}
                     sx={{ color: colors.icon.primary, textDecoration: 'none', cursor: 'pointer', '&:hover': { textDecoration: 'underline' } }}
                   >
                     View return policy
