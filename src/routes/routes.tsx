@@ -10,6 +10,7 @@ import CommunityPage from '../pages/CommunityPage';
 import WishlistPage from '../pages/WishlistPage';
 import CartPage from '../pages/CartPage';
 import CheckoutPage from '../pages/CheckoutPage';
+import ShippingInfoPage from '../pages/ShippingInfoPage';
 import LoyaltyWalletPage from '../pages/LoyaltyWalletPage';
 import YourOrdersPage from '../pages/YourOrdersPage';
 import YourPostsPage from '../pages/YourPostsPage';
@@ -74,6 +75,10 @@ export const routes: RouteObject[] = [
       {
         path: 'checkout',
         element: <CheckoutPage />,
+      },
+      {
+        path: 'shipping-info',
+        element: <ShippingInfoPage />,
       },
       {
         path: 'wishlist',
