@@ -4,6 +4,7 @@ export { DropdownMenu } from './DropdownMenu';
 export { NavLink } from './NavLink';
 export { MobileMenu } from './MobileMenu';
 export { NavigationBar } from './NavigationBar';
+export { GuestNavigationBar } from './GuestNavigationBar';
 export { ProductCard } from './ProductCard';
 export { default as ReviewCard } from './ReviewCard';
 export { default as CommunityPostCard } from './CommunityPostCard';
