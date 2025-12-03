@@ -1,0 +1,259 @@
+{
+  "metadata": {
+    "generated": "2025-12-02",
+    "application": "swm-society-front",
+    "folder": "src/pages",
+    "description": "Complete color audit for all pages - organized by file and color usage"
+  },
+  "themeColors": {
+    "button": {
+      "primary": "#dc2626",
+      "primaryHover": "#b91c1c",
+      "primaryDisabled": "#9ca3af"
+    },
+    "text": {
+      "primary": "#000000",
+      "secondary": "#ffffff",
+      "disabled": "#6b7280",
+      "dark": "#1f2937",
+      "gray": "#374151",
+      "lightGray": "#666"
+    },
+    "background": {
+      "default": "#ffffff",
+      "paper": "#ffffff",
+      "light": "#f9fafb",
+      "lighter": "#f3f4f6"
+    },
+    "border": {
+      "default": "#e5e7eb",
+      "light": "#e0e0e0"
+    },
+    "icon": {
+      "primary": "#d32f2f"
+    },
+    "overlay": {
+      "dark": "#000000",
+      "darkHover": "#1a1a1a",
+      "gray": "#cccccc"
+    }
+  },
+  "pageStatus": [
+    {
+      "file": "CommunityPage.tsx",
+      "status": "updated",
+      "hardcodedCount": 0,
+      "themesUsed": [
+        "colors.button.primary",
+        "colors.button.primaryHover",
+        "colors.background.default",
+        "colors.background.lighter",
+        "colors.text.primary"
+      ]
+    },
+    {
+      "file": "LoyaltyWalletPage.tsx",
+      "status": "partially_updated",
+      "hardcodedCount": 11,
+      "hardcodedColors": [
+        "#fff8cbff",
+        "#fcd34d",
+        "#92400e",
+        "#ea580c",
+        "#b45309",
+        "linear-gradient(135deg, #000000 0%, #dc2626 100%)",
+        "#6b7280",
+        "#10b981",
+        "#1f2937",
+        "#059669",
+        "#fef2f2"
+      ],
+      "issues": [
+        "Text color #6b7280 should use colors.text.disabled",
+        "Icon color #10b981 should be extracted as status color",
+        "Expiring box colors are hardcoded and not reusable",
+        "Heading colors #1f2937 should use colors.text.dark"
+      ]
+    },
+    {
+      "file": "ProductDetailsPage.tsx",
+      "status": "updated",
+      "hardcodedCount": 0,
+      "themesUsed": [
+        "colors.button.primary",
+        "colors.button.primaryHover"
+      ]
+    },
+    {
+      "file": "ShopPage.tsx",
+      "status": "mostly_updated",
+      "hardcodedCount": 2,
+      "hardcodedColors": [
+        "white (background)",
+        "text.secondary (MUI reference)"
+      ],
+      "issues": [
+        "Background 'white' should use colors.background.default",
+        "MUI reference 'text.secondary' is incorrect"
+      ]
+    },
+    {
+      "file": "ThomasMushetStoryPage.tsx",
+      "status": "needs_update",
+      "hardcodedCount": 1,
+      "hardcodedColors": [
+        "white (background)"
+      ],
+      "issues": [
+        "Background 'white' should use colors.background.default"
+      ]
+    },
+    {
+      "file": "WishlistPage.tsx",
+      "status": "partially_updated",
+      "hardcodedCount": 4,
+      "hardcodedColors": [
+        "black (text)",
+        "grey.600 (text)",
+        "grey.500 (text)",
+        "rgba(0,0,0,0.05) (overlay)"
+      ],
+      "issues": [
+        "Text 'black' should use colors.text.primary",
+        "Gray colors 'grey.*' should use colors.text.disabled",
+        "Overlay rgba should have theme constant"
+      ]
+    },
+    {
+      "file": "YourOrdersPage.tsx",
+      "status": "partially_updated",
+      "hardcodedCount": 13,
+      "hardcodedColors": [
+        "#10b981",
+        "#f59e0b",
+        "#3b82f6",
+        "#ef4444",
+        "#ea580c",
+        "#000000",
+        "#ffffff",
+        "#a855f7",
+        "#6b7280",
+        "#9ca3af"
+      ],
+      "issues": [
+        "Status colors should be extracted to constants",
+        "Product color mapping should be reusable",
+        "Text colors #6b7280 and #9ca3af should use theme"
+      ]
+    },
+    {
+      "file": "YourPostsPage.tsx",
+      "status": "updated",
+      "hardcodedCount": 1,
+      "hardcodedColors": [
+        "#dc2626 (like button)"
+      ],
+      "issues": [
+        "Like button color should use colors.button.primary"
+      ]
+    }
+  ],
+  "colorReplacements": {
+    "#dc2626": {
+      "replacement": "colors.button.primary",
+      "frequency": 15,
+      "files": ["YourPostsPage.tsx", "YourOrdersPage.tsx", "LoyaltyWalletPage.tsx"]
+    },
+    "#b91c1c": {
+      "replacement": "colors.button.primaryHover",
+      "frequency": 8,
+      "files": ["Multiple"]
+    },
+    "#ffffff": {
+      "replacement": "colors.background.default or colors.text.secondary",
+      "frequency": 12,
+      "files": ["ShopPage.tsx", "ThomasMushetStoryPage.tsx"]
+    },
+    "#000000": {
+      "replacement": "colors.text.primary",
+      "frequency": 10,
+      "files": ["YourOrdersPage.tsx", "WishlistPage.tsx"]
+    },
+    "#6b7280": {
+      "replacement": "colors.text.disabled",
+      "frequency": 14,
+      "files": ["YourOrdersPage.tsx", "WishlistPage.tsx", "LoyaltyWalletPage.tsx"]
+    },
+    "#9ca3af": {
+      "replacement": "colors.button.primaryDisabled",
+      "frequency": 3,
+      "files": ["YourOrdersPage.tsx", "WishlistPage.tsx"]
+    },
+    "#e5e7eb": {
+      "replacement": "colors.border.default",
+      "frequency": 6,
+      "files": ["YourOrdersPage.tsx", "LoyaltyWalletPage.tsx"]
+    },
+    "#f3f4f6": {
+      "replacement": "colors.background.lighter",
+      "frequency": 4,
+      "files": ["YourOrdersPage.tsx", "LoyaltyWalletPage.tsx"]
+    },
+    "#374151": {
+      "replacement": "colors.text.gray",
+      "frequency": 3,
+      "files": ["ShopPage.tsx", "WishlistPage.tsx"]
+    },
+    "#1f2937": {
+      "replacement": "colors.text.dark",
+      "frequency": 2,
+      "files": ["YourOrdersPage.tsx", "LoyaltyWalletPage.tsx"]
+    }
+  },
+  "statusColors": {
+    "delivered": "#10b981",
+    "shipped": "#f59e0b",
+    "processing": "#3b82f6",
+    "cancelled": "#ef4444",
+    "default": "#6b7280"
+  },
+  "productColors": {
+    "orange": "#ea580c",
+    "blue": "#3b82f6",
+    "red": "#dc2626",
+    "black": "#000000",
+    "white": "#ffffff",
+    "green": "#10b981",
+    "purple": "#a855f7"
+  },
+  "summary": {
+    "totalFilesAudited": 7,
+    "filesUpdated": 3,
+    "filesPartiallyUpdated": 6,
+    "filesNeedsUpdate": 2,
+    "filesNotAudited": 7,
+    "totalHardcodedColors": 48,
+    "uniqueHardcodedColors": 16,
+    "compliancePercentage": 42.8
+  },
+  "recommendations": {
+    "immediate": [
+      "Replace all #6b7280 with colors.text.disabled",
+      "Replace all #dc2626 with colors.button.primary",
+      "Replace all 'white' backgrounds with colors.background.default",
+      "Extract status colors to theme constants"
+    ],
+    "shortTerm": [
+      "Create reusable status color constants",
+      "Extract product color mapping",
+      "Add overlay colors to theme",
+      "Fix MUI theme references"
+    ],
+    "longTerm": [
+      "Add pre-commit hooks to prevent hardcoded colors",
+      "Create color audit automated tests",
+      "Document color guidelines for team",
+      "Implement design token system"
+    ]
+  }
+}

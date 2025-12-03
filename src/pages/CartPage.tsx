@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Delete as TrashIcon, Add as AddIcon, Remove as RemoveIcon } from '@mui/icons-material';
 import { cartService } from '../api/services/cartService';
 import type { CartItem } from '../types/cart';
+import { colors } from '../theme';
 
 const CartPage: React.FC = () => {
   const navigate = useNavigate();
@@ -74,7 +75,7 @@ const CartPage: React.FC = () => {
           variant="h4"
           sx={{
             fontWeight: 700,
-            color: 'black',
+            color: colors.text.primary,
             mb: 1,
           }}
         >
@@ -98,7 +99,7 @@ const CartPage: React.FC = () => {
           <Typography
             variant="h6"
             sx={{
-              color: 'grey.600',
+              color: colors.text.disabled,
               textAlign: 'center',
             }}
           >
@@ -107,7 +108,7 @@ const CartPage: React.FC = () => {
           <Typography
             variant="body2"
             sx={{
-              color: 'grey.500',
+              color: colors.text.disabled,
               textAlign: 'center',
               mb: 2,
             }}
@@ -118,13 +119,13 @@ const CartPage: React.FC = () => {
             variant="contained"
             onClick={() => navigate('/shop')}
             sx={{
-              backgroundColor: '#dc2626',
-              color: 'white',
+              backgroundColor: colors.button.primary,
+              color: colors.text.secondary,
               textTransform: 'none',
               px: 4,
               py: 1.5,
               '&:hover': {
-                backgroundColor: '#b91c1c',
+                backgroundColor: colors.button.primaryHover,
               },
             }}
           >
@@ -137,11 +138,11 @@ const CartPage: React.FC = () => {
           {/* Left Column - Products */}
           <Box>
             {/* Column Headers */}
-            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 100px 100px 100px', gap: 2, mb: 3, pb: 2, borderBottom: '1px solid #e0e0e0' }}>
-              <Typography sx={{ fontWeight: 600, color: 'grey.600', fontSize: '0.9rem' }}>Product</Typography>
-              <Typography sx={{ fontWeight: 600, color: 'grey.600', fontSize: '0.9rem', textAlign: 'center' }}>Price</Typography>
-              <Typography sx={{ fontWeight: 600, color: 'grey.600', fontSize: '0.9rem', textAlign: 'center' }}>Quantity</Typography>
-              <Typography sx={{ fontWeight: 600, color: 'grey.600', fontSize: '0.9rem', textAlign: 'right' }}>Total</Typography>
+            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 100px 100px 100px', gap: 2, mb: 3, pb: 2, borderBottom: `1px solid ${colors.border.light}` }}>
+              <Typography sx={{ fontWeight: 600, color: colors.text.disabled, fontSize: '0.9rem' }}>Product</Typography>
+              <Typography sx={{ fontWeight: 600, color: colors.text.disabled, fontSize: '0.9rem', textAlign: 'center' }}>Price</Typography>
+              <Typography sx={{ fontWeight: 600, color: colors.text.disabled, fontSize: '0.9rem', textAlign: 'center' }}>Quantity</Typography>
+              <Typography sx={{ fontWeight: 600, color: colors.text.disabled, fontSize: '0.9rem', textAlign: 'right' }}>Total</Typography>
             </Box>
 
             {/* Cart Items */}
@@ -154,7 +155,7 @@ const CartPage: React.FC = () => {
                   gap: 2,
                   py: 3,
                   px: 2,
-                  borderBottom: '1px solid #e0e0e0',
+                  borderBottom: `1px solid ${colors.border.light}`,
                   alignItems: 'center',
                   '&:last-child': {
                     borderBottom: 'none',
@@ -172,7 +173,7 @@ const CartPage: React.FC = () => {
                       height: 80,
                       objectFit: 'cover',
                       borderRadius: '4px',
-                      backgroundColor: '#f5f5f5',
+                      backgroundColor: colors.background.lighter,
                       cursor: 'pointer',
                       '&:hover': {
                         opacity: 0.8,
@@ -184,22 +185,22 @@ const CartPage: React.FC = () => {
                     <Typography
                       sx={{
                         fontWeight: 600,
-                        color: 'black',
+                        color: colors.text.primary,
                         fontSize: '0.95rem',
                         mb: 0.5,
                         cursor: 'pointer',
                         '&:hover': {
-                          color: '#dc2626',
+                          color: colors.button.primary,
                         },
                       }}
                       onClick={() => navigate(`/product/${item.productId}`)}
                     >
                       {item.productName}
                     </Typography>
-                    <Typography sx={{ fontSize: '0.8rem', color: 'grey.600', mb: 0.3 }}>
+                    <Typography sx={{ fontSize: '0.8rem', color: colors.text.disabled, mb: 0.3 }}>
                       Size: {item.size}
                     </Typography>
-                    <Typography sx={{ fontSize: '0.8rem', color: 'grey.600', display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                    <Typography sx={{ fontSize: '0.8rem', color: colors.text.disabled, display: 'flex', alignItems: 'center', gap: 0.5 }}>
                       Color:
                       <Box
                         sx={{
@@ -207,7 +208,7 @@ const CartPage: React.FC = () => {
                           height: 14,
                           borderRadius: '50%',
                           backgroundColor: item.color.toLowerCase(),
-                          border: '1px solid #ddd',
+                          border: `1px solid ${colors.border.light}`,
                         }}
                       />
                       {item.color}
@@ -218,7 +219,7 @@ const CartPage: React.FC = () => {
                         onClick={() => handleRemove(item.stockId)}
                         sx={{
                           fontSize: '0.8rem',
-                          color: '#dc2626',
+                          color: colors.button.primary,
                           cursor: 'pointer',
                           display: 'flex',
                           alignItems: 'center',
@@ -236,7 +237,7 @@ const CartPage: React.FC = () => {
 
                 {/* Price */}
                 <Box sx={{ textAlign: 'center' }}>
-                  <Typography sx={{ fontWeight: 600, color: 'black', fontSize: '0.9rem' }}>
+                  <Typography sx={{ fontWeight: 600, color: colors.text.primary, fontSize: '0.9rem' }}>
                     £{item.price.toFixed(2)}
                   </Typography>
                 </Box>
@@ -247,28 +248,28 @@ const CartPage: React.FC = () => {
                     size="small"
                     onClick={() => handleDecreaseQuantity(item.stockId)}
                     sx={{
-                      border: '1px solid #e0e0e0',
+                      border: `1px solid ${colors.border.light}`,
                       borderRadius: '4px',
                       padding: '4px',
                       '&:hover': {
-                        backgroundColor: '#f5f5f5',
+                        backgroundColor: colors.background.lighter,
                       },
                     }}
                   >
                     <RemoveIcon sx={{ fontSize: 14 }} />
                   </IconButton>
-                  <Typography sx={{ minWidth: '25px', textAlign: 'center', fontWeight: 600, fontSize: '0.9rem' }}>
+                  <Typography sx={{ minWidth: '25px', textAlign: 'center', fontWeight: 600, fontSize: '0.9rem', color: colors.text.primary }}>
                     {quantities[item.stockId] || item.quantity}
                   </Typography>
                   <IconButton
                     size="small"
                     onClick={() => handleIncreaseQuantity(item.stockId, item.maxQuantity)}
                     sx={{
-                      border: '1px solid #e0e0e0',
+                      border: `1px solid ${colors.border.light}`,
                       borderRadius: '4px',
                       padding: '4px',
                       '&:hover': {
-                        backgroundColor: '#f5f5f5',
+                        backgroundColor: colors.background.lighter,
                       },
                     }}
                   >
@@ -278,7 +279,7 @@ const CartPage: React.FC = () => {
 
                 {/* Total */}
                 <Box sx={{ textAlign: 'right' }}>
-                  <Typography sx={{ fontWeight: 700, color: '#dc2626', fontSize: '0.95rem' }}>
+                  <Typography sx={{ fontWeight: 700, color: colors.button.primary, fontSize: '0.95rem' }}>
                     £{(item.price * (quantities[item.stockId] || item.quantity)).toFixed(2)}
                   </Typography>
                 </Box>
@@ -298,7 +299,7 @@ const CartPage: React.FC = () => {
               <Typography
                 sx={{
                   fontWeight: 700,
-                  color: 'black',
+                  color: colors.text.primary,
                   fontSize: '1.1rem',
                   mb: 2,
                 }}
@@ -308,41 +309,36 @@ const CartPage: React.FC = () => {
 
               {/* Subtotal */}
               <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1.5 }}>
-                <Typography sx={{ fontSize: '0.9rem', color: 'grey.600' }}>
+                <Typography sx={{ fontSize: '0.9rem', color: colors.text.disabled }}>
                   Subtotal ( {totalItems} {totalItems === 1 ? 'item' : 'items'} )
                 </Typography>
-                <Typography sx={{ fontSize: '0.9rem', fontWeight: 600, color: 'black' }}>
+                <Typography sx={{ fontSize: '0.9rem', fontWeight: 600, color: colors.text.primary }}>
                   £{totalAmount.toFixed(2)}
                 </Typography>
               </Box>
 
               {/* Shipping */}
               <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-                <Typography sx={{ fontSize: '0.9rem', color: 'grey.600' }}>
+                <Typography sx={{ fontSize: '0.9rem', color: colors.text.disabled }}>
                   Shipping
                 </Typography>
-                <Typography sx={{ fontSize: '0.9rem', color: 'grey.600' }}>
+                <Typography sx={{ fontSize: '0.9rem', color: colors.text.disabled }}>
                   Calculated at checkout
                 </Typography>
               </Box>
 
               {/* Divider */}
-              <Box sx={{ height: '1px', backgroundColor: '#e0e0e0', mb: 2 }} />
+              <Box sx={{ height: '1px', backgroundColor: colors.border.light, mb: 2 }} />
 
               {/* Total */}
               <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
-                <Typography sx={{ fontSize: '1rem', color: 'black', fontWeight: 500 }}>
+                <Typography sx={{ fontSize: '1rem', color: colors.text.primary, fontWeight: 500 }}>
                   Total
                 </Typography>
-                <Typography sx={{ fontSize: '1.3rem', fontWeight: 700, color: '#dc2626' }}>
+                <Typography sx={{ fontSize: '1.3rem', fontWeight: 700, color: colors.button.primary }}>
                   £{totalAmount.toFixed(2)}
                 </Typography>
               </Box>
-
-              {/* VAT Note */}
-              <Typography sx={{ fontSize: '0.75rem', color: 'grey.500', mb: 2, textAlign: 'center' }}>
-                Including VAT
-              </Typography>
 
               {/* Checkout Button */}
               <MuiButton
@@ -350,15 +346,15 @@ const CartPage: React.FC = () => {
                 fullWidth
                 onClick={() => navigate('/checkout')}
                 sx={{
-                  backgroundColor: 'black',
-                  color: 'white',
+                  backgroundColor: colors.text.primary,
+                  color: colors.text.secondary,
                   textTransform: 'none',
                   py: 1.5,
                   fontSize: '0.95rem',
                   fontWeight: 600,
                   mb: 2,
                   '&:hover': {
-                    backgroundColor: '#333',
+                    backgroundColor: colors.text.dark,
                   },
                 }}
               >
@@ -371,7 +367,7 @@ const CartPage: React.FC = () => {
                 sx={{
                   textAlign: 'center',
                   fontSize: '0.9rem',
-                  color: 'black',
+                  color: colors.text.primary,
                   cursor: 'pointer',
                   fontWeight: 500,
                   '&:hover': {

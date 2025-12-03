@@ -18,6 +18,7 @@ import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import PublicIcon from '@mui/icons-material/Public';
 import CardGiftcardIcon from '@mui/icons-material/CardGiftcard';
+import { colors } from '../theme';
 import {
   getShippingFeatures,
   getShippingOptions,
@@ -56,14 +57,14 @@ const ShippingInfoPage = () => {
 
       {/* Shipping Policy Section */}
       <Box sx={{ mb: 8 }}>
-        <Card sx={{ mb: 4, boxShadow: 'none', border: '1px solid #e5e7eb' }}>
+        <Card sx={{ mb: 4, boxShadow: 'none', border: `1px solid ${colors.border.default}` }}>
           <CardContent sx={{ p: 4 }}>
             <Typography variant="h5" sx={{ fontWeight: 600, mb: 2 }}>
               Our Shipping Policy
             </Typography>
             <Typography
               variant="body1"
-              sx={{ color: '#666', lineHeight: 1.7, mb: 4 }}
+              sx={{ color: colors.text.lightGray, lineHeight: 1.7, mb: 4 }}
             >
               {policyDescription}
             </Typography>
@@ -83,14 +84,14 @@ const ShippingInfoPage = () => {
                     <IconComponent
                       sx={{
                         fontSize: 48,
-                        color: '#d32f2f',
+                        color: colors.icon.primary,
                         mb: 1,
                       }}
                     />
                     <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
                       {feature.title}
                     </Typography>
-                    <Typography variant="body2" sx={{ color: '#666' }}>
+                    <Typography variant="body2" sx={{ color: colors.text.lightGray }}>
                       {feature.description}
                     </Typography>
                   </Box>
@@ -106,33 +107,33 @@ const ShippingInfoPage = () => {
         <Typography variant="h5" sx={{ fontWeight: 600, mb: 3 }}>
           Shipping Options
         </Typography>
-        <TableContainer component={Paper} sx={{ boxShadow: 'none', border: '1px solid #e5e7eb' }}>
+        <TableContainer component={Paper} sx={{ boxShadow: 'none', border: `1px solid ${colors.border.default}` }}>
           <Table>
             <TableHead>
-              <TableRow sx={{ bgcolor: '#f3f4f6' }}>
-                <TableCell sx={{ fontWeight: 600, color: '#111' }}>
+              <TableRow sx={{ bgcolor: colors.background.lighter }}>
+                <TableCell sx={{ fontWeight: 600, color: colors.text.primary }}>
                   Shipping Method
                 </TableCell>
-                <TableCell sx={{ fontWeight: 600, color: '#111' }}>
+                <TableCell sx={{ fontWeight: 600, color: colors.text.primary }}>
                   Delivery Time
                 </TableCell>
-                <TableCell sx={{ fontWeight: 600, color: '#111' }}>
+                <TableCell sx={{ fontWeight: 600, color: colors.text.primary }}>
                   Cost
                 </TableCell>
-                <TableCell sx={{ fontWeight: 600, color: '#111' }}>
+                <TableCell sx={{ fontWeight: 600, color: colors.text.primary }}>
                   Free Shipping Minimum
                 </TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {shippingOptions.map((option) => (
-                <TableRow key={option.id} sx={{ '&:hover': { bgcolor: '#fafafa' } }}>
-                  <TableCell sx={{ color: '#333' }}>{option.method}</TableCell>
-                  <TableCell sx={{ color: '#333' }}>
+                <TableRow key={option.id} sx={{ '&:hover': { bgcolor: colors.background.light } }}>
+                  <TableCell sx={{ color: colors.text.primary }}>{option.method}</TableCell>
+                  <TableCell sx={{ color: colors.text.primary }}>
                     {option.deliveryTime}
                   </TableCell>
-                  <TableCell sx={{ color: '#333' }}>{option.cost}</TableCell>
-                  <TableCell sx={{ color: '#333' }}>
+                  <TableCell sx={{ color: colors.text.primary }}>{option.cost}</TableCell>
+                  <TableCell sx={{ color: colors.text.primary }}>
                     {option.freeShippingMinimum}
                   </TableCell>
                 </TableRow>
@@ -153,7 +154,7 @@ const ShippingInfoPage = () => {
               key={faq.id}
               sx={{
                 boxShadow: 'none',
-                border: '1px solid #e5e7eb',
+                border: `1px solid ${colors.border.default}`,
                 cursor: 'pointer',
               }}
               onClick={() => toggleFAQ(faq.id)}
@@ -164,13 +165,13 @@ const ShippingInfoPage = () => {
                   sx={{
                     fontWeight: 600,
                     mb: expandedFAQ === faq.id ? 2 : 0,
-                    color: '#111',
+                    color: colors.text.primary,
                   }}
                 >
                   {faq.question}
                 </Typography>
                 {expandedFAQ === faq.id && (
-                  <Typography variant="body2" sx={{ color: '#666', lineHeight: 1.7 }}>
+                  <Typography variant="body2" sx={{ color: colors.text.lightGray, lineHeight: 1.7 }}>
                     {faq.answer}
                   </Typography>
                 )}
@@ -181,14 +182,14 @@ const ShippingInfoPage = () => {
       </Box>
 
       {/* Contact Section */}
-      <Card sx={{ boxShadow: 'none', border: '1px solid #e5e7eb' }}>
+      <Card sx={{ boxShadow: 'none', border: `1px solid ${colors.border.default}` }}>
         <CardContent sx={{ p: 4, textAlign: 'center' }}>
           <Typography variant="h5" sx={{ fontWeight: 600, mb: 3 }}>
             Need More Information?
           </Typography>
           <Typography
             variant="body1"
-            sx={{ color: '#666', mb: 4, lineHeight: 1.7 }}
+            sx={{ color: colors.text.lightGray, mb: 4, lineHeight: 1.7 }}
           >
             {contactDescription}
           </Typography>
@@ -196,12 +197,12 @@ const ShippingInfoPage = () => {
             <Button
               variant="contained"
               sx={{
-                bgcolor: '#d32f2f',
-                color: '#fff',
+                bgcolor: colors.button.primary,
+                color: colors.text.secondary,
                 px: 3,
                 py: 1.5,
                 fontWeight: 600,
-                '&:hover': { bgcolor: '#b71c1c' },
+                '&:hover': { bgcolor: colors.button.primaryHover },
               }}
             >
               Contact Us
@@ -209,14 +210,14 @@ const ShippingInfoPage = () => {
             <Button
               variant="outlined"
               sx={{
-                color: '#d32f2f',
-                borderColor: '#d32f2f',
+                color: colors.button.primary,
+                borderColor: colors.button.primary,
                 px: 3,
                 py: 1.5,
                 fontWeight: 600,
                 '&:hover': {
-                  borderColor: '#b71c1c',
-                  color: '#b71c1c',
+                  borderColor: colors.button.primaryHover,
+                  color: colors.button.primaryHover,
                 },
               }}
             >

@@ -15,6 +15,7 @@ import {
   Alert,
 } from '@mui/material';
 import { Trash2 } from 'lucide-react';
+import { colors } from '../theme';
 import type { Review } from '../types/review';
 
 interface ReviewCardProps {
@@ -87,7 +88,7 @@ const ReviewCard: React.FC<ReviewCardProps> = ({
       <Card
         sx={{
           mb: 1.5,
-          border: '1px solid #e0e0e0',
+          border: `1px solid ${colors.border.light}`,
           borderRadius: '8px',
           boxShadow: 'none',
           '&:hover': {
@@ -116,7 +117,7 @@ const ReviewCard: React.FC<ReviewCardProps> = ({
                 </Typography>
               )}
             </Box>
-            <Typography variant="caption" sx={{ color: '#9e9e9e', fontSize: '0.75rem' }}>
+            <Typography variant="caption" sx={{ color: colors.text.disabled, fontSize: '0.75rem' }}>
               {formatDate(review.createdAt)}
             </Typography>
           </Box>
@@ -134,7 +135,7 @@ const ReviewCard: React.FC<ReviewCardProps> = ({
           )}
 
           {/* Comment */}
-          <Typography variant="body2" sx={{ color: '#666', mb: 1.5, fontSize: '0.85rem', lineHeight: 1.4 }}>
+          <Typography variant="body2" sx={{ color: colors.text.lightGray, mb: 1.5, fontSize: '0.85rem', lineHeight: 1.4 }}>
             {review.comment}
           </Typography>
 

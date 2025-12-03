@@ -24,29 +24,29 @@ import type { CheckoutFormData, FormErrors } from '../types/checkout';
 // Field styling - no borders, clean appearance
 const fieldSx = { 
   '& .MuiOutlinedInput-root': {
-    bgcolor: '#ffffff',
+    bgcolor: colors.input.bg,
     '& fieldset': {
-      borderColor: '#e5e7eb'
+      borderColor: colors.border.default
     },
     '&:hover fieldset': {
-      borderColor: '#e5e7eb'
+      borderColor: colors.border.default
     },
     '&.Mui-focused fieldset': {
-      borderColor: '#e5e7eb'
+      borderColor: colors.border.default
     }
   }
 };
 
 const selectSx = {
-  bgcolor: '#ffffff',
+  bgcolor: colors.input.bg,
   '& .MuiOutlinedInput-notchedOutline': {
-    borderColor: '#e5e7eb'
+    borderColor: colors.border.default
   },
   '&:hover .MuiOutlinedInput-notchedOutline': {
-    borderColor: '#e5e7eb'
+    borderColor: colors.border.default
   },
   '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-    borderColor: '#e5e7eb'
+    borderColor: colors.border.default
   }
 };
 
@@ -195,7 +195,7 @@ const CheckoutPage: React.FC = () => {
           <Alert severity="success" sx={{ mb: 4 }}>
             {successMessage}
           </Alert>
-          <Typography variant="body1" sx={{ color: 'grey.600', mb: 4 }}>
+          <Typography variant="body1" sx={{ color: colors.text.disabled, mb: 4 }}>
             Redirecting to home page...
           </Typography>
         </Box>
@@ -363,7 +363,7 @@ const CheckoutPage: React.FC = () => {
               {/* Left: Payment Method Selection */}
               <Box sx={{ minWidth: 0 }}>
                 <Box sx={{ mb: 2.5 }}>
-                  <Typography variant="caption" sx={{ color: 'grey.600', display: 'flex', alignItems: 'center', gap: 0.75, fontSize: '0.875rem', whiteSpace: 'nowrap' }}>
+                  <Typography variant="caption" sx={{ color: colors.text.disabled, display: 'flex', alignItems: 'center', gap: 0.75, fontSize: '0.875rem', whiteSpace: 'nowrap' }}>
                     🔒 Secure payment processing
                   </Typography>
                 </Box>
@@ -374,9 +374,9 @@ const CheckoutPage: React.FC = () => {
                 >
                   <FormControlLabel
                     value="credit"
-                    control={<Radio sx={{ mr: 1.5, color: '#dc2626', '&.Mui-checked': { color: '#dc2626' } }} />}
+                    control={<Radio sx={{ mr: 1.5, color: colors.button.primary, '&.Mui-checked': { color: colors.button.primary } }} />}
                     label={
-                      <Typography variant="body2" sx={{ fontWeight: 500, color: '#1f2937', whiteSpace: 'nowrap' }}>
+                      <Typography variant="body2" sx={{ fontWeight: 500, color: colors.text.dark, whiteSpace: 'nowrap' }}>
                         Credit / Debit Card
                       </Typography>
                     }
@@ -384,9 +384,9 @@ const CheckoutPage: React.FC = () => {
                   />
                   <FormControlLabel
                     value="cash"
-                    control={<Radio sx={{ mr: 1.5, color: '#dc2626', '&.Mui-checked': { color: '#dc2626' } }} />}
+                    control={<Radio sx={{ mr: 1.5, color: colors.button.primary, '&.Mui-checked': { color: colors.button.primary } }} />}
                     label={
-                      <Typography variant="body2" sx={{ fontWeight: 500, color: '#1f2937', whiteSpace: 'nowrap' }}>
+                      <Typography variant="body2" sx={{ fontWeight: 500, color: colors.text.dark, whiteSpace: 'nowrap' }}>
                         Cash On Delivery
                       </Typography>
                     }
@@ -397,9 +397,9 @@ const CheckoutPage: React.FC = () => {
 
               {/* Right: Credit Card Fields - Gray Background Box */}
               {formData.paymentMethod === 'credit' && (
-                <Box sx={{ bgcolor: '#f3f4f6', p: 4, borderRadius: 1 }}>
+                <Box sx={{ bgcolor: colors.background.lighter, p: 4, borderRadius: 1 }}>
                   <Box sx={{ mb: 3 }}>
-                    <Typography variant="body2" sx={{ color: 'grey.700', mb: 1 }}>
+                    <Typography variant="body2" sx={{ color: colors.text.gray, mb: 1 }}>
                       Name on Card
                     </Typography>
                     <TextField
@@ -410,25 +410,12 @@ const CheckoutPage: React.FC = () => {
                       helperText={errors.cardName}
                       variant="outlined"
                       size="small"
-                      sx={{ 
-                        '& .MuiOutlinedInput-root': {
-                          bgcolor: '#ffffff',
-                          '& fieldset': {
-                            borderColor: '#e5e7eb'
-                          },
-                          '&:hover fieldset': {
-                            borderColor: '#e5e7eb'
-                          },
-                          '&.Mui-focused fieldset': {
-                            borderColor: '#e5e7eb'
-                          }
-                        }
-                      }}
+                      sx={fieldSx}
                     />
                   </Box>
 
                   <Box sx={{ mb: 3 }}>
-                    <Typography variant="body2" sx={{ color: 'grey.700', mb: 1 }}>
+                    <Typography variant="body2" sx={{ color: colors.text.gray, mb: 1 }}>
                       Card Number
                     </Typography>
                     <TextField
@@ -440,20 +427,7 @@ const CheckoutPage: React.FC = () => {
                       helperText={errors.cardNumber}
                       variant="outlined"
                       size="small"
-                      sx={{ 
-                        '& .MuiOutlinedInput-root': {
-                          bgcolor: '#ffffff',
-                          '& fieldset': {
-                            borderColor: '#e5e7eb'
-                          },
-                          '&:hover fieldset': {
-                            borderColor: '#e5e7eb'
-                          },
-                          '&.Mui-focused fieldset': {
-                            borderColor: '#e5e7eb'
-                          }
-                        }
-                      }}
+                      sx={fieldSx}
                     />
                   </Box>
 
@@ -470,18 +444,7 @@ const CheckoutPage: React.FC = () => {
                         error={Boolean(errors.expiryMonth)}
                         variant="outlined"
                         size="small"
-                        sx={{
-                          bgcolor: '#ffffff',
-                          '& .MuiOutlinedInput-notchedOutline': {
-                            borderColor: '#e5e7eb'
-                          },
-                          '&:hover .MuiOutlinedInput-notchedOutline': {
-                            borderColor: '#e5e7eb'
-                          },
-                          '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                            borderColor: '#e5e7eb'
-                          }
-                        }}
+                        sx={selectSx}
                       >
                         <MenuItem value="MM">MM</MenuItem>
                         {Array.from({ length: 12 }, (_, i) => (
@@ -503,18 +466,7 @@ const CheckoutPage: React.FC = () => {
                         error={Boolean(errors.expiryYear)}
                         variant="outlined"
                         size="small"
-                        sx={{
-                          bgcolor: '#ffffff',
-                          '& .MuiOutlinedInput-notchedOutline': {
-                            borderColor: '#e5e7eb'
-                          },
-                          '&:hover .MuiOutlinedInput-notchedOutline': {
-                            borderColor: '#e5e7eb'
-                          },
-                          '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                            borderColor: '#e5e7eb'
-                          }
-                        }}
+                        sx={selectSx}
                       >
                         <MenuItem value="YY">YY</MenuItem>
                         {Array.from({ length: 10 }, (_, i) => {
@@ -540,20 +492,7 @@ const CheckoutPage: React.FC = () => {
                         error={Boolean(errors.cvv)}
                         variant="outlined"
                         size="small"
-                        sx={{ 
-                          '& .MuiOutlinedInput-root': {
-                            bgcolor: '#ffffff',
-                            '& fieldset': {
-                              borderColor: '#e5e7eb'
-                            },
-                            '&:hover fieldset': {
-                              borderColor: '#e5e7eb'
-                            },
-                            '&.Mui-focused fieldset': {
-                              borderColor: '#e5e7eb'
-                            }
-                          }
-                        }}
+                        sx={fieldSx}
                       />
                     </Box>
                   </Box>
@@ -569,18 +508,18 @@ const CheckoutPage: React.FC = () => {
             onClick={handleCompleteOrder}
             disabled={isLoading || cartItems.length === 0}
             sx={{
-              backgroundColor: '#000000',
-              color: '#ffffff',
+              backgroundColor: colors.overlay.dark,
+              color: colors.text.secondary,
               textTransform: 'none',
               fontWeight: 600,
               py: 1.5,
               fontSize: '1rem',
               '&:hover': {
-                backgroundColor: '#1a1a1a',
+                backgroundColor: colors.overlay.darkHover,
               },
               '&:disabled': {
-                backgroundColor: '#cccccc',
-                color: '#ffffff',
+                backgroundColor: colors.overlay.gray,
+                color: colors.text.secondary,
               },
             }}
           >
@@ -590,7 +529,7 @@ const CheckoutPage: React.FC = () => {
 
         {/* Right Column - Order Summary */}
         <Box>
-          <Paper sx={{ p: 3, bgcolor: '#f9fafb', position: 'sticky', top: 100 }}>
+          <Paper sx={{ p: 3, bgcolor: colors.background.light, position: 'sticky', top: 100 }}>
             <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
               Order Summary
             </Typography>
@@ -607,7 +546,7 @@ const CheckoutPage: React.FC = () => {
                       £{(item.price * item.quantity).toFixed(2)}
                     </Typography>
                   </Box>
-                  <Typography variant="caption" sx={{ color: 'grey.600' }}>
+                  <Typography variant="caption" sx={{ color: colors.text.disabled }}>
                     Qty: {item.quantity} × £{item.price.toFixed(2)}
                   </Typography>
                   {item.color && (

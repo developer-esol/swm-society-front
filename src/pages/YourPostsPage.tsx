@@ -105,7 +105,7 @@ const YourPostsPage: React.FC = () => {
                 key={post.id}
                 sx={{
                   bgcolor: colors.background.paper,
-                  border: `1px solid ${colors.border}`,
+                  border: `1px solid ${colors.border.default}`,
                   borderRadius: 2,
                   overflow: 'hidden',
                   display: 'flex',
@@ -185,7 +185,7 @@ const YourPostsPage: React.FC = () => {
 
                     {/* Right: Likes Display */}
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, ml: 2 }}>
-                      <FavoriteIcon sx={{ color: '#dc2626', fontSize: 20 }} />
+                      <FavoriteIcon sx={{ color: colors.button.primary, fontSize: 20 }} />
                       <Typography
                         variant="body2"
                         sx={{
@@ -215,7 +215,7 @@ const YourPostsPage: React.FC = () => {
                         color: likedPosts.has(post.id) ? '#dc2626' : colors.text.secondary,
                         p: 0,
                         '&:hover': {
-                          color: '#dc2626',
+                          color: colors.button.primary,
                         },
                       }}
                     >
@@ -233,14 +233,14 @@ const YourPostsPage: React.FC = () => {
                       onClick={() => handleRemovePost(post.id)}
                       sx={{
                         bgcolor: colors.text.primary,
-                        color: '#fff',
+                        color: colors.text.secondary,
                         textTransform: 'none',
                         fontSize: '0.875rem',
                         fontWeight: '500',
                         py: 0.75,
                         px: 2,
                         '&:hover': {
-                          bgcolor: '#1f2937',
+                          bgcolor: colors.text.dark,
                         },
                       }}
                     >
@@ -270,14 +270,14 @@ const YourPostsPage: React.FC = () => {
             <MuiButton
               variant="contained"
               sx={{
-                bgcolor: '#dc2626',
-                color: '#fff',
+                bgcolor: colors.button.primary,
+                color: colors.text.secondary,
                 textTransform: 'none',
                 fontWeight: '600',
                 py: 1,
                 px: 3,
                 '&:hover': {
-                  bgcolor: '#b91c1c',
+                  bgcolor: colors.button.primaryHover,
                 },
               }}
             >

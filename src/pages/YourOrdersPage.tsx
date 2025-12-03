@@ -124,7 +124,7 @@ const YourOrdersPage: React.FC = () => {
                           sx={{
                             width: 100,
                             height: 120,
-                            bgcolor: '#f3f4f6',
+                            bgcolor: colors.background.lighter,
                             borderRadius: 1,
                             display: 'flex',
                             alignItems: 'center',
@@ -181,10 +181,10 @@ const YourOrdersPage: React.FC = () => {
                             <Typography
                               variant="caption"
                               sx={{
-                                color: '#6b7280',
+                                color: colors.text.disabled,
                               }}
                             >
-                              {order.orderDate}
+                              {item.color}
                             </Typography>
 
                             {/* Color Dot */}
@@ -194,14 +194,15 @@ const YourOrdersPage: React.FC = () => {
                                 height: 16,
                                 borderRadius: '50%',
                                 bgcolor: getColorDot(item.color),
-                                border: '2px solid #e5e7eb',
+                                border: `2px solid ${colors.border.default}`,
                               }}
                             />
 
                             <Typography
                               variant="caption"
                               sx={{
-                                color: '#6b7280',
+                                color: colors.text.disabled,
+                                opacity: 0.7,
                               }}
                             >
                               {item.color}
@@ -210,7 +211,8 @@ const YourOrdersPage: React.FC = () => {
                             <Typography
                               variant="caption"
                               sx={{
-                                color: '#6b7280',
+                                color: colors.text.disabled,
+                                fontSize: '0.875rem',
                               }}
                             >
                               Size: {item.size}
@@ -263,7 +265,7 @@ const YourOrdersPage: React.FC = () => {
             <Typography
               variant="body1"
               sx={{
-                color: '#6b7280',
+                color: colors.text.disabled,
                 mb: 2,
               }}
             >
@@ -272,7 +274,7 @@ const YourOrdersPage: React.FC = () => {
             <Typography
               variant="body2"
               sx={{
-                color: '#9ca3af',
+                color: colors.button.primaryDisabled,
               }}
             >
               Start shopping to see your orders here.

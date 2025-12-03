@@ -14,6 +14,7 @@ import { DropdownMenu } from './DropdownMenu';
 import { NavLink } from './NavLink';
 import { MobileMenu } from './MobileMenu';
 import { useBrands } from '../hooks/useBrands';
+import { colors } from '../theme';
 
 export const NavigationBar: React.FC = () => {
     const [isAuthenticated, setIsAuthenticated] = useState<boolean>(true);
@@ -93,15 +94,16 @@ export const NavigationBar: React.FC = () => {
                                     anchorEl={profileAnchor}
                                     open={Boolean(profileAnchor)}
                                     onClose={handleProfileClose}
+                                    disableScrollLock={true}
                                     PaperProps={{
                                         sx: {
-                                            bgcolor: '#f9fafb',
-                                            color: '#6b7280',
+                                            bgcolor: colors.background.light,
+                                            color: colors.text.disabled,
                                             mt: 1.5,
                                             minWidth: '180px',
                                             boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)',
                                             borderRadius: '8px',
-                                            border: '1px solid #e5e7eb',
+                                            border: `1px solid ${colors.border.default}`,
                                         }
                                     }}
                                 >
@@ -110,13 +112,13 @@ export const NavigationBar: React.FC = () => {
                                         to="/orders"
                                         onClick={handleProfileClose}
                                         sx={{
-                                            color: '#6b7280',
+                                            color: colors.text.disabled,
                                             fontSize: '0.95rem',
                                             py: 1.5,
                                             px: 2.5,
                                             '&:hover': {
-                                                bgcolor: '#f3f4f6',
-                                                color: '#374151',
+                                                bgcolor: colors.background.lighter,
+                                                color: colors.text.gray,
                                             },
                                             fontWeight: 500,
                                         }}
@@ -128,13 +130,13 @@ export const NavigationBar: React.FC = () => {
                                         to="/posts"
                                         onClick={handleProfileClose}
                                         sx={{
-                                            color: '#6b7280',
+                                            color: colors.text.disabled,
                                             fontSize: '0.95rem',
                                             py: 1.5,
                                             px: 2.5,
                                             '&:hover': {
-                                                bgcolor: '#f3f4f6',
-                                                color: '#374151',
+                                                bgcolor: colors.background.lighter,
+                                                color: colors.text.gray,
                                             },
                                             fontWeight: 500,
                                         }}
@@ -146,13 +148,13 @@ export const NavigationBar: React.FC = () => {
                                         to="/loyalty-wallet"
                                         onClick={handleProfileClose}
                                         sx={{
-                                            color: '#6b7280',
+                                            color: colors.text.disabled,
                                             fontSize: '0.95rem',
                                             py: 1.5,
                                             px: 2.5,
                                             '&:hover': {
-                                                bgcolor: '#f3f4f6',
-                                                color: '#374151',
+                                                bgcolor: colors.background.lighter,
+                                                color: colors.text.gray,
                                             },
                                             fontWeight: 500,
                                         }}
@@ -164,13 +166,13 @@ export const NavigationBar: React.FC = () => {
                                             logout();
                                         }}
                                         sx={{
-                                            color: '#6b7280',
+                                            color: colors.text.disabled,
                                             fontSize: '0.95rem',
                                             py: 1.5,
                                             px: 2.5,
                                             '&:hover': {
-                                                bgcolor: '#f3f4f6',
-                                                color: '#374151',
+                                                bgcolor: colors.background.lighter,
+                                                color: colors.text.gray,
                                             },
                                             fontWeight: 500,
                                         }}
@@ -192,6 +194,7 @@ export const NavigationBar: React.FC = () => {
                                     anchorEl={profileAnchor}
                                     open={Boolean(profileAnchor)}
                                     onClose={handleProfileClose}
+                                    disableScrollLock={true}
                                     PaperProps={{
                                         sx: {
                                             bgcolor: 'white',

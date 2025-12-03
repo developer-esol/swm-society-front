@@ -153,7 +153,7 @@ const WishlistPage: React.FC = () => {
           variant="h4"
           sx={{
             fontWeight: 700,
-            color: 'black',
+            color: colors.text.primary,
             mb: 1,
           }}
         >
@@ -162,7 +162,7 @@ const WishlistPage: React.FC = () => {
         <Typography
           variant="body2"
           sx={{
-            color: 'grey.600',
+            color: colors.text.disabled,
           }}
         >
           {totalItems} {totalItems === 1 ? 'item' : 'items'}
@@ -186,7 +186,7 @@ const WishlistPage: React.FC = () => {
           <Typography
             variant="h6"
             sx={{
-              color: 'grey.600',
+              color: colors.text.disabled,
               textAlign: 'center',
             }}
           >
@@ -195,7 +195,7 @@ const WishlistPage: React.FC = () => {
           <Typography
             variant="body2"
             sx={{
-              color: 'grey.500',
+              color: colors.text.disabled,
               textAlign: 'center',
               mb: 2,
             }}
@@ -242,14 +242,14 @@ const WishlistPage: React.FC = () => {
               gap: 3,
               mt: 4,
               pt: 3,
-              borderTop: '2px solid #e0e0e0',
+              borderTop: `2px solid ${colors.border.default}`,
             }}
           >
             {/* Summary Box */}
             <Box
               sx={{
-                backgroundColor: '#f9f9f9',
-                border: '1px solid #e0e0e0',
+                backgroundColor: colors.background.lighter,
+                border: `1px solid ${colors.border.default}`,
                 borderRadius: '8px',
                 p: 2,
                 minWidth: '180px',
@@ -257,16 +257,16 @@ const WishlistPage: React.FC = () => {
             >
               {/* Items Count */}
               <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1.5 }}>
-                <Typography sx={{ fontSize: '0.85rem', color: 'grey.600' }}>
+                <Typography sx={{ fontSize: '0.85rem', color: colors.text.disabled }}>
                   In-Stock Items:
                 </Typography>
-                <Typography sx={{ fontSize: '0.85rem', fontWeight: 600, color: 'black' }}>
+                <Typography sx={{ fontSize: '0.85rem', fontWeight: 600, color: colors.text.primary }}>
                   {totalItems}
                 </Typography>
               </Box>
               {outOfStockItems > 0 && (
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1.5 }}>
-                  <Typography sx={{ fontSize: '0.85rem', color: 'grey.600' }}>
+                  <Typography sx={{ fontSize: '0.85rem', color: colors.text.disabled }}>
                     Out of Stock:
                   </Typography>
                   <Typography sx={{ fontSize: '0.85rem', fontWeight: 600, color: colors.button.primaryDisabled }}>
@@ -276,11 +276,11 @@ const WishlistPage: React.FC = () => {
               )}
 
               {/* Divider */}
-              <Box sx={{ height: '1px', backgroundColor: '#e0e0e0', mb: 1.5 }} />
+              <Box sx={{ height: '1px', backgroundColor: colors.border.default, mb: 1.5 }} />
 
               {/* Total Amount */}
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                <Typography sx={{ fontSize: '0.9rem', color: 'grey.600', fontWeight: 500 }}>
+                <Typography sx={{ fontSize: '0.9rem', color: colors.text.disabled, fontWeight: 500 }}>
                   Wishlist Total:
                 </Typography>
                 <Typography

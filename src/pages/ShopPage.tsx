@@ -17,6 +17,7 @@ import { ExpandMore, FilterList } from '@mui/icons-material';
 import { ProductCard } from '../components';
 import { useLocation } from 'react-router-dom';
 import { useHMVProduct, useProjectZeroProduct, useProjectThomasMushetProduct } from '../hooks/useProducts';
+import { colors } from '../theme';
 import type { Product } from '../types';
 
 const Shop: React.FC = () => {
@@ -207,12 +208,12 @@ const Shop: React.FC = () => {
             }} />}
             onClick={() => setIsFilterOpen(!isFilterOpen)}
             sx={{
-              bgcolor: 'grey.100',
-              borderColor: 'grey.300',
-              color: 'black',
+              bgcolor: colors.background.lighter,
+              borderColor: colors.border.light,
+              color: colors.text.primary,
               '&:hover': {
-                bgcolor: 'grey.200',
-                borderColor: 'grey.400',
+                bgcolor: colors.background.light,
+                borderColor: colors.border.default,
               }
             }}
           >
@@ -229,7 +230,7 @@ const Shop: React.FC = () => {
                 onChange={(e) => setSortBy(e.target.value)}
                 sx={{
                   '& .MuiOutlinedInput-notchedOutline': {
-                    borderColor: 'grey.300',
+                    borderColor: colors.border.light,
                   }
                 }}
               >
@@ -244,7 +245,7 @@ const Shop: React.FC = () => {
 
         {/* Filters Panel */}
         <Collapse in={isFilterOpen}>
-          <Paper sx={{ p: 3, mb: 4, bgcolor: 'grey.50' }}>
+          <Paper sx={{ p: 3, mb: 4, bgcolor: colors.background.lighter }}>
             <Box sx={{ 
               display: 'grid',
               gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' },
@@ -264,15 +265,15 @@ const Shop: React.FC = () => {
                     min={0}
                     max={200}
                     sx={{
-                      color: 'black',
+                      color: colors.text.primary,
                       '& .MuiSlider-thumb': {
-                        bgcolor: 'black',
+                        bgcolor: colors.text.primary,
                       },
                       '& .MuiSlider-track': {
-                        bgcolor: 'black',
+                        bgcolor: colors.text.primary,
                       },
                       '& .MuiSlider-rail': {
-                        bgcolor: 'grey.300',
+                        bgcolor: colors.border.light,
                       }
                     }}
                   />
@@ -295,15 +296,15 @@ const Shop: React.FC = () => {
                       label={size}
                       onClick={() => toggleSize(size)}
                       sx={{
-                        bgcolor: selectedSizes.includes(size) ? '#dc2626' : '#f3f4f6',
-                        color: selectedSizes.includes(size) ? 'white' : '#374151',
-                        border: selectedSizes.includes(size) ? '2px solid #dc2626' : '1px solid #d1d5db',
+                        bgcolor: selectedSizes.includes(size) ? colors.button.primary : colors.background.lighter,
+                        color: selectedSizes.includes(size) ? colors.text.secondary : colors.text.gray,
+                        border: selectedSizes.includes(size) ? `2px solid ${colors.button.primary}` : `1px solid ${colors.border.default}`,
                         fontWeight: 500,
                         cursor: 'pointer',
                         transition: 'all 0.2s ease',
                         '&:hover': {
-                          bgcolor: selectedSizes.includes(size) ? '#b91c1c' : '#e5e7eb',
-                          borderColor: '#dc2626',
+                          bgcolor: selectedSizes.includes(size) ? colors.button.primaryHover : colors.border.default,
+                          borderColor: colors.button.primary,
                         }
                       }}
                     />
@@ -323,15 +324,15 @@ const Shop: React.FC = () => {
                       label={color}
                       onClick={() => toggleColor(color)}
                       sx={{
-                        bgcolor: selectedColors.includes(color) ? '#dc2626' : '#f3f4f6',
-                        color: selectedColors.includes(color) ? 'white' : '#374151',
-                        border: selectedColors.includes(color) ? '2px solid #dc2626' : '1px solid #d1d5db',
+                        bgcolor: selectedColors.includes(color) ? colors.button.primary : colors.background.lighter,
+                        color: selectedColors.includes(color) ? colors.text.secondary : colors.text.gray,
+                        border: selectedColors.includes(color) ? `2px solid ${colors.button.primary}` : `1px solid ${colors.border.default}`,
                         fontWeight: 500,
                         cursor: 'pointer',
                         transition: 'all 0.2s ease',
                         '&:hover': {
-                          bgcolor: selectedColors.includes(color) ? '#b91c1c' : '#e5e7eb',
-                          borderColor: '#dc2626',
+                          bgcolor: selectedColors.includes(color) ? colors.button.primaryHover : colors.border.default,
+                          borderColor: colors.button.primary,
                         }
                       }}
                     />
@@ -367,10 +368,10 @@ const Shop: React.FC = () => {
             <Button
               onClick={clearAllFilters}
               sx={{
-                color: '#dc2626',
+                color: colors.button.primary,
                 '&:hover': {
-                  color: '#b91c1c',
-                  bgcolor: 'rgba(220, 38, 38, 0.04)',
+                  color: colors.button.primaryHover,
+                  bgcolor: 'rgba(220, 38, 38, 0.04)', // Red background tint
                 }
               }}
             >

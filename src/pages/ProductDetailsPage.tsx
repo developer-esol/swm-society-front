@@ -218,8 +218,8 @@ const ProductDetails: React.FC = () => {
           to="/shop" 
           variant="contained"
           sx={{
-            bgcolor: '#dc2626',
-            '&:hover': { bgcolor: '#b91c1c' }
+            bgcolor: colors.button.primary,
+            '&:hover': { bgcolor: colors.button.primaryHover }
           }}
         >
           Return to Shop
@@ -386,7 +386,7 @@ const ProductDetails: React.FC = () => {
   };
 
   return (
-    <Box sx={{ bgcolor: 'white', width: '100%', minHeight: '100vh' }}>
+    <Box sx={{ bgcolor: colors.text.secondary, width: '100%', minHeight: '100vh' }}>
       <Container maxWidth="lg" sx={{ py: 6 }}>
         <Box
           sx={{
@@ -402,7 +402,7 @@ const ProductDetails: React.FC = () => {
               sx={{
                 width: '100%',
                 height: { xs: 400, md: 500 },
-                bgcolor: 'grey.100',
+                bgcolor: colors.background.light,
                 borderRadius: 2,
                 display: 'flex',
                 alignItems: 'center',
@@ -442,12 +442,12 @@ const ProductDetails: React.FC = () => {
                       justifyContent: 'center',
                       cursor: 'pointer',
                       transition: 'all 0.3s',
-                      border: selectedColor === color ? '3px solid #dc2626' : '1px solid #e0e0e0',
+                      border: selectedColor === color ? `3px solid ${colors.button.primary}` : `1px solid ${colors.border.light}`,
                       backgroundImage: colorImage ? `url(${colorImage})` : 'none',
                       backgroundSize: 'cover',
                       backgroundPosition: 'center',
                       '&:hover': {
-                        borderColor: '#dc2626',
+                        borderColor: colors.button.primary,
                         transform: 'scale(1.05)',
                         boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
                       }
@@ -473,10 +473,10 @@ const ProductDetails: React.FC = () => {
                 sx={{
                   display: 'flex',
                   alignItems: 'center',
-                  color: '#dc2626',
+                  color: colors.button.primary,
                   textDecoration: 'none',
                   '&:hover': {
-                    color: '#b91c1c',
+                    color: colors.button.primaryHover,
                   },
                 }}
               >
@@ -494,7 +494,7 @@ const ProductDetails: React.FC = () => {
                 readOnly
                 precision={0.1}
               />
-              <Typography variant="body2" sx={{ color: 'grey.600' }}>
+              <Typography variant="body2" sx={{ color: colors.text.disabled }}>
                 {reviews.length} {reviews.length === 1 ? 'review' : 'reviews'}
               </Typography>
             </Box>
@@ -513,7 +513,7 @@ const ProductDetails: React.FC = () => {
             </Typography>
 
             {/* Description */}
-            <Typography variant="body1" sx={{ color: 'text.primary', mb: 4, lineHeight: 1.6 }}>
+            <Typography variant="body1" sx={{ color: colors.text.primary, mb: 4, lineHeight: 1.6 }}>
               {product.description}
             </Typography>
 
@@ -532,8 +532,8 @@ const ProductDetails: React.FC = () => {
                       sx={{
                         minWidth: '60px',
                         height: '45px',
-                        bgcolor: selectedSize === size ? 'black' : 'white',
-                        color: selectedSize === size ? 'white' : 'black',
+                        bgcolor: selectedSize === size ? colors.text.primary : colors.text.secondary,
+                        color: selectedSize === size ? colors.text.secondary : colors.text.primary,
                         borderColor: 'transparent',
                         border: 'none',
                         textTransform: 'none',
@@ -541,7 +541,7 @@ const ProductDetails: React.FC = () => {
                         fontWeight: 500,
                         borderRadius: '4px',
                         '&:hover': {
-                          bgcolor: selectedSize === size ? 'grey.800' : 'grey.100',
+                          bgcolor: selectedSize === size ? colors.overlay.darkHover : colors.background.light,
                         }
                       }}
                     >
@@ -567,8 +567,8 @@ const ProductDetails: React.FC = () => {
                       sx={{
                         minWidth: '80px',
                         height: '45px',
-                        bgcolor: selectedColor === color ? 'black' : 'white',
-                        color: selectedColor === color ? 'white' : 'black',
+                        bgcolor: selectedColor === color ? colors.text.primary : colors.text.secondary,
+                        color: selectedColor === color ? colors.text.secondary : colors.text.primary,
                         borderColor: 'transparent',
                         border: 'none',
                         textTransform: 'none',
@@ -576,7 +576,7 @@ const ProductDetails: React.FC = () => {
                         fontWeight: 500,
                         borderRadius: '4px',
                         '&:hover': {
-                          bgcolor: selectedColor === color ? 'grey.800' : 'grey.100',
+                          bgcolor: selectedColor === color ? colors.overlay.darkHover : colors.background.light,
                         }
                       }}
                     >
@@ -599,13 +599,13 @@ const ProductDetails: React.FC = () => {
                     disabled={quantity <= 1}
                     sx={{
                       border: '1px solid',
-                      borderColor: 'grey.400',
+                      borderColor: colors.border.light,
                       borderRadius: 0,
                       borderTopLeftRadius: 4,
                       borderBottomLeftRadius: 4,
                       '&:hover': {
-                        borderColor: 'grey.600',
-                        bgcolor: 'grey.50',
+                        borderColor: colors.text.disabled,
+                        bgcolor: colors.background.light,
                       }
                     }}
                   >
@@ -616,7 +616,7 @@ const ProductDetails: React.FC = () => {
                       px: 3,
                       py: 1,
                       border: '1px solid',
-                      borderColor: 'grey.400',
+                      borderColor: colors.border.light,
                       borderLeft: 0,
                       borderRight: 0,
                       minWidth: 60,
@@ -630,13 +630,13 @@ const ProductDetails: React.FC = () => {
                     disabled={!currentStock || quantity >= currentStock.quantity}
                     sx={{
                       border: '1px solid',
-                      borderColor: 'grey.400',
+                      borderColor: colors.border.light,
                       borderRadius: 0,
                       borderTopRightRadius: 4,
                       borderBottomRightRadius: 4,
                       '&:hover': {
-                        borderColor: 'grey.600',
-                        bgcolor: 'grey.50',
+                        borderColor: colors.text.disabled,
+                        bgcolor: colors.background.light,
                       }
                     }}
                   >
@@ -658,14 +658,14 @@ const ProductDetails: React.FC = () => {
                 disabled={!currentStock || currentStock.quantity === 0 || (inWishlist && !currentStock)}
                 sx={{
                   flex: 1,
-                  bgcolor: (!currentStock || currentStock.quantity === 0 || (inWishlist && !currentStock)) ? '#f0f0f0' : colors.button.primary,
-                  color: (!currentStock || currentStock.quantity === 0 || (inWishlist && !currentStock)) ? '#ccc' : colors.text.secondary,
+                  bgcolor: (!currentStock || currentStock.quantity === 0 || (inWishlist && !currentStock)) ? colors.background.lighter : colors.button.primary,
+                  color: (!currentStock || currentStock.quantity === 0 || (inWishlist && !currentStock)) ? colors.button.primaryDisabled : colors.text.secondary,
                   '&:hover': {
-                    bgcolor: (!currentStock || currentStock.quantity === 0 || (inWishlist && !currentStock)) ? '#f0f0f0' : colors.button.primaryHover,
+                    bgcolor: (!currentStock || currentStock.quantity === 0 || (inWishlist && !currentStock)) ? colors.background.lighter : colors.button.primaryHover,
                   },
                   '&:disabled': {
-                    bgcolor: '#f0f0f0',
-                    color: '#ccc',
+                    bgcolor: colors.background.lighter,
+                    color: colors.button.primaryDisabled,
                   }
                 }}
               >
@@ -677,7 +677,7 @@ const ProductDetails: React.FC = () => {
                 onClick={handleWishlistToggle}
                 startIcon={inWishlist ? <Favorite /> : <FavoriteBorder />}
                 sx={{
-                  borderColor: inWishlist ? colors.button.primary : 'grey.400',
+                  borderColor: inWishlist ? colors.button.primary : colors.border.light,
                   color: inWishlist ? colors.button.primary : colors.text.primary,
                   '&:hover': {
                     borderColor: colors.button.primary,
@@ -690,36 +690,36 @@ const ProductDetails: React.FC = () => {
             </Box>
 
             {/* Shipping & Returns Info with Links */}
-            <Box sx={{ mb: 4, py: 3, borderTop: '1px solid #e5e7eb', borderBottom: '1px solid #e5e7eb' }}>
+            <Box sx={{ mb: 4, py: 3, borderTop: `1px solid ${colors.border.default}`, borderBottom: `1px solid ${colors.border.default}` }}>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                 <Box>
-                  <Typography variant="body2" sx={{ fontWeight: 500, color: '#111', mb: 0.5 }}>
+                  <Typography variant="body2" sx={{ fontWeight: 500, color: colors.text.primary, mb: 0.5 }}>
                     Shipping:
                   </Typography>
-                  <Typography variant="body2" sx={{ color: '#666', mb: 1 }}>
+                  <Typography variant="body2" sx={{ color: colors.text.lightGray, mb: 1 }}>
                     Free shipping on orders over £100. Standard delivery 3-5 working days.
                   </Typography>
                   <MuiLink
                     component="button"
                     variant="body2"
                     onClick={() => navigate('/shipping-info')}
-                    sx={{ color: '#d32f2f', textDecoration: 'none', cursor: 'pointer', '&:hover': { textDecoration: 'underline' } }}
+                    sx={{ color: colors.icon.primary, textDecoration: 'none', cursor: 'pointer', '&:hover': { textDecoration: 'underline' } }}
                   >
                     View shipping details
                   </MuiLink>
                 </Box>
                 <Box>
-                  <Typography variant="body2" sx={{ fontWeight: 500, color: '#111', mb: 0.5 }}>
+                  <Typography variant="body2" sx={{ fontWeight: 500, color: colors.text.primary, mb: 0.5 }}>
                     Returns:
                   </Typography>
-                  <Typography variant="body2" sx={{ color: '#666', mb: 1 }}>
+                  <Typography variant="body2" sx={{ color: colors.text.lightGray, mb: 1 }}>
                     Free 30-day returns for unworn items.
                   </Typography>
                   <MuiLink
                     component="button"
                     variant="body2"
                     onClick={() => navigate('/shipping-info')}
-                    sx={{ color: '#d32f2f', textDecoration: 'none', cursor: 'pointer', '&:hover': { textDecoration: 'underline' } }}
+                    sx={{ color: colors.icon.primary, textDecoration: 'none', cursor: 'pointer', '&:hover': { textDecoration: 'underline' } }}
                   >
                     View return policy
                   </MuiLink>
@@ -754,10 +754,10 @@ const ProductDetails: React.FC = () => {
       </Container>
 
       {/* Customer Reviews Section */}
-      <Container maxWidth="lg" sx={{ py: 6, borderTop: '1px solid #e0e0e0' }}>
+      <Container maxWidth="lg" sx={{ py: 6, borderTop: `1px solid ${colors.border.light}` }}>
         <Box sx={{ mb: 6 }}>
           {/* Review Summary */}
-          <Box sx={{ mb: 4, pb: 4, borderBottom: '1px solid #e0e0e0' }}>
+          <Box sx={{ mb: 4, pb: 4, borderBottom: `1px solid ${colors.border.light}` }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
               <Box>
                 <Typography variant="h5" sx={{ fontWeight: 700, mb: 1 }}>
@@ -769,7 +769,7 @@ const ProductDetails: React.FC = () => {
                     readOnly
                     precision={0.1}
                   />
-                  <Typography variant="body2" sx={{ color: '#9e9e9e' }}>
+                  <Typography variant="body2" sx={{ color: colors.text.disabled }}>
                     {reviews.length} {reviews.length === 1 ? 'review' : 'reviews'}
                   </Typography>
                 </Box>
@@ -802,14 +802,14 @@ const ProductDetails: React.FC = () => {
                 />
               ))
             ) : (
-              <Typography sx={{ color: '#9e9e9e', textAlign: 'center', py: 4 }}>
+              <Typography sx={{ color: colors.text.disabled, textAlign: 'center', py: 4 }}>
                 No reviews yet. Be the first to review!
               </Typography>
             )}
           </Box>
 
           {/* Write a Review Section */}
-          <Box sx={{ borderTop: '1px solid #e0e0e0', pt: 4 }}>
+          <Box sx={{ borderTop: `1px solid ${colors.border.light}`, pt: 4 }}>
             <Typography variant="h6" sx={{ fontWeight: 600, mb: 3 }}>
               Write a Review
             </Typography>
@@ -861,9 +861,9 @@ const ProductDetails: React.FC = () => {
                   padding: '10px 24px',
                   fontWeight: 600,
                   alignSelf: 'flex-start',
-                  bgcolor: '#dc2626',
+                  bgcolor: colors.button.primary,
                   '&:hover': {
-                    bgcolor: '#b91c1c',
+                    bgcolor: colors.button.primaryHover,
                   }
                 }}
               >

@@ -79,7 +79,7 @@ const WishlistCard: React.FC<WishlistCardProps> = ({
         gap: 2,
         py: 3,
         px: 2,
-        borderBottom: '1px solid #e0e0e0',
+        borderBottom: `1px solid ${colors.border.light}`,
         alignItems: 'flex-start',
         '&:last-child': {
           borderBottom: 'none',
@@ -97,7 +97,7 @@ const WishlistCard: React.FC<WishlistCardProps> = ({
             height: 120,
             objectFit: 'cover',
             borderRadius: '4px',
-            backgroundColor: '#f5f5f5',
+            backgroundColor: colors.background.light,
             cursor: 'pointer',
             '&:hover': {
               opacity: 0.8,
@@ -152,7 +152,7 @@ const WishlistCard: React.FC<WishlistCardProps> = ({
                 height: 16,
                 borderRadius: '50%',
                 backgroundColor: item.color.toLowerCase(),
-                border: '2px solid #ddd',
+                border: `2px solid ${colors.border.default}`,
               }}
             />
             <Typography sx={{ color: 'black', fontSize: '0.85rem', fontWeight: 500 }}>
