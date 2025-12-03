@@ -9,6 +9,7 @@ import ProductDetailsPage from '../pages/ProductDetailsPage';
 import CommunityPage from '../pages/CommunityPage';
 import WishlistPage from '../pages/WishlistPage';
 import CartPage from '../pages/CartPage';
+import LoginPage from '../pages/LoginPage';
 import CheckoutPage from '../pages/CheckoutPage';
 import ShippingInfoPage from '../pages/ShippingInfoPage';
 import LoyaltyWalletPage from '../pages/LoyaltyWalletPage';
@@ -17,7 +18,6 @@ import YourPostsPage from '../pages/YourPostsPage';
 
 
 // Temporary placeholder components - replace with actual imports when components are created
-const LoginPage = () => <div><h1>Login</h1></div>;
 const NotFoundPage = () => <div><h1>404 - Page Not Found</h1></div>;
 
 export const routes: RouteObject[] = [
