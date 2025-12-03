@@ -10,6 +10,7 @@ import CommunityPage from '../pages/CommunityPage';
 import WishlistPage from '../pages/WishlistPage';
 import CartPage from '../pages/CartPage';
 import LoginPage from '../pages/LoginPage';
+import RegisterPage from '../pages/RegisterPage';
 import CheckoutPage from '../pages/CheckoutPage';
 import ShippingInfoPage from '../pages/ShippingInfoPage';
 import LoyaltyWalletPage from '../pages/LoyaltyWalletPage';
@@ -67,6 +68,10 @@ export const routes: RouteObject[] = [
       {
         path: 'login',
         element: <LoginPage />,
+      },
+      {
+        path: 'register',
+        element: <RegisterPage />,
       },
       {
         path: 'cart',
