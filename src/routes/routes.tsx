@@ -1,7 +1,8 @@
 import type { RouteObject } from 'react-router-dom';
-import { MainLayout } from '../layouts';
+import { MainLayout, GuestLayout } from '../layouts';
 import { HomePage } from '../pages';
 import ProjectZeroStoryPage from '../pages/ProjectZeroStoryPage';
+import GuestHomePage from '../pages/GuestHomePage';
 import ThomasMushetStoryPage from '../pages/ThomasMushetStoryPage';
 import HereMyVoiceStoryPage from '../pages/HereMyVoiceStoryPage';
 import Shop from '../pages/ShopPage';
@@ -9,15 +10,18 @@ import ProductDetailsPage from '../pages/ProductDetailsPage';
 import CommunityPage from '../pages/CommunityPage';
 import WishlistPage from '../pages/WishlistPage';
 import CartPage from '../pages/CartPage';
+import LoginPage from '../pages/LoginPage';
+import RegisterPage from '../pages/RegisterPage';
 import CheckoutPage from '../pages/CheckoutPage';
 import ShippingInfoPage from '../pages/ShippingInfoPage';
+import ReturnPolicyPage from '../pages/ReturnPolicyPage';
 import LoyaltyWalletPage from '../pages/LoyaltyWalletPage';
 import YourOrdersPage from '../pages/YourOrdersPage';
 import YourPostsPage from '../pages/YourPostsPage';
+import GoogleAuthCallback from '../pages/GoogleAuthCallback';
 
 
 // Temporary placeholder components - replace with actual imports when components are created
-const LoginPage = () => <div><h1>Login</h1></div>;
 const NotFoundPage = () => <div><h1>404 - Page Not Found</h1></div>;
 
 export const routes: RouteObject[] = [
@@ -69,6 +73,14 @@ export const routes: RouteObject[] = [
         element: <LoginPage />,
       },
       {
+        path: 'auth/google/callback',
+        element: <GoogleAuthCallback />,
+      },
+      {
+        path: 'register',
+        element: <RegisterPage />,
+      },
+      {
         path: 'cart',
         element: <CartPage />,
       },
@@ -79,6 +91,10 @@ export const routes: RouteObject[] = [
       {
         path: 'shipping-info',
         element: <ShippingInfoPage />,
+      },
+      {
+        path: 'return-policy',
+        element: <ReturnPolicyPage />,
       },
       {
         path: 'wishlist',
@@ -99,6 +115,48 @@ export const routes: RouteObject[] = [
       {
         path: '*',
         element: <NotFoundPage />,
+      },
+    ],
+  },
+  {
+    path: '/guest',
+    element: <GuestLayout />,
+    children: [
+      {
+        index: true,
+        element: <GuestHomePage />,
+      },
+      {
+        path: 'shop',
+        element: <Shop />,
+      },
+      {
+        path: 'community',
+        element: <CommunityPage />,
+      },
+      {
+        path: 'cart',
+        element: <CartPage />,
+      },
+      {
+        path: 'wishlist',
+        element: <WishlistPage />,
+      },
+      {
+        path: 'product/:productId',
+        element: <ProductDetailsPage />,
+      },
+      {
+        path: 'project-zero-story',
+        element: <ProjectZeroStoryPage />,
+      },
+      {
+        path: 'thomas-mushet-story',
+        element: <ThomasMushetStoryPage />,
+      },
+      {
+        path: 'hear-my-voice-story',
+        element: <HereMyVoiceStoryPage />,
       },
     ],
   },

@@ -1,4 +1,5 @@
 export { default as HomePage } from './HomePage';
+export { default as GuestHomePage } from './GuestHomePage';
 export { default as ProductDetailsPage } from './ProductDetailsPage';
 export { default as WishlistPage } from './WishlistPage';
 export { default as LoyaltyWalletPage } from './LoyaltyWalletPage';
@@ -6,3 +7,4 @@ export { default as YourOrdersPage } from './YourOrdersPage';
 export { default as YourPostsPage } from './YourPostsPage';
 export { default as CheckoutPage } from './CheckoutPage';
 export { default as ShippingInfoPage } from './ShippingInfoPage';
+export { default as ReturnPolicyPage } from './ReturnPolicyPage';
