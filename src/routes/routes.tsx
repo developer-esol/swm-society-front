@@ -19,10 +19,9 @@ import LoyaltyWalletPage from '../pages/LoyaltyWalletPage';
 import YourOrdersPage from '../pages/YourOrdersPage';
 import YourPostsPage from '../pages/YourPostsPage';
 import GoogleAuthCallback from '../pages/GoogleAuthCallback';
+import AdminDashboard from '../pages/AdminDashboard';
+import NotFoundPage from '../pages/NotFoundPage';
 
-
-// Temporary placeholder components - replace with actual imports when components are created
-const NotFoundPage = () => <div><h1>404 - Page Not Found</h1></div>;
 
 export const routes: RouteObject[] = [
   {
@@ -117,6 +116,10 @@ export const routes: RouteObject[] = [
         element: <NotFoundPage />,
       },
     ],
+  },
+  {
+    path: '/admin',
+    element: <AdminDashboard />,
   },
   {
     path: '/guest',
