@@ -19,7 +19,7 @@ import LoyaltyWalletPage from '../pages/LoyaltyWalletPage';
 import YourOrdersPage from '../pages/YourOrdersPage';
 import YourPostsPage from '../pages/YourPostsPage';
 import GoogleAuthCallback from '../pages/GoogleAuthCallback';
-import AdminDashboard from '../pages/AdminDashboard';
+import AdminDashboard from '../pages/Admin/AdminDashboard'
 import NotFoundPage from '../pages/NotFoundPage';
 
 

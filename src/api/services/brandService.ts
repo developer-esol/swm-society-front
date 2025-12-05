@@ -1,5 +1,4 @@
 import type { Brand } from '../../types';
-import { apiClient } from '../apiClient';
 
 export const brandService = {
   // READ operations

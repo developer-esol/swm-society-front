@@ -62,6 +62,13 @@ export const colors = {
     success: '#10b981',          // Green for eligible
     error: '#dc2626',            // Red for not eligible
   },
+  // Chart Colors
+  chart: {
+    primary: '#000000',          // Direct - Black
+    secondary: '#3b82f6',        // Shift Monkey - Blue
+    tertiary: '#10b981',         // Returned - Green
+    quaternary: '#f59e0b',       // Failed - Amber
+  },
 };
 
 export const theme = createTheme({
