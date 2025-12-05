@@ -10,7 +10,7 @@ const AdminDashboard = () => {
   return (
     <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: colors.background.default }}>
       <Box sx={{ display: { xs: 'none', sm: 'block' } }}>
-        <AdminSidebar />
+        <AdminSidebar activeMenu="dashboard" />
       </Box>
       <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
         <Container maxWidth="lg" sx={{ py: 4, flex: 1, px: { xs: 2, sm: 3, md: 4 } }}>
