@@ -21,8 +21,9 @@ import {
   ManageAccounts as RolesIcon,
   Security as AccessIcon,
   SecurityOutlined as SecurityIcon,
-  Menu as MenuIcon,
-  Close as CloseIcon,
+  // Collapse/Expand Icon
+  ChevronLeft as ChevronLeftIcon,
+  ChevronRight as ChevronRightIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { colors } from '../../theme';
@@ -45,13 +46,23 @@ const menuItems: SidebarMenuItem[] = [
 
 interface AdminSidebarProps {
   activeMenu?: string;
+  onCollapseChange?: (isCollapsed: boolean) => void;
 }
 
-const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeMenu }) => {
+const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeMenu, onCollapseChange }) => {
   const navigate = useNavigate();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
+
+  const handleCollapseToggle = () => {
+    const newState = !isCollapsed;
+    setIsCollapsed(newState);
+    if (onCollapseChange) {
+      onCollapseChange(newState);
+    }
+  };
 
   const handleMenuClick = (path: string) => {
     navigate(path);
@@ -85,7 +96,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeMenu }) => {
           color: colors.text.secondary,
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'center',
+          justifyContent: 'space-between',
           minHeight: 85,
           maxHeight: 85,
           flexShrink: 0,
@@ -103,6 +114,21 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeMenu }) => {
             objectFit: 'contain',
           }}
         />
+        {!isMobile && (
+          <IconButton
+            onClick={() => handleCollapseToggle()}
+            sx={{
+              color: colors.text.secondary,
+              padding: '4px',
+              '&:hover': {
+                bgcolor: colors.overlay.darkHover,
+              },
+            }}
+            size="small"
+          >
+            {isCollapsed ? <ChevronRightIcon /> : <ChevronLeftIcon />}
+          </IconButton>
+        )}
       </Box>
 
       {/* User Profile Section - Hidden for cleaner design */}
