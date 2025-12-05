@@ -5,7 +5,7 @@ const mockReviews: Review[] = [
   {
     id: '1',
     productId: '1',
-    userId: 'user1',
+    userId: '1',
     userName: 'James K.',
     rating: 5,
     title: 'Amazing quality and fit',
@@ -16,7 +16,7 @@ const mockReviews: Review[] = [
   {
     id: '2',
     productId: '1',
-    userId: 'user2',
+    userId: '2',
     userName: 'Sarah M.',
     rating: 4,
     title: 'Great product',
@@ -27,7 +27,7 @@ const mockReviews: Review[] = [
   {
     id: '3',
     productId: '1',
-    userId: 'user3',
+    userId: '3',
     userName: 'David L.',
     rating: 5,
     title: 'Highly recommend',
@@ -38,7 +38,7 @@ const mockReviews: Review[] = [
   {
     id: '4',
     productId: '2',
-    userId: 'user4',
+    userId: '4',
     userName: 'Emma R.',
     rating: 5,
     title: 'Perfect fit and comfort',
@@ -49,7 +49,7 @@ const mockReviews: Review[] = [
   {
     id: '5',
     productId: '2',
-    userId: 'user5',
+    userId: '5',
     userName: 'Michael T.',
     rating: 4,
     title: 'Very good quality',
