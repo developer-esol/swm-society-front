@@ -22,6 +22,8 @@ import GoogleAuthCallback from '../pages/GoogleAuthCallback';
 import AdminDashboard from '../pages/Admin/AdminDashboard'
 import AdminProducts from '../pages/Admin/AdminProducts'
 import AddProduct from '../pages/Admin/AddProduct'
+import AdminStock from '../pages/Admin/AdminStock'
+import AddStock from '../pages/Admin/AddStock'
 import NotFoundPage from '../pages/NotFoundPage';
 
 
@@ -130,6 +132,14 @@ export const routes: RouteObject[] = [
   {
     path: '/admin/add-product',
     element: <AddProduct />,
+  },
+  {
+    path: '/admin/stock',
+    element: <AdminStock />,
+  },
+  {
+    path: '/admin/add-stock',
+    element: <AddStock />,
   },
   {
     path: '/guest',
