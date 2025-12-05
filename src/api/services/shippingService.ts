@@ -1,23 +1,4 @@
-export interface ShippingFeature {
-  id: string;
-  icon: 'LocalShipping' | 'AccessTime' | 'Public' | 'CardGiftcard';
-  title: string;
-  description: string;
-}
-
-export interface ShippingOption {
-  id: string;
-  method: string;
-  deliveryTime: string;
-  cost: string;
-  freeShippingMinimum: string;
-}
-
-export interface FAQ {
-  id: string;
-  question: string;
-  answer: string;
-}
+import type { ShippingFeature, ShippingOption, FAQ } from '../../types/common';
 
 // Dummy data
 export const shippingFeatures: ShippingFeature[] = [
