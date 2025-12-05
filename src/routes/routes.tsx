@@ -20,6 +20,8 @@ import YourOrdersPage from '../pages/YourOrdersPage';
 import YourPostsPage from '../pages/YourPostsPage';
 import GoogleAuthCallback from '../pages/GoogleAuthCallback';
 import AdminDashboard from '../pages/Admin/AdminDashboard'
+import AdminProducts from '../pages/Admin/AdminProducts'
+import AddProduct from '../pages/Admin/AddProduct'
 import NotFoundPage from '../pages/NotFoundPage';
 
 
@@ -120,6 +122,14 @@ export const routes: RouteObject[] = [
   {
     path: '/admin',
     element: <AdminDashboard />,
+  },
+  {
+    path: '/admin/products',
+    element: <AdminProducts />,
+  },
+  {
+    path: '/admin/add-product',
+    element: <AddProduct />,
   },
   {
     path: '/guest',
