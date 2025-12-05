@@ -4,7 +4,6 @@ import type { SelectChangeEvent } from '@mui/material'
 import { useNavigate } from 'react-router-dom'
 import { useFormik } from 'formik'
 import * as Yup from 'yup'
-import AdminSidebar from '../../components/Admin/AdminSidebar'
 import { colors } from '../../theme'
 import { useProductsStore } from '../../store/useProductsStore'
 import type { AddProductFormData, AdminProduct } from '../../types/Admin'
@@ -140,15 +139,11 @@ const AddProduct: React.FC = () => {
   }
 
   return (
-    <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: colors.background.default }}>
-      <Box sx={{ display: { xs: 'none', sm: 'none', md: 'block' } }}>
-        <AdminSidebar activeMenu="products" />
-      </Box>
-      <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-        <Container maxWidth="lg" sx={{ py: 4, flex: 1, px: { xs: 2, sm: 3, md: 4 } }}>
-          {/* Header */}
-          <Typography 
-            variant="h4" 
+    <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', bgcolor: colors.background.default }}>
+      <Container maxWidth="lg" sx={{ py: 4, flex: 1, px: { xs: 2, sm: 3, md: 4 } }}>
+        {/* Header */}
+        <Typography 
+          variant="h4" 
             sx={{ 
               mb: 4, 
               fontWeight: 700, 
@@ -443,8 +438,7 @@ const AddProduct: React.FC = () => {
           </Box>
         </Container>
       </Box>
-    </Box>
-  )
-}
-
-export default AddProduct
+    )
+  }
+  
+  export default AddProduct

@@ -3,7 +3,6 @@ import { Box, Typography, TextField, Button, Alert, Container } from '@mui/mater
 import { useNavigate } from 'react-router-dom'
 import { useFormik } from 'formik'
 import * as Yup from 'yup'
-import AdminSidebar from '../../components/Admin/AdminSidebar'
 import { colors } from '../../theme'
 import { useStockStore } from '../../store/useStockStore'
 import type { AddStockFormData, StockItem } from '../../types/Admin'
@@ -108,22 +107,18 @@ const AddStock: React.FC = () => {
   }
 
   return (
-    <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: colors.background.default }}>
-      <Box sx={{ display: { xs: 'none', sm: 'none', md: 'block' } }}>
-        <AdminSidebar activeMenu="stock" />
-      </Box>
-      <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-        <Container maxWidth="lg" sx={{ py: 4, flex: 1, px: { xs: 2, sm: 3, md: 4 } }}>
-          {/* Header */}
-          <Typography
-            variant="h4"
-            sx={{
-              mb: 4,
-              fontWeight: 700,
-              color: colors.text.primary,
-              fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' },
-            }}
-          >
+    <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', bgcolor: colors.background.default }}>
+      <Container maxWidth="lg" sx={{ py: 4, flex: 1, px: { xs: 2, sm: 3, md: 4 } }}>
+        {/* Header */}
+        <Typography
+          variant="h4"
+          sx={{
+            mb: 4,
+            fontWeight: 700,
+            color: colors.text.primary,
+            fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' },
+          }}
+        >
             Add Item
           </Typography>
 
@@ -365,8 +360,7 @@ const AddStock: React.FC = () => {
           </Box>
         </Container>
       </Box>
-    </Box>
-  )
-}
-
-export default AddStock
+    )
+  }
+  
+  export default AddStock

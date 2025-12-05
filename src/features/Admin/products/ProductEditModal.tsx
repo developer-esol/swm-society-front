@@ -1,7 +1,11 @@
-import { Dialog, DialogTitle, DialogContent, Box, TextField, Button } from '@mui/material'
+import { Dialog, DialogTitle, DialogContent, Box, TextField, Button, FormControl, InputLabel, Select, MenuItem } from '@mui/material'
+import type { SelectChangeEvent } from '@mui/material'
 import { useState } from 'react'
 import { colors } from '../../../theme'
+import { useBrands } from '../../../hooks/useBrands'
 import type { AdminProduct } from '../../../types/Admin'
+
+const DELIVERY_METHODS = ['Shirt Monkey', 'Standard', 'Express', 'Direct']
 
 interface ProductEditModalProps {
   open: boolean
@@ -12,6 +16,7 @@ interface ProductEditModalProps {
 
 const ProductEditModal = ({ open, product, onClose, onSave }: ProductEditModalProps) => {
   const [formData, setFormData] = useState<AdminProduct | null>(product)
+  const { data: brands = [] } = useBrands()
 
   // Update formData when product changes
   if (product && (!formData || formData.id !== product.id)) {
@@ -21,7 +26,7 @@ const ProductEditModal = ({ open, product, onClose, onSave }: ProductEditModalPr
   if (!formData) return null
 
   const textFieldStyles = {
-'& .MuiOutlinedInput-root': {
+    '& .MuiOutlinedInput-root': {
       backgroundColor: colors.background.default,
     },
     '& .MuiOutlinedInput-root.Mui-disabled': {
@@ -40,11 +45,41 @@ const ProductEditModal = ({ open, product, onClose, onSave }: ProductEditModalPr
     },
   }
 
-  const handleChange = (field: keyof AdminProduct) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const selectSx = {
+    bgcolor: colors.background.default,
+    '& .MuiOutlinedInput-notchedOutline': {
+      borderColor: colors.border.default,
+    },
+    '&:hover .MuiOutlinedInput-notchedOutline': {
+      borderColor: colors.border.default,
+    },
+    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+      borderColor: colors.border.default,
+    },
+  }
+
+  const handleTextChange = (field: keyof AdminProduct) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormData({
       ...formData,
       [field]: e.target.value,
     })
+  }
+
+  const handleSelectChange = (field: keyof AdminProduct) => (e: SelectChangeEvent<string>) => {
+    const value = e.target.value
+    if (field === 'brandId') {
+      const selectedBrand = brands.find(b => b.id === value)
+      setFormData({
+        ...formData,
+        [field]: value,
+        brandName: selectedBrand?.brandName || value,
+      })
+    } else {
+      setFormData({
+        ...formData,
+        [field]: value,
+      })
+    }
   }
 
   const handleSave = () => {
@@ -82,24 +117,35 @@ const ProductEditModal = ({ open, product, onClose, onSave }: ProductEditModalPr
         Edit Product
       </DialogTitle>
       <DialogContent sx={{ pt: 4 }}>
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 , pt : 1.5}}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, pt: 1.5 }}>
+          {/* Brand Name Dropdown */}
           <Box>
-            <TextField
-              label="Brand Name"
-              value={formData.brandName}
-              onChange={handleChange('brandName')}
-              fullWidth
-              size="small"
-              variant="outlined"
-              sx={textFieldStyles}
-            />
+            <FormControl fullWidth size="small">
+              <InputLabel>Brand Name</InputLabel>
+              <Select
+                value={formData.brandId || ''}
+                onChange={handleSelectChange('brandId')}
+                label="Brand Name"
+                sx={selectSx}
+              >
+                <MenuItem value="">
+                  <em>Select Brand</em>
+                </MenuItem>
+                {brands.map((brand) => (
+                  <MenuItem key={brand.id} value={brand.id}>
+                    {brand.brandName}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
           </Box>
 
+          {/* Product Name */}
           <Box>
             <TextField
               label="Product Name"
               value={formData.productName}
-              onChange={handleChange('productName')}
+              onChange={handleTextChange('productName')}
               fullWidth
               size="small"
               variant="outlined"
@@ -107,23 +153,34 @@ const ProductEditModal = ({ open, product, onClose, onSave }: ProductEditModalPr
             />
           </Box>
 
+          {/* Delivery Method Dropdown */}
           <Box>
-            <TextField
-              label="Delivery Method"
-              value={formData.deliveryMethod}
-              onChange={handleChange('deliveryMethod')}
-              fullWidth
-              size="small"
-              variant="outlined"
-              sx={textFieldStyles}
-            />
+            <FormControl fullWidth size="small">
+              <InputLabel>Delivery Method</InputLabel>
+              <Select
+                value={formData.deliveryMethod}
+                onChange={handleSelectChange('deliveryMethod')}
+                label="Delivery Method"
+                sx={selectSx}
+              >
+                <MenuItem value="">
+                  <em>Select Delivery Method</em>
+                </MenuItem>
+                {DELIVERY_METHODS.map((method) => (
+                  <MenuItem key={method} value={method}>
+                    {method}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
           </Box>
 
+          {/* Description */}
           <Box>
             <TextField
               label="Description"
               value={formData.description}
-              onChange={handleChange('description')}
+              onChange={handleTextChange('description')}
               fullWidth
               multiline
               rows={4}

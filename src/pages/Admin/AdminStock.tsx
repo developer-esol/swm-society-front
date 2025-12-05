@@ -2,7 +2,6 @@ import { Box, Container, Typography } from '@mui/material'
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { StockTable, StockTableHeader, StockEditModal } from '../../features/Admin/stock'
-import AdminSidebar from '../../components/Admin/AdminSidebar'
 import { useStockStore } from '../../store/useStockStore'
 import { colors } from '../../theme'
 import type { StockItem } from '../../types/Admin'
@@ -68,50 +67,45 @@ const AdminStock = () => {
   }
 
   return (
-    <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: colors.background.default }}>
-      <Box sx={{ display: { xs: 'none', sm: 'none', md: 'block' } }}>
-        <AdminSidebar activeMenu="stock" />
-      </Box>
-      <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', width: { xs: '100%', md: 'auto' } }}>
-        <Container
-          maxWidth="xl"
+    <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', bgcolor: colors.background.default }}>
+      <Container
+        maxWidth="xl"
+        sx={{
+          py: { xs: 3, sm: 4, md: 4 },
+          flex: 1,
+          px: { xs: 2, sm: 3, md: 4 },
+          width: '100%',
+        }}
+      >
+        <Typography
+          variant="h4"
           sx={{
-            py: { xs: 3, sm: 4, md: 4 },
-            flex: 1,
-            px: { xs: 2, sm: 3, md: 4 },
-            width: '100%',
+            mb: { xs: 3, sm: 4 },
+            fontWeight: 700,
+            color: colors.text.primary,
+            fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' },
           }}
         >
-          <Typography
-            variant="h4"
-            sx={{
-              mb: { xs: 3, sm: 4 },
-              fontWeight: 700,
-              color: colors.text.primary,
-              fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' },
-            }}
-          >
-            Your Stock
-          </Typography>
+          Your Stock
+        </Typography>
 
-          <StockTableHeader searchQuery={searchQuery} onSearch={handleSearch} onAddStock={handleAddStock} />
+        <StockTableHeader searchQuery={searchQuery} onSearch={handleSearch} onAddStock={handleAddStock} />
 
-          <StockTable items={displayItems} onEdit={handleEdit} onDelete={handleDeleteItem} />
+        <StockTable items={displayItems} onEdit={handleEdit} onDelete={handleDeleteItem} />
 
-          <Typography
-            sx={{
-              mt: 3,
-              color: colors.text.secondary,
-              fontSize: '0.875rem',
-              textAlign: 'center',
-            }}
-          >
-            1-05 of 3 products
-          </Typography>
+        <Typography
+          sx={{
+            mt: 3,
+            color: colors.text.secondary,
+            fontSize: '0.875rem',
+            textAlign: 'center',
+          }}
+        >
+          1-05 of 3 products
+        </Typography>
 
-          <StockEditModal open={editModalOpen} item={selectedItem} onClose={handleCloseEditModal} onSave={handleSaveEdit} />
-        </Container>
-      </Box>
+        <StockEditModal open={editModalOpen} item={selectedItem} onClose={handleCloseEditModal} onSave={handleSaveEdit} />
+      </Container>
     </Box>
   )
 }

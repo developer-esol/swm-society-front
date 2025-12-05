@@ -1,5 +1,5 @@
 import type { RouteObject } from 'react-router-dom';
-import { MainLayout, GuestLayout } from '../layouts';
+import { MainLayout, GuestLayout, AdminLayout } from '../layouts';
 import { HomePage } from '../pages';
 import ProjectZeroStoryPage from '../pages/ProjectZeroStoryPage';
 import GuestHomePage from '../pages/GuestHomePage';
@@ -123,23 +123,29 @@ export const routes: RouteObject[] = [
   },
   {
     path: '/admin',
-    element: <AdminDashboard />,
-  },
-  {
-    path: '/admin/products',
-    element: <AdminProducts />,
-  },
-  {
-    path: '/admin/add-product',
-    element: <AddProduct />,
-  },
-  {
-    path: '/admin/stock',
-    element: <AdminStock />,
-  },
-  {
-    path: '/admin/add-stock',
-    element: <AddStock />,
+    element: <AdminLayout />,
+    children: [
+      {
+        index: true,
+        element: <AdminDashboard />,
+      },
+      {
+        path: 'products',
+        element: <AdminProducts />,
+      },
+      {
+        path: 'add-product',
+        element: <AddProduct />,
+      },
+      {
+        path: 'stock',
+        element: <AdminStock />,
+      },
+      {
+        path: 'add-stock',
+        element: <AddStock />,
+      },
+    ],
   },
   {
     path: '/guest',

@@ -1,7 +1,12 @@
-import { Dialog, DialogTitle, DialogContent, Box, TextField, Button } from '@mui/material'
+import { Dialog, DialogTitle, DialogContent, Box, TextField, Button, FormControl, InputLabel, Select, MenuItem } from '@mui/material'
+import type { SelectChangeEvent } from '@mui/material'
 import { useState } from 'react'
 import { colors } from '../../../theme'
 import type { StockItem } from '../../../types/Admin'
+
+// Mock data for colors and sizes
+const COLORS = ['Red', 'Blue', 'Green', 'Black', 'White', 'Yellow', 'Purple', 'Orange']
+const SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL']
 
 interface StockEditModalProps {
   open: boolean
@@ -40,10 +45,30 @@ const StockEditModal = ({ open, item, onClose, onSave }: StockEditModalProps) =>
     },
   }
 
-  const handleChange = (field: keyof StockItem) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const selectSx = {
+    bgcolor: colors.background.default,
+    '& .MuiOutlinedInput-notchedOutline': {
+      borderColor: colors.border.default,
+    },
+    '&:hover .MuiOutlinedInput-notchedOutline': {
+      borderColor: colors.border.default,
+    },
+    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+      borderColor: colors.border.default,
+    },
+  }
+
+  const handleTextChange = (field: keyof StockItem) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormData({
       ...formData,
       [field]: field === 'quantity' || field === 'price' ? Number(e.target.value) : e.target.value,
+    })
+  }
+
+  const handleSelectChange = (field: keyof StockItem) => (e: SelectChangeEvent<string>) => {
+    setFormData({
+      ...formData,
+      [field]: e.target.value,
     })
   }
 
@@ -83,11 +108,12 @@ const StockEditModal = ({ open, item, onClose, onSave }: StockEditModalProps) =>
       </DialogTitle>
       <DialogContent sx={{ pt: 4 }}>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, pt: 1.5 }}>
+          {/* Product Name */}
           <Box>
             <TextField
               label="Product Name"
               value={formData.productName}
-              onChange={handleChange('productName')}
+              onChange={handleTextChange('productName')}
               fullWidth
               size="small"
               variant="outlined"
@@ -95,36 +121,57 @@ const StockEditModal = ({ open, item, onClose, onSave }: StockEditModalProps) =>
             />
           </Box>
 
+          {/* Color Dropdown */}
           <Box>
-            <TextField
-              label="Color"
-              value={formData.color}
-              onChange={handleChange('color')}
-              fullWidth
-              size="small"
-              variant="outlined"
-              sx={textFieldStyles}
-            />
+            <FormControl fullWidth size="small">
+              <InputLabel>Color</InputLabel>
+              <Select
+                value={formData.color}
+                onChange={handleSelectChange('color')}
+                label="Color"
+                sx={selectSx}
+              >
+                <MenuItem value="">
+                  <em>Select Color</em>
+                </MenuItem>
+                {COLORS.map((color) => (
+                  <MenuItem key={color} value={color}>
+                    {color}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
           </Box>
 
+          {/* Size Dropdown */}
           <Box>
-            <TextField
-              label="Size"
-              value={formData.size}
-              onChange={handleChange('size')}
-              fullWidth
-              size="small"
-              variant="outlined"
-              sx={textFieldStyles}
-            />
+            <FormControl fullWidth size="small">
+              <InputLabel>Size</InputLabel>
+              <Select
+                value={formData.size}
+                onChange={handleSelectChange('size')}
+                label="Size"
+                sx={selectSx}
+              >
+                <MenuItem value="">
+                  <em>Select Size</em>
+                </MenuItem>
+                {SIZES.map((size) => (
+                  <MenuItem key={size} value={size}>
+                    {size}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
           </Box>
 
+          {/* Quantity */}
           <Box>
             <TextField
               label="Quantity"
               type="number"
               value={formData.quantity}
-              onChange={handleChange('quantity')}
+              onChange={handleTextChange('quantity')}
               fullWidth
               size="small"
               variant="outlined"
@@ -132,12 +179,13 @@ const StockEditModal = ({ open, item, onClose, onSave }: StockEditModalProps) =>
             />
           </Box>
 
+          {/* Price */}
           <Box>
             <TextField
               label="Price"
               type="number"
               value={formData.price}
-              onChange={handleChange('price')}
+              onChange={handleTextChange('price')}
               fullWidth
               size="small"
               variant="outlined"
