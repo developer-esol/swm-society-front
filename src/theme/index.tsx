@@ -27,6 +27,9 @@ export const colors = {
   },
   input: {
     bg: '#ffffff',
+    border: '#e0e0e0',
+    placeholderText: '#999999',
+    searchIconColor: '#e74c3c',
   },
   icon: {
     primary: '#d32f2f',
