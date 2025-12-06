@@ -26,6 +26,7 @@ import AdminStock from '../pages/Admin/AdminStock'
 import AddStock from '../pages/Admin/AddStock'
 import AdminReviews from '../pages/Admin/AdminReviews'
 import AdminCommunityPosts from '../pages/Admin/AdminCommunityPosts'
+import AdminUsers from '../pages/Admin/AdminUsers'
 import NotFoundPage from '../pages/NotFoundPage';
 
 
@@ -154,6 +155,14 @@ export const routes: RouteObject[] = [
       {
         path: 'posts',
         element: <AdminCommunityPosts />,
+      },
+      {
+        path: 'users',
+        element: <AdminUsers />,
+      },
+      {
+        path: '*',
+        element: <NotFoundPage />,
       },
     ],
   },
