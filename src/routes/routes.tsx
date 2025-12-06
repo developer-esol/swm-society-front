@@ -31,6 +31,10 @@ import AdminAccessControl from '../pages/Admin/AdminAccessControl'
 import AddAccessControlUser from '../pages/Admin/AddAccessControlUser'
 import EditAccessControlUser from '../pages/Admin/EditAccessControlUser'
 import AdminLoyalty from '../pages/Admin/AdminLoyalty'
+import AdminSales from '../pages/Admin/AdminSales'
+import AdminRoles from '../pages/Admin/AdminRoles'
+import PermissionLevels from '../pages/Admin/PermissionLevels'
+import RoleCreation from '../pages/Admin/RoleCreation'
 import NotFoundPage from '../pages/NotFoundPage';
 
 
@@ -179,6 +183,22 @@ export const routes: RouteObject[] = [
       {
         path: 'loyalty',
         element: <AdminLoyalty />,
+      },
+      {
+        path: 'sales',
+        element: <AdminSales />,
+      },
+      {
+        path: 'roles',
+        element: <AdminRoles />,
+      },
+      {
+        path: 'permission-levels/:roleId',
+        element: <PermissionLevels />,
+      },
+      {
+        path: 'role-creation',
+        element: <RoleCreation />,
       },
       {
         path: '*',

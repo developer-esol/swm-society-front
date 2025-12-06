@@ -231,15 +231,14 @@ const AdminLoyalty = () => {
                       count={totalPages}
                       page={currentPage}
                       onChange={(_e, page) => handlePageChange(page)}
-                      color="primary"
                       sx={{
                         '& .MuiPaginationItem-root': {
                           color: colors.text.primary,
                           borderColor: colors.border.default,
-                        },
-                        '& .Mui-selected': {
-                          backgroundColor: colors.button.primary,
-                          color: 'white',
+                          '&.Mui-selected': {
+                            backgroundColor: '#dc2626',
+                            color: 'white',
+                          },
                         },
                       }}
                     />
