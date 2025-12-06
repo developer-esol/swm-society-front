@@ -1,7 +1,6 @@
 import { Box, Container, Typography } from '@mui/material'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useProducts } from '../../hooks/admin'
 import { ProductsTable, ProductTableHeader, ProductViewModal, ProductEditModal } from '../../features/Admin/products'
 import { useProductsStore } from '../../store/useProductsStore'
 import { colors } from '../../theme'
@@ -9,12 +8,11 @@ import type { AdminProduct } from '../../types/Admin'
 
 const AdminProducts = () => {
   const navigate = useNavigate()
-  const { searchQuery, handleSearch } = useProducts()
   const { products, initializeProducts, updateProduct, deleteProduct } = useProductsStore()
   const [viewModalOpen, setViewModalOpen] = useState(false)
   const [editModalOpen, setEditModalOpen] = useState(false)
   const [selectedProduct, setSelectedProduct] = useState<AdminProduct | null>(null)
-  const [displayProducts, setDisplayProducts] = useState<AdminProduct[]>(products)
+  const [searchQuery, setSearchQuery] = useState('')
 
   // Initialize products on mount
   useEffect(() => {
@@ -23,10 +21,20 @@ const AdminProducts = () => {
     }
   }, [initializeProducts, products.length])
 
-  // Update display products when store products change
-  useEffect(() => {
-    setDisplayProducts(products)
-  }, [products])
+  // Filter products based on search query
+  const filteredProducts = useMemo(() => {
+    if (!searchQuery.trim()) return products
+    return products.filter(
+      (product) =>
+        product.productName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        product.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        product.id.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+  }, [searchQuery, products])
+
+  const handleSearch = (query: string) => {
+    setSearchQuery(query)
+  }
 
   const handleView = (product: AdminProduct) => {
     setSelectedProduct(product)
@@ -92,7 +100,7 @@ const AdminProducts = () => {
         />
 
         <ProductsTable
-          products={displayProducts}
+          products={filteredProducts}
           onView={handleView}
           onEdit={handleEdit}
           onDelete={handleDeleteProduct}

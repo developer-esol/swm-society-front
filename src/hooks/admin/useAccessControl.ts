@@ -6,13 +6,25 @@ export const useAccessControl = () => {
   const [users, setUsers] = useState<AccessControlUser[]>([])
   const [searchQuery, setSearchQuery] = useState('')
 
-  // Load users on mount
+  // Load users on mount and when component focuses
   useEffect(() => {
     const loadUsers = async () => {
-      const allUsers = await accessControlService.getAll()
-      setUsers(allUsers)
+      try {
+        const allUsers = await accessControlService.getAll()
+        console.log('useAccessControl - loaded users:', allUsers)
+        setUsers(allUsers)
+      } catch (error) {
+        console.error('Failed to load users:', error)
+      }
     }
     loadUsers()
+
+    // Optionally refetch on window focus (when user returns to the page)
+    const handleFocus = () => {
+      loadUsers()
+    }
+    window.addEventListener('focus', handleFocus)
+    return () => window.removeEventListener('focus', handleFocus)
   }, [])
 
   const filteredUsers = useMemo(
