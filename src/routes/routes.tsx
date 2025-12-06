@@ -27,6 +27,9 @@ import AddStock from '../pages/Admin/AddStock'
 import AdminReviews from '../pages/Admin/AdminReviews'
 import AdminCommunityPosts from '../pages/Admin/AdminCommunityPosts'
 import AdminUsers from '../pages/Admin/AdminUsers'
+import AdminAccessControl from '../pages/Admin/AdminAccessControl'
+import AddAccessControlUser from '../pages/Admin/AddAccessControlUser'
+import EditAccessControlUser from '../pages/Admin/EditAccessControlUser'
 import NotFoundPage from '../pages/NotFoundPage';
 
 
@@ -159,6 +162,18 @@ export const routes: RouteObject[] = [
       {
         path: 'users',
         element: <AdminUsers />,
+      },
+      {
+        path: 'access-control',
+        element: <AdminAccessControl />,
+      },
+      {
+        path: 'add-access-control-user',
+        element: <AddAccessControlUser />,
+      },
+      {
+        path: 'edit-access-control-user/:userId',
+        element: <EditAccessControlUser />,
       },
       {
         path: '*',
