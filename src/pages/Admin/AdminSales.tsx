@@ -6,6 +6,7 @@ import { colors } from '../../theme'
 const AdminSales = () => {
   const {
     transactions,
+    filteredTransactions,
     currentPage,
     totalPages,
     searchQuery,
@@ -14,7 +15,6 @@ const AdminSales = () => {
     handleSearch,
     handlePageChange: handlePageChangeHook,
     handleDateFilterChange,
-    handleDeleteTransaction,
   } = useAdminSales()
 
   const handlePageChange = (_event: React.ChangeEvent<unknown>, page: number) => {
@@ -106,34 +106,33 @@ const AdminSales = () => {
         {/* Sales Table */}
         <SalesTable 
           transactions={transactions}
-          onDelete={handleDeleteTransaction}
         />
 
-        {/* Pagination and Info */}
-        {totalPages > 1 && (
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 4 }}>
-            <Typography sx={{ color: colors.text.secondary, fontSize: '0.9rem' }}>
-              {(currentPage - 1) * 5 + 1}-{Math.min(currentPage * 5, transactions.length)} of {transactions.length} transactions
-            </Typography>
-            <Stack spacing={2} direction="row">
-              <Pagination
-                count={totalPages}
-                page={currentPage}
-                onChange={(_e, page) => handlePageChange(page)}
-                sx={{
-                  '& .MuiPaginationItem-root': {
-                    color: colors.text.primary,
-                    borderColor: colors.border.default,
-                    '&.Mui-selected': {
-                      backgroundColor: '#dc2626',
-                      color: 'white',
-                    },
-                  },
-                }}
-              />
-            </Stack>
-          </Box>
-        )}
+       {/* Pagination */}
+              {totalPages > 1 && (
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 3 }}>
+                  <Typography sx={{ color: colors.text.secondary, fontSize: '0.9rem' }}>
+                    {(currentPage - 1) * 5 + 1}-{Math.min(currentPage * 5, filteredTransactions.length)} of {filteredTransactions.length} transactions
+                  </Typography>
+                  <Stack spacing={2} direction="row">
+                    <Pagination
+                      count={totalPages}
+                      page={currentPage}
+                      onChange={handlePageChange}
+                      sx={{
+                        '& .MuiPaginationItem-root': {
+                          color: colors.text.primary,
+                          borderColor: colors.border.default,
+                          '&.Mui-selected': {
+                            backgroundColor: '#dc2626',
+                            color: 'white',
+                          },
+                        },
+                      }}
+                    />
+                  </Stack>
+                </Box>
+              )}
       </Container>
     </Box>
   )
