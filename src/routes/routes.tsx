@@ -1,7 +1,8 @@
 import type { RouteObject } from 'react-router-dom';
-import { MainLayout } from '../layouts';
+import { MainLayout, GuestLayout } from '../layouts';
 import { HomePage } from '../pages';
 import ProjectZeroStoryPage from '../pages/ProjectZeroStoryPage';
+import GuestHomePage from '../pages/GuestHomePage';
 import ThomasMushetStoryPage from '../pages/ThomasMushetStoryPage';
 import HereMyVoiceStoryPage from '../pages/HereMyVoiceStoryPage';
 import Shop from '../pages/ShopPage';
@@ -104,6 +105,48 @@ export const routes: RouteObject[] = [
       {
         path: '*',
         element: <NotFoundPage />,
+      },
+    ],
+  },
+  {
+    path: '/guest',
+    element: <GuestLayout />,
+    children: [
+      {
+        index: true,
+        element: <GuestHomePage />,
+      },
+      {
+        path: 'shop',
+        element: <Shop />,
+      },
+      {
+        path: 'community',
+        element: <CommunityPage />,
+      },
+      {
+        path: 'cart',
+        element: <CartPage />,
+      },
+      {
+        path: 'wishlist',
+        element: <WishlistPage />,
+      },
+      {
+        path: 'product/:productId',
+        element: <ProductDetailsPage />,
+      },
+      {
+        path: 'project-zero-story',
+        element: <ProjectZeroStoryPage />,
+      },
+      {
+        path: 'thomas-mushet-story',
+        element: <ThomasMushetStoryPage />,
+      },
+      {
+        path: 'hear-my-voice-story',
+        element: <HereMyVoiceStoryPage />,
       },
     ],
   },
