@@ -9,7 +9,7 @@ import {
     MenuItem,
 } from '@mui/material';
 import { Menu as MenuIcon, ShoppingCart, Favorite, AccountCircle } from '@mui/icons-material';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { DropdownMenu } from './DropdownMenu';
 import { NavLink } from './NavLink';
 import { MobileMenu } from './MobileMenu';
@@ -17,6 +17,7 @@ import { useBrands } from '../hooks/useBrands';
 import { colors } from '../theme';
 
 export const NavigationBar: React.FC = () => {
+    const navigate = useNavigate();
     const [isAuthenticated, setIsAuthenticated] = useState<boolean>(true);
     const [totalItems] = useState<number>(0);
     const [wishlistItems] = useState<number>(0);
@@ -32,6 +33,7 @@ export const NavigationBar: React.FC = () => {
         // Placeholder logout function
         setIsAuthenticated(false);
         setProfileAnchor(null);
+        navigate('/login');
     }
     
     const handleMobileToggle = () => setMobileOpen(!mobileOpen);
