@@ -30,6 +30,7 @@ import AdminUsers from '../pages/Admin/AdminUsers'
 import AdminAccessControl from '../pages/Admin/AdminAccessControl'
 import AddAccessControlUser from '../pages/Admin/AddAccessControlUser'
 import EditAccessControlUser from '../pages/Admin/EditAccessControlUser'
+import AdminLoyalty from '../pages/Admin/AdminLoyalty'
 import NotFoundPage from '../pages/NotFoundPage';
 
 
@@ -174,6 +175,10 @@ export const routes: RouteObject[] = [
       {
         path: 'edit-access-control-user/:userId',
         element: <EditAccessControlUser />,
+      },
+      {
+        path: 'loyalty',
+        element: <AdminLoyalty />,
       },
       {
         path: '*',
