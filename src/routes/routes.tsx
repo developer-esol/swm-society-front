@@ -14,9 +14,11 @@ import LoginPage from '../pages/LoginPage';
 import RegisterPage from '../pages/RegisterPage';
 import CheckoutPage from '../pages/CheckoutPage';
 import ShippingInfoPage from '../pages/ShippingInfoPage';
+import ReturnPolicyPage from '../pages/ReturnPolicyPage';
 import LoyaltyWalletPage from '../pages/LoyaltyWalletPage';
 import YourOrdersPage from '../pages/YourOrdersPage';
 import YourPostsPage from '../pages/YourPostsPage';
+import GoogleAuthCallback from '../pages/GoogleAuthCallback';
 
 
 // Temporary placeholder components - replace with actual imports when components are created
@@ -71,6 +73,10 @@ export const routes: RouteObject[] = [
         element: <LoginPage />,
       },
       {
+        path: 'auth/google/callback',
+        element: <GoogleAuthCallback />,
+      },
+      {
         path: 'register',
         element: <RegisterPage />,
       },
@@ -85,6 +91,10 @@ export const routes: RouteObject[] = [
       {
         path: 'shipping-info',
         element: <ShippingInfoPage />,
+      },
+      {
+        path: 'return-policy',
+        element: <ReturnPolicyPage />,
       },
       {
         path: 'wishlist',

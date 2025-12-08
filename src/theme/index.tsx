@@ -59,6 +59,8 @@ export const colors = {
     shipped: '#f59e0b',          // Amber
     processing: '#3b82f6',       // Blue
     cancelled: '#ef4444',        // Red
+    success: '#10b981',          // Green for eligible
+    error: '#dc2626',            // Red for not eligible
   },
 };
 
