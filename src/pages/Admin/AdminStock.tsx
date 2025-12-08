@@ -1,5 +1,5 @@
-import { Box, Container, Typography } from '@mui/material'
-import { useState, useEffect } from 'react'
+import { Box, Container, Typography, Pagination, Stack } from '@mui/material'
+import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { StockTable, StockTableHeader, StockEditModal } from '../../features/Admin/stock'
 import { useStockStore } from '../../store/useStockStore'
@@ -11,8 +11,10 @@ const AdminStock = () => {
   const { stockItems, initializeStockItems, updateStockItem, deleteStockItem } = useStockStore()
   const [editModalOpen, setEditModalOpen] = useState(false)
   const [selectedItem, setSelectedItem] = useState<StockItem | null>(null)
-  const [displayItems, setDisplayItems] = useState<StockItem[]>(stockItems)
   const [searchQuery, setSearchQuery] = useState('')
+  const [currentPage, setCurrentPage] = useState(1)
+
+  const ITEMS_PER_PAGE = 5
 
   // Initialize stock items on mount
   useEffect(() => {
@@ -21,10 +23,27 @@ const AdminStock = () => {
     }
   }, [initializeStockItems, stockItems.length])
 
-  // Update display items when store items change
-  useEffect(() => {
-    setDisplayItems(stockItems)
-  }, [stockItems])
+  // Filter items based on search query
+  const filteredItems = useMemo(() => {
+    if (!searchQuery.trim()) return stockItems
+    return stockItems.filter(
+      (item) =>
+        item.productName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.color.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.size.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.id.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+  }, [searchQuery, stockItems])
+
+  // Paginate items
+  const totalPages = Math.ceil(filteredItems.length / ITEMS_PER_PAGE)
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE
+  const endIndex = startIndex + ITEMS_PER_PAGE
+  const paginatedItems = filteredItems.slice(startIndex, endIndex)
+
+  const handlePageChange = (_event: React.ChangeEvent<unknown>, page: number) => {
+    setCurrentPage(page)
+  }
 
   const handleEdit = (item: StockItem) => {
     setSelectedItem(item)
@@ -48,18 +67,7 @@ const AdminStock = () => {
 
   const handleSearch = (query: string) => {
     setSearchQuery(query)
-    if (query.trim()) {
-      const filtered = stockItems.filter(
-        (item) =>
-          item.productName.toLowerCase().includes(query.toLowerCase()) ||
-          item.color.toLowerCase().includes(query.toLowerCase()) ||
-          item.size.toLowerCase().includes(query.toLowerCase()) ||
-          item.id.toLowerCase().includes(query.toLowerCase())
-      )
-      setDisplayItems(filtered)
-    } else {
-      setDisplayItems(stockItems)
-    }
+    setCurrentPage(1) // Reset to first page when searching
   }
 
   const handleAddStock = () => {
@@ -91,18 +99,47 @@ const AdminStock = () => {
 
         <StockTableHeader searchQuery={searchQuery} onSearch={handleSearch} onAddStock={handleAddStock} />
 
-        <StockTable items={displayItems} onEdit={handleEdit} onDelete={handleDeleteItem} />
+        <StockTable items={paginatedItems} onEdit={handleEdit} onDelete={handleDeleteItem} />
 
-        <Typography
-          sx={{
-            mt: 3,
-            color: colors.text.secondary,
-            fontSize: '0.875rem',
-            textAlign: 'center',
-          }}
-        >
-          1-05 of 3 products
-        </Typography>
+        {/* Pagination and Info */}
+        {totalPages > 1 && (
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 4 }}>
+            <Typography sx={{ color: colors.text.secondary, fontSize: '0.9rem' }}>
+              {(currentPage - 1) * 5 + 1}-{Math.min(currentPage * 5, filteredItems.length)} of {filteredItems.length} items
+            </Typography>
+            <Stack spacing={2} direction="row">
+              <Pagination
+                count={totalPages}
+                page={currentPage}
+                onChange={handlePageChange}
+                sx={{
+                  '& .MuiPaginationItem-root': {
+                    color: colors.text.primary,
+                    borderColor: colors.border.default,
+                    '&.Mui-selected': {
+                      backgroundColor: '#dc2626',
+                      color: 'white',
+                    },
+                  },
+                }}
+              />
+            </Stack>
+          </Box>
+        )}
+
+        {/* Fallback text when no pagination needed */}
+        {totalPages <= 1 && filteredItems.length > 0 && (
+          <Typography
+            sx={{
+              mt: 3,
+              color: colors.text.secondary,
+              fontSize: '0.875rem',
+              textAlign: 'center',
+            }}
+          >
+            1-{filteredItems.length} of {filteredItems.length} items
+          </Typography>
+        )}
 
         <StockEditModal open={editModalOpen} item={selectedItem} onClose={handleCloseEditModal} onSave={handleSaveEdit} />
       </Container>
