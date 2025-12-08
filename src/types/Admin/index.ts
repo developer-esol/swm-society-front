@@ -3,3 +3,4 @@ export type { DashboardData, StatBox, SalesRevenueData, LocationData, SalesChart
 export type { AdminProduct, AddProductFormData, AddProductPayload } from './products'
 export type { StockItem, AddStockFormData, AddStockPayload } from './stock'
 export type { AdminUser as User } from './users'
+export type { AccessControlUser } from './accessControl'
