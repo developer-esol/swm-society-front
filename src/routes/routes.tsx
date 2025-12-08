@@ -24,6 +24,7 @@ import AdminProducts from '../pages/Admin/AdminProducts'
 import AddProduct from '../pages/Admin/AddProduct'
 import AdminStock from '../pages/Admin/AdminStock'
 import AddStock from '../pages/Admin/AddStock'
+import AdminReviews from '../pages/Admin/AdminReviews'
 import NotFoundPage from '../pages/NotFoundPage';
 
 
@@ -144,6 +145,10 @@ export const routes: RouteObject[] = [
       {
         path: 'add-stock',
         element: <AddStock />,
+      },
+      {
+        path: 'reviews',
+        element: <AdminReviews />,
       },
     ],
   },

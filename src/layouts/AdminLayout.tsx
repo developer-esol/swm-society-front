@@ -1,5 +1,6 @@
-import React from 'react'
-import { Box, useMediaQuery, useTheme } from '@mui/material'
+import React, { useState } from 'react'
+import { Box, useMediaQuery, useTheme, IconButton } from '@mui/material'
+import { ChevronRight as ChevronRightIcon } from '@mui/icons-material'
 import { Outlet, useLocation } from 'react-router-dom'
 import AdminSidebar from '../components/Admin/AdminSidebar'
 import AdminNavbar from '../components/Admin/AdminNavbar'
@@ -13,6 +14,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = () => {
   const theme = useTheme()
   const location = useLocation()
   const isMobile = useMediaQuery(theme.breakpoints.down('md'))
+  const [isCollapsed, setIsCollapsed] = useState(false)
   const DRAWER_WIDTH = 230
 
   // Determine active menu based on current path
@@ -50,12 +52,32 @@ const AdminLayout: React.FC<AdminLayoutProps> = () => {
       <AdminNavbar drawerWidth={DRAWER_WIDTH} />
 
       {/* Main Content with Sidebar */}
-      <Box sx={{ display: 'flex', flex: 1, mt: { xs: '80px', md: '85px' } }}>
-        {/* Sidebar - Hidden on mobile */}
-        {!isMobile && (
+      <Box sx={{ display: 'flex', flex: 1, mt: { xs: '80px', md: '85px' }, position: 'relative' }}>
+        {/* Sidebar - Hidden on mobile or when collapsed */}
+        {!isMobile && !isCollapsed && (
           <Box sx={{ width: DRAWER_WIDTH, flexShrink: 0 }}>
-            <AdminSidebar activeMenu={activeMenu} />
+            <AdminSidebar activeMenu={activeMenu} onCollapseChange={setIsCollapsed} />
           </Box>
+        )}
+
+        {/* Toggle Sidebar Button - Shows when sidebar is collapsed */}
+        {!isMobile && isCollapsed && (
+          <IconButton
+            onClick={() => setIsCollapsed(false)}
+            sx={{
+              position: 'fixed',
+              left: 16,
+              top: { xs: 90, md: 100 },
+              bgcolor: colors.overlay.dark,
+              color: colors.text.secondary,
+              zIndex: 999,
+              '&:hover': {
+                bgcolor: colors.overlay.darkHover,
+              },
+            }}
+          >
+            <ChevronRightIcon />
+          </IconButton>
         )}
 
         {/* Main Content Area */}
@@ -63,7 +85,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = () => {
           component="main"
           sx={{
             flex: 1,
-            width: isMobile ? '100%' : `calc(100% - ${DRAWER_WIDTH}px)`,
+            width: isMobile || isCollapsed ? '100%' : `calc(100% - ${DRAWER_WIDTH}px)`,
             display: 'flex',
             flexDirection: 'column',
           }}
