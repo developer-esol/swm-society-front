@@ -4,3 +4,4 @@ export type { AdminProduct, AddProductFormData, AddProductPayload } from './prod
 export type { StockItem, AddStockFormData, AddStockPayload } from './stock'
 export type { AdminUser as User } from './users'
 export type { AccessControlUser } from './accessControl'
+export type { Role, Permission, PermissionCategory } from './roles'

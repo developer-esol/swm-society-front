@@ -38,10 +38,10 @@ const AccessControlTable = ({ users, onEdit, onDelete }: AccessControlTableProps
         <Table>
           <TableHead>
             <TableRow sx={{ bgcolor: '#d3d3d3' }}>
-              <TableCell sx={{ fontWeight: 700, color: colors.text.primary, fontSize: '0.9rem' }}>
+              <TableCell sx={{ fontWeight: 700, color: colors.text.primary, fontSize: '0.9rem', textAlign: 'left' }}>
                 User
               </TableCell>
-              <TableCell sx={{ fontWeight: 700, color: colors.text.primary, fontSize: '0.9rem' }}>
+              <TableCell sx={{ fontWeight: 700, color: colors.text.primary, fontSize: '0.9rem', textAlign: 'center' }}>
                 Role
               </TableCell>
               <TableCell sx={{ fontWeight: 700, color: colors.text.primary, fontSize: '0.9rem', textAlign: 'center' }}>
@@ -53,7 +53,7 @@ const AccessControlTable = ({ users, onEdit, onDelete }: AccessControlTableProps
             {users.length > 0 ? (
               users.map((user) => (
                 <TableRow key={user.id} sx={{ '&:hover': { bgcolor: colors.background.lighter } }}>
-                  <TableCell sx={{ color: colors.text.primary, fontSize: '0.9rem', lineHeight: 1.43 }}>
+                  <TableCell sx={{ color: colors.text.primary, fontSize: '0.9rem', lineHeight: 1.43, textAlign: 'left' }}>
                     <div>{user.name}</div>
                     <div style={{ color: colors.text.disabled, fontSize: '0.8rem' }}>{user.email}</div>
                   </TableCell>

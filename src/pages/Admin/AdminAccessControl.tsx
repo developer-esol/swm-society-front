@@ -1,8 +1,8 @@
-import { Box, Container, Typography, Button, Pagination, Stack } from '@mui/material'
-import { useState } from 'react'
+import { Box, Container, Typography, Button, Pagination, Stack, CircularProgress } from '@mui/material'
+import { useState, useMemo, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AccessControlTable, AccessControlHeader, EditAccessControlUserModal } from '../../features/Admin/accessControl'
-import { useAccessControl } from '../../hooks/admin'
+import { useAccessControlStore } from '../../store/useAccessControlStore'
 import { colors } from '../../theme'
 import type { AccessControlUser } from '../../types/Admin/accessControl'
 
@@ -10,10 +10,30 @@ const ITEMS_PER_PAGE = 5
 
 const AdminAccessControl = () => {
   const navigate = useNavigate()
-  const { users: filteredUsers, searchQuery, handleSearch, handleDeleteUser, handleUpdateUser } = useAccessControl()
+  const { users, isLoading, loadUsers, deleteUser: deleteUserFromStore, updateUser: updateUserInStore } = useAccessControlStore()
   const [currentPage, setCurrentPage] = useState(1)
   const [editModalOpen, setEditModalOpen] = useState(false)
   const [selectedUser, setSelectedUser] = useState<AccessControlUser | null>(null)
+  const [searchQuery, setSearchQuery] = useState('')
+
+  // Load users on component mount
+  useEffect(() => {
+    loadUsers()
+  }, [loadUsers])
+
+  // Filter users by search query
+  const filteredUsers = useMemo(() => {
+    if (searchQuery.trim() === '') {
+      return users
+    }
+    const lowerQuery = searchQuery.toLowerCase()
+    return users.filter(
+      (user) =>
+        user.name.toLowerCase().includes(lowerQuery) ||
+        user.email.toLowerCase().includes(lowerQuery) ||
+        user.role.toLowerCase().includes(lowerQuery)
+    )
+  }, [searchQuery, users])
 
   // Handle edit user
   const handleEditUser = (user: AccessControlUser) => {
@@ -29,8 +49,18 @@ const AdminAccessControl = () => {
 
   // Handle save edit
   const handleSaveEdit = (updatedUser: AccessControlUser) => {
-    handleUpdateUser(updatedUser)
+    updateUserInStore(updatedUser)
     handleCloseEditModal()
+  }
+
+  // Handle delete user
+  const handleDeleteUser = (userId: string) => {
+    deleteUserFromStore(userId)
+  }
+
+  // Handle search
+  const handleSearch = (query: string) => {
+    setSearchQuery(query)
   }
 
   // Calculate pagination
@@ -88,36 +118,44 @@ const AdminAccessControl = () => {
           onSearch={handleSearch}
         />
 
-        <AccessControlTable
-          users={paginatedUsers}
-          onEdit={handleEditUser}
-          onDelete={handleDeleteUser}
-        />
-
-        {filteredUsers.length > 0 && (
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 3 }}>
-            <Typography sx={{ color: colors.text.secondary, fontSize: '0.9rem' }}>
-              {startIndex + 1}-{Math.min(endIndex, filteredUsers.length)} of {filteredUsers.length} users
-            </Typography>
-            <Stack spacing={2} sx={{ display: 'flex', alignItems: 'center' }}>
-              <Pagination
-                count={totalPages}
-                page={currentPage}
-                onChange={handlePageChange}
-                color="standard"
-                sx={{
-                  '& .MuiPaginationItem-root': {
-                    color: colors.text.primary,
-                    fontSize: '0.9rem'
-                  },
-                  '& .MuiPaginationItem-page.Mui-selected': {
-                    bgcolor: colors.button.primary,
-                    color: 'white'
-                  }
-                }}
-              />
-            </Stack>
+        {isLoading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', py: 10 }}>
+            <CircularProgress />
           </Box>
+        ) : (
+          <>
+            <AccessControlTable
+              users={paginatedUsers}
+              onEdit={handleEditUser}
+              onDelete={handleDeleteUser}
+            />
+
+            {filteredUsers.length > 0 && (
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 3 }}>
+                <Typography sx={{ color: colors.text.secondary, fontSize: '0.9rem' }}>
+                  {startIndex + 1}-{Math.min(endIndex, filteredUsers.length)} of {filteredUsers.length} users
+                </Typography>
+                <Stack spacing={2} sx={{ display: 'flex', alignItems: 'center' }}>
+                  <Pagination
+                    count={totalPages}
+                    page={currentPage}
+                    onChange={handlePageChange}
+                    color="standard"
+                    sx={{
+                      '& .MuiPaginationItem-root': {
+                        color: colors.text.primary,
+                        fontSize: '0.9rem'
+                      },
+                      '& .MuiPaginationItem-page.Mui-selected': {
+                        bgcolor: colors.button.primary,
+                        color: 'white'
+                      }
+                    }}
+                  />
+                </Stack>
+              </Box>
+            )}
+          </>
         )}
       </Container>
 

@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom'
 import { useFormik } from 'formik'
 import * as Yup from 'yup'
 import { colors } from '../../theme'
-import { accessControlService } from '../../api/services/admin/accessControlService'
+import { useAccessControlStore } from '../../store/useAccessControlStore'
 import type { AddAccessControlUserFormData, AccessControlUser } from '../../types/Admin/accessControl'
 
 // Validation Schema
@@ -67,6 +67,7 @@ const selectSx = {
 
 const AddAccessControlUser: React.FC = () => {
   const navigate = useNavigate()
+  const { addUser } = useAccessControlStore()
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
@@ -83,9 +84,6 @@ const AddAccessControlUser: React.FC = () => {
     onSubmit: async (values) => {
       setSubmitError(null)
       try {
-        // Simulate API call delay
-        await new Promise((resolve) => setTimeout(resolve, 500))
-
         // Create new user
         const maxId = 999
         const newUser: AccessControlUser = {
@@ -95,9 +93,9 @@ const AddAccessControlUser: React.FC = () => {
           role: values.role,
         }
 
-        // Add to service
-        const createdUser = await accessControlService.addUser(newUser)
-        console.log('User added:', createdUser)
+        // Add to store (which refreshes the list)
+        await addUser(newUser)
+        console.log('User added:', newUser)
 
         // Clear form automatically
         formik.resetForm()
