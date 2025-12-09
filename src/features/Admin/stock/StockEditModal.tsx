@@ -1,26 +1,35 @@
-import { Dialog, DialogTitle, DialogContent, Box, TextField, Button, FormControl, InputLabel, Select, MenuItem } from '@mui/material'
+import { Dialog, DialogTitle, DialogContent, Box, TextField, Button, FormControl, InputLabel, Select, MenuItem, Alert } from '@mui/material'
 import type { SelectChangeEvent } from '@mui/material'
 import { useState } from 'react'
 import { colors } from '../../../theme'
 import type { StockItem } from '../../../types/Admin'
+import { stockService } from '../../../api/services/stockService'
+import type { CreateStockData } from '../../../types/product'
 
-// Mock data for colors and sizes
-const COLORS = ['Red', 'Blue', 'Green', 'Black', 'White', 'Yellow', 'Purple', 'Orange']
+// Mock data for sizes
 const SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL']
+const HARDCODED_IMAGE_URL = 'https://example.com/stock-image.jpg'
 
 interface StockEditModalProps {
   open: boolean
   item: StockItem | null
   onClose: () => void
   onSave: (item: StockItem) => void
+  originalStock?: { productId: string } // Add originalStock prop to get the real productId
 }
 
-const StockEditModal = ({ open, item, onClose, onSave }: StockEditModalProps) => {
+const StockEditModal = ({ open, item, onClose, onSave, originalStock }: StockEditModalProps) => {
   const [formData, setFormData] = useState<StockItem | null>(item)
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState<string | null>(null)
 
   // Update formData when item changes
   if (item && (!formData || formData.id !== item.id)) {
-    setFormData(item)
+    setFormData({
+      ...item,
+      imageUrl: HARDCODED_IMAGE_URL // Use hardcoded URL like product edit page
+    })
   }
 
   if (!formData) return null
@@ -59,22 +68,103 @@ const StockEditModal = ({ open, item, onClose, onSave }: StockEditModalProps) =>
   }
 
   const handleTextChange = (field: keyof StockItem) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setFormData({
-      ...formData,
-      [field]: field === 'quantity' || field === 'price' ? Number(e.target.value) : e.target.value,
-    })
+    // Clear error when user starts typing
+    if (error) setError(null)
+    
+    const value = e.target.value
+    
+    if (field === 'quantity') {
+      const numValue = value === '' ? 0 : parseInt(value) || 0
+      setFormData({
+        ...formData,
+        [field]: Math.max(0, numValue), // Ensure quantity is never negative
+      })
+    } else if (field === 'price') {
+      const numValue = value === '' ? 0 : parseFloat(value) || 0
+      setFormData({
+        ...formData,
+        [field]: Math.max(0, Math.round(numValue * 100) / 100), // Ensure price is never negative and round to 2 decimal places
+      })
+    } else {
+      setFormData({
+        ...formData,
+        [field]: value,
+      })
+    }
   }
 
   const handleSelectChange = (field: keyof StockItem) => (e: SelectChangeEvent<string>) => {
+    // Clear error when user makes a selection
+    if (error) setError(null)
+    
     setFormData({
       ...formData,
       [field]: e.target.value,
     })
   }
 
-  const handleSave = () => {
-    onSave(formData)
-    onClose()
+  const handleSave = async () => {
+    if (!formData) return
+    
+    // Validate required fields and constraints
+    if (!formData.productName.trim()) {
+      setError('Product name is required')
+      return
+    }
+    
+    if (!formData.size.trim()) {
+      setError('Size is required')
+      return
+    }
+    
+    if (!formData.color.trim()) {
+      setError('Color is required')
+      return
+    }
+    
+    if (formData.quantity <= 0) {
+      setError('Quantity must be greater than 0')
+      return
+    }
+    
+    if (formData.price <= 0) {
+      setError('Price must be greater than 0')
+      return
+    }
+    
+    try {
+      setIsLoading(true)
+      setError(null)
+      setSuccess(null)
+      
+      // Map StockItem to CreateStockData format for API
+      const updateData: Partial<CreateStockData> = {
+        productId: originalStock?.productId || formData.itemId, // Use correct productId from originalStock
+        size: formData.size,
+        color: formData.color,
+        quantity: Math.floor(formData.quantity), // Ensure quantity is an integer
+        price: Math.round(formData.price * 100) / 100, // Round to 2 decimal places
+        imageUrl: formData.imageUrl
+      }
+      
+      await stockService.updateStock(formData.id, updateData)
+      
+      setSuccess('Stock item updated successfully!')
+      onSave(formData)
+      
+      // Close modal after short delay
+      setTimeout(() => {
+        onClose()
+        setSuccess(null)
+      }, 1500)
+      
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to update stock. Please try again.'
+      setError(errorMessage)
+      console.error('Error updating stock:', error)
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const handleCancel = () => {
@@ -107,6 +197,20 @@ const StockEditModal = ({ open, item, onClose, onSave }: StockEditModalProps) =>
         Edit Stock Item
       </DialogTitle>
       <DialogContent sx={{ pt: 4 }}>
+        {/* Success Alert */}
+        {success && (
+          <Alert severity="success" sx={{ mb: 2 }}>
+            {success}
+          </Alert>
+        )}
+        
+        {/* Error Alert */}
+        {error && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {error}
+          </Alert>
+        )}
+        
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, pt: 1.5 }}>
           {/* Product Name */}
           <Box>
@@ -121,26 +225,17 @@ const StockEditModal = ({ open, item, onClose, onSave }: StockEditModalProps) =>
             />
           </Box>
 
-          {/* Color Dropdown */}
+          {/* Color */}
           <Box>
-            <FormControl fullWidth size="small">
-              <InputLabel>Color</InputLabel>
-              <Select
-                value={formData.color}
-                onChange={handleSelectChange('color')}
-                label="Color"
-                sx={selectSx}
-              >
-                <MenuItem value="">
-                  <em>Select Color</em>
-                </MenuItem>
-                {COLORS.map((color) => (
-                  <MenuItem key={color} value={color}>
-                    {color}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+            <TextField
+              label="Color"
+              value={formData.color}
+              onChange={handleTextChange('color')}
+              fullWidth
+              size="small"
+              variant="outlined"
+              sx={textFieldStyles}
+            />
           </Box>
 
           {/* Size Dropdown */}
@@ -193,6 +288,20 @@ const StockEditModal = ({ open, item, onClose, onSave }: StockEditModalProps) =>
             />
           </Box>
 
+          {/* Image URL */}
+          <Box>
+            <TextField
+              label="Image URL"
+              value={formData.imageUrl}
+              fullWidth
+              size="small"
+              variant="outlined"
+              disabled
+              helperText="Image URL is currently hardcoded"
+              sx={textFieldStyles}
+            />
+          </Box>
+
           <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end', mt: 3, pt: 2, borderTop: `1px solid ${colors.border.default}` }}>
             <Button
               variant="outlined"
@@ -213,6 +322,7 @@ const StockEditModal = ({ open, item, onClose, onSave }: StockEditModalProps) =>
             <Button
               variant="contained"
               onClick={handleSave}
+              disabled={isLoading}
               sx={{
                 backgroundColor: colors.button.primary,
                 color: colors.text.secondary,
@@ -221,9 +331,12 @@ const StockEditModal = ({ open, item, onClose, onSave }: StockEditModalProps) =>
                 '&:hover': {
                   backgroundColor: colors.button.primaryHover,
                 },
+                '&:disabled': {
+                  backgroundColor: colors.border.default,
+                },
               }}
             >
-              Save
+              {isLoading ? 'Saving...' : 'Save'}
             </Button>
           </Box>
         </Box>

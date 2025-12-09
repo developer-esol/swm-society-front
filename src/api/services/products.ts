@@ -9,16 +9,23 @@ import { thomasMushetProductService } from './thomasMushetService';
 export const productsService = {
   // READ operations
   async getProducts(filters?: ProductFilters): Promise<Product[]> {
-    // For demo purposes, combine all product services
     try {
-      const hmvProducts = await hmvProductService.getProducts(filters);
-      const projectZeroProducts = await projectZeroProductService.getProducts();
-      const thomasMushetProducts = await thomasMushetProductService.getProducts(filters);
-      
-      return [...hmvProducts, ...projectZeroProducts, ...thomasMushetProducts];
+      // Fetch from actual database API
+      const response = await apiClient.get<Product[]>('/products');
+      return response;
     } catch (error) {
-      console.error('Error fetching products:', error);
-      return [];
+      console.error('Error fetching products from database:', error);
+      // Fallback to demo data if database is unavailable
+      try {
+        const hmvProducts = await hmvProductService.getProducts(filters);
+        const projectZeroProducts = await projectZeroProductService.getProducts();
+        const thomasMushetProducts = await thomasMushetProductService.getProducts(filters);
+        
+        return [...hmvProducts, ...projectZeroProducts, ...thomasMushetProducts];
+      } catch (fallbackError) {
+        console.error('Error fetching fallback products:', fallbackError);
+        return [];
+      }
     }
   },
 

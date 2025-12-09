@@ -1,27 +1,48 @@
-import { Box, Container, Typography, Pagination, Stack } from '@mui/material'
-import { useState, useEffect, useMemo } from 'react'
+import { Box, Container, Typography, Pagination, Stack, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Button } from '@mui/material'
+import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { StockTable, StockTableHeader, StockEditModal } from '../../features/Admin/stock'
-import { useStockStore } from '../../store/useStockStore'
+import { useAllStocks, useAllProducts, useUpdateStock, useDeleteStock } from '../../hooks/useStock'
 import { colors } from '../../theme'
 import type { StockItem } from '../../types/Admin'
 
 const AdminStock = () => {
   const navigate = useNavigate()
-  const { stockItems, initializeStockItems, updateStockItem, deleteStockItem } = useStockStore()
+  const { data: stocks = [] } = useAllStocks()
+  const { data: products = [] } = useAllProducts()
+  const updateStockMutation = useUpdateStock()
+  const deleteStockMutation = useDeleteStock()
   const [editModalOpen, setEditModalOpen] = useState(false)
   const [selectedItem, setSelectedItem] = useState<StockItem | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
+  const [deleteConfirm, setDeleteConfirm] = useState<{ open: boolean; stockId: string; stockName: string }>({ 
+    open: false, 
+    stockId: '', 
+    stockName: '' 
+  })
+  const [isDeleting, setIsDeleting] = useState(false)
 
   const ITEMS_PER_PAGE = 5
 
-  // Initialize stock items on mount
-  useEffect(() => {
-    if (stockItems.length === 0) {
-      initializeStockItems()
-    }
-  }, [initializeStockItems, stockItems.length])
+  // Transform stocks data to include product names and match StockItem interface
+  const stockItems = useMemo(() => {
+    if (!stocks || !products) return []
+    
+    return stocks.map(stock => {
+      const product = products.find(p => p.id === stock.productId)
+      return {
+        id: stock.id,
+        itemId: stock.id, // Use same ID for itemId
+        productName: product?.name || 'Unknown Product',
+        color: stock.color,
+        size: stock.size,
+        quantity: stock.quantity,
+        price: stock.price,
+        imageUrl: stock.imageUrl || '' // Stock type uses 'imageUrl' field
+      }
+    })
+  }, [stocks, products])
 
   // Filter items based on search query
   const filteredItems = useMemo(() => {
@@ -45,9 +66,13 @@ const AdminStock = () => {
     setCurrentPage(page)
   }
 
-  const handleEdit = (item: StockItem) => {
-    setSelectedItem(item)
-    setEditModalOpen(true)
+  const handleSearch = (query: string) => {
+    setSearchQuery(query)
+    setCurrentPage(1)
+  }
+
+  const handleAddStock = () => {
+    navigate('/admin/add-stock')
   }
 
   const handleCloseEditModal = () => {
@@ -55,23 +80,58 @@ const AdminStock = () => {
     setSelectedItem(null)
   }
 
-  const handleSaveEdit = (updatedItem: StockItem) => {
-    updateStockItem(updatedItem)
-    setEditModalOpen(false)
-    setSelectedItem(null)
+  const handleSaveEdit = async (updatedItem: StockItem) => {
+    try {
+      // Find the original stock to get the productId for the update
+      const originalStock = stocks.find(s => s.id === updatedItem.id)
+      if (originalStock) {
+        await updateStockMutation.mutateAsync({
+          id: updatedItem.id,
+          data: {
+            productId: originalStock.productId,
+            color: updatedItem.color,
+            size: updatedItem.size,
+            quantity: updatedItem.quantity,
+            price: updatedItem.price
+            // Don't send imageUrl - API doesn't expect it and it will be preserved automatically
+          }
+        })
+      }
+      setEditModalOpen(false)
+      setSelectedItem(null)
+    } catch (error) {
+      console.error('Failed to update stock:', error)
+    }
   }
 
-  const handleDeleteItem = (id: string) => {
-    deleteStockItem(id)
+  const handleEdit = (item: StockItem) => {
+    setSelectedItem(item)
+    setEditModalOpen(true)
   }
 
-  const handleSearch = (query: string) => {
-    setSearchQuery(query)
-    setCurrentPage(1) // Reset to first page when searching
+  const handleDelete = (id: string) => {
+    const stockItem = stockItems.find(item => item.id === id)
+    setDeleteConfirm({
+      open: true,
+      stockId: id,
+      stockName: stockItem ? `${stockItem.productName} (${stockItem.size}, ${stockItem.color})` : 'this stock item'
+    })
   }
 
-  const handleAddStock = () => {
-    navigate('/admin/add-stock')
+  const confirmDelete = async () => {
+    setIsDeleting(true)
+    try {
+      await deleteStockMutation.mutateAsync(deleteConfirm.stockId)
+      setDeleteConfirm({ open: false, stockId: '', stockName: '' })
+    } catch (error) {
+      console.error('Failed to delete stock:', error)
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
+  const cancelDelete = () => {
+    setDeleteConfirm({ open: false, stockId: '', stockName: '' })
   }
 
   return (
@@ -98,8 +158,7 @@ const AdminStock = () => {
         </Typography>
 
         <StockTableHeader searchQuery={searchQuery} onSearch={handleSearch} onAddStock={handleAddStock} />
-
-        <StockTable items={paginatedItems} onEdit={handleEdit} onDelete={handleDeleteItem} />
+        <StockTable items={paginatedItems} onEdit={handleEdit} onDelete={handleDelete} />
 
         {/* Pagination and Info */}
         {totalPages > 1 && (
@@ -141,7 +200,76 @@ const AdminStock = () => {
           </Typography>
         )}
 
-        <StockEditModal open={editModalOpen} item={selectedItem} onClose={handleCloseEditModal} onSave={handleSaveEdit} />
+        <StockEditModal 
+          open={editModalOpen} 
+          item={selectedItem} 
+          onClose={handleCloseEditModal} 
+          onSave={handleSaveEdit}
+          originalStock={selectedItem ? stocks.find(s => s.id === selectedItem.id) : undefined}
+        />
+
+        {/* Delete Confirmation Dialog */}
+        <Dialog
+          open={deleteConfirm.open}
+          onClose={cancelDelete}
+          maxWidth="sm"
+          fullWidth
+          PaperProps={{
+            sx: {
+              borderRadius: '8px',
+              boxShadow: '0 8px 32px rgba(205, 159, 159, 0.12)',
+            },
+          }}
+        >
+          <DialogTitle 
+            sx={{ 
+              fontWeight: 700, 
+              color: colors.text.primary,
+              fontSize: '1.2rem',
+              pb: 1,
+            }}
+          >
+            Confirm Delete
+          </DialogTitle>
+          <DialogContent>
+            <DialogContentText sx={{ color: colors.text.primary, fontSize: '1rem' }}>
+              Are you sure you want to delete "{deleteConfirm.stockName}"? This action cannot be undone.
+            </DialogContentText>
+          </DialogContent>
+          <DialogActions sx={{ p: 3, gap: 1 }}>
+            <Button
+              onClick={cancelDelete}
+              variant="outlined"
+              sx={{
+                borderColor: colors.border.default,
+                color: colors.text.primary,
+                '&:hover': {
+                  backgroundColor: colors.background.lighter,
+                  borderColor: colors.border.default,
+                },
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={confirmDelete}
+              variant="contained"
+              disabled={isDeleting}
+              sx={{
+                backgroundColor: '#dc2626',
+                color: 'white',
+                '&:hover': {
+                  backgroundColor: '#b91c1c',
+                },
+                '&:disabled': {
+                  backgroundColor: '#9ca3af',
+                },
+              }}
+            >
+              {isDeleting ? 'Deleting...' : 'Delete'}
+            </Button>
+          </DialogActions>
+        </Dialog>
       </Container>
     </Box>
   )

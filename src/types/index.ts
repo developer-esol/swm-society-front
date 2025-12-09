@@ -5,6 +5,7 @@ export type {
   CreateProductData, 
   UpdateProductData, 
   Stock,
+  CreateStockData,
   ProductDetailsResponse
 } from './product';
 export type { Review, ReviewInput, ReviewsResponse, CreateReviewData, UpdateReviewData } from './review';
