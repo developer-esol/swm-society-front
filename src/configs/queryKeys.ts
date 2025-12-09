@@ -5,6 +5,7 @@ export const QUERY_KEYS = {
   // Products
   products: {
     all: ['products'] as const,
+    admin: ['products', 'admin'] as const,
     herMyVoice: ['herMyVoice'] as const,
     projectZero: ['projectZero'] as const,
     thomasMushet: ['thomasMushet'] as const,

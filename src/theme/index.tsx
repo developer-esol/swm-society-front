@@ -72,6 +72,16 @@ export const colors = {
     tertiary: '#10b981',         // Returned - Green
     quaternary: '#f59e0b',       // Failed - Amber
   },
+  // Menu/Dropdown Colors
+  menu: {
+    background: '#ffffff',
+    text: '#000000',
+    textSecondary: '#666666',
+    hover: '#f1dedeff',
+    selected: '#c8cbceff',
+    selectedHover: '#aab5beff',
+    border: '#b9babdff',
+  },
 };
 
 export const theme = createTheme({
@@ -131,6 +141,36 @@ export const theme = createTheme({
           },
         },
       ],
+    },
+    MuiMenu: {
+      styleOverrides: {
+        paper: {
+          backgroundColor: colors.menu.background,
+          border: `1px solid ${colors.menu.border}`,
+          boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+        },
+      },
+    },
+    MuiMenuItem: {
+      styleOverrides: {
+        root: {
+          color: colors.menu.text,
+          '&:hover': {
+            backgroundColor: colors.menu.hover,
+            color: colors.menu.text,
+          },
+          '&.Mui-selected': {
+            backgroundColor: colors.menu.selected,
+            color: colors.menu.text,
+            '&:hover': {
+              backgroundColor: colors.menu.selectedHover,
+            },
+          },
+          '& em': {
+            color: colors.menu.textSecondary,
+          },
+        },
+      },
     },
   },
 });

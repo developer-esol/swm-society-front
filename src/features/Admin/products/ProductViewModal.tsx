@@ -1,9 +1,17 @@
 import { Dialog, DialogTitle, DialogContent, Box, TextField, Button } from '@mui/material'
 import { colors } from '../../../theme'
 import type { AdminProduct } from '../../../types/Admin'
+import { useBrands } from '../../../hooks/useBrands'
 
 const ProductViewModal = ({ open, product, onClose }: { open: boolean; product: AdminProduct | null; onClose: () => void }) => {
+  const { data: brands = [] } = useBrands()
+  
   if (!product) return null
+
+  const getBrandName = (brandId: string | number) => {
+    const brand = brands.find(b => b.id === brandId.toString() || b.id === brandId)
+    return brand?.brandName || brand?.name || `Brand ID: ${brandId}`
+  }
 
   const textFieldStyles = {
     '& .MuiOutlinedInput-root': {
@@ -55,7 +63,7 @@ const ProductViewModal = ({ open, product, onClose }: { open: boolean; product: 
           <Box>
             <TextField
               label="Brand Name"
-              value={product.brandName}
+              value={getBrandName(product.brandId)}
               disabled
               fullWidth
               size="small"

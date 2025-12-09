@@ -14,6 +14,7 @@ import {
 import { Visibility as ViewIcon, Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material'
 import { colors } from '../../../theme'
 import type { AdminProduct } from '../../../types/Admin'
+import { useBrands } from '../../../hooks/useBrands'
 
 interface ProductsTableProps {
   products: AdminProduct[]
@@ -23,6 +24,14 @@ interface ProductsTableProps {
 }
 
 const ProductsTable = ({ products, onView, onEdit, onDelete }: ProductsTableProps) => {
+  const { data: brands = [] } = useBrands()
+
+  const getBrandName = (brandId: string | number) => {
+    const brand = brands.find(b => b.id === brandId.toString() || b.id === brandId)
+    // Try different possible field names from backend
+    return brand?.brandName || brand?.name || `Brand ID: ${brandId}`
+  }
+
   return (
     <Paper sx={{ bgcolor: colors.background.default, border: `1px solid ${colors.border.default}` }}>
       <TableContainer>
@@ -39,10 +48,10 @@ const ProductsTable = ({ products, onView, onEdit, onDelete }: ProductsTableProp
                 Description
               </TableCell>
               <TableCell sx={{ fontWeight: 700, color: colors.text.primary, fontSize: '0.9rem' }}>
-                Brand ID
+                Brand Name
               </TableCell>
               <TableCell sx={{ fontWeight: 700, color: colors.text.primary, fontSize: '0.9rem' }}>
-                Delivery
+                Delivery Method
               </TableCell>
               <TableCell sx={{ fontWeight: 700, color: colors.text.primary, fontSize: '0.9rem', textAlign: 'center' }}>
                 Action
@@ -63,7 +72,7 @@ const ProductsTable = ({ products, onView, onEdit, onDelete }: ProductsTableProp
                     {product.description}
                   </TableCell>
                   <TableCell sx={{ color: colors.text.primary, fontSize: '0.9rem' }}>
-                    {product.brandId}
+                    {getBrandName(product.brandId)}
                   </TableCell>
                   <TableCell sx={{ color: colors.text.primary, fontSize: '0.9rem' }}>
                     {product.deliveryMethod}
