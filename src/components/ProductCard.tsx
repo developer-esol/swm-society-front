@@ -53,19 +53,40 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         >
           {product.name}
         </Typography>
-        
-        <Box sx={{ mb: 1 }}>
-          <Chip
-            label={product.brandName}
-            size="small"
+
+        {product.description && (
+          <Typography
+            variant="body2"
             sx={{
               fontSize: '0.75rem',
-              height: 20,
-              bgcolor: 'grey.100',
-              color: 'grey.700',
+              color: 'grey.600',
+              mb: 1,
+              lineHeight: 1.3,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              display: '-webkit-box',
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: 'vertical',
             }}
-          />
-        </Box>
+          >
+            {product.description}
+          </Typography>
+        )}
+        
+        {product.brandName && (
+          <Box sx={{ mb: 1 }}>
+            <Chip
+              label={product.brandName}
+              size="small"
+              sx={{
+                fontSize: '0.80rem',
+                height: 20,
+                bgcolor: 'grey.100',
+                color: 'grey.700',
+              }}
+            />
+          </Box>
+        )}
 
         <Typography
           variant="h6"

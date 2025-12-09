@@ -1,53 +1,69 @@
 import { apiClient } from '../apiClient';
-import type { Product, ProductFilters, CreateProductData, UpdateProductData, CreateProductResponse } from '../../types';
-
-// Import the individual product services for demo data
-import { hmvProductService } from './hmvProductsService';
-import { projectZeroProductService } from './projectZeroProductService';
-import { thomasMushetProductService } from './thomasMushetService';
+import type { Product, ProductFilters, CreateProductData, UpdateProductData } from '../../types';
 
 export const productsService = {
   // READ operations
   async getProducts(filters?: ProductFilters): Promise<Product[]> {
-    try {
-      // Fetch from actual database API
-      const response = await apiClient.get<Product[]>('/products');
-      return response;
-    } catch (error) {
-      console.error('Error fetching products from database:', error);
-      // Fallback to demo data if database is unavailable
-      try {
-        const hmvProducts = await hmvProductService.getProducts(filters);
-        const projectZeroProducts = await projectZeroProductService.getProducts();
-        const thomasMushetProducts = await thomasMushetProductService.getProducts(filters);
-        
-        return [...hmvProducts, ...projectZeroProducts, ...thomasMushetProducts];
-      } catch (fallbackError) {
-        console.error('Error fetching fallback products:', fallbackError);
-        return [];
-      }
-    }
+    console.log('Fetching all products from database API');
+    // Fetch from actual database API only
+    return await apiClient.get<Product[]>('/products');
   },
 
   async getProductById(id: string): Promise<Product> {
-    // Try to find the product in all services
-    try {
-      const allProducts = await this.getProducts();
-      const product = allProducts.find(p => p.id === id);
-      
-      if (!product) {
-        throw new Error(`Product with id ${id} not found`);
-      }
-      
-      return product;
-    } catch (error) {
-      console.error('Error fetching product by id:', error);
-      throw error;
-    }
+    console.log('Fetching product by ID from database API:', id);
+    // Get the specific product from API only
+    return await apiClient.get<Product>(`/products/${id}`);
   },
 
   async getProductsByCollection(collection: string): Promise<Product[]> {
-    return apiClient.get<Product[]>('/products', { collection });
+    console.log('Fetching products by brand from database API:', collection);
+    
+    try {
+      // First get all products and brands
+      const allProducts = await apiClient.get<Product[]>('/products');
+      console.log('All products fetched:', allProducts.length);
+      console.log('Sample product:', allProducts[0]);
+      
+      if (!collection) {
+        return allProducts;
+      }
+      
+      // Get brands from database
+      const brands = await apiClient.get<Brand[]>('/brands');
+      console.log('All brands fetched:', brands);
+      
+      // Find the brand that matches the collection name
+      // Based on your database, brands have a 'name' field, not 'brandName'
+      const matchingBrand = brands.find(brand => {
+        const brandName = brand.name || brand.brandName || '';
+        const matches = brandName.toLowerCase().trim() === collection.toLowerCase().trim();
+        console.log(`Comparing brand "${brandName}" with "${collection}": ${matches}`);
+        return matches;
+      });
+      
+      if (!matchingBrand) {
+        console.log(`No brand found for collection: ${collection}`);
+        console.log('Available brands:', brands.map(b => b.name || b.brandName));
+        return [];
+      }
+      
+      console.log('Matching brand found:', matchingBrand);
+      const brandId = matchingBrand.id;
+      
+      // Filter products by brandId
+      const filteredProducts = allProducts.filter(product => {
+        const matches = product.brandId === brandId;
+        console.log(`Product "${product.name}" (brandId: ${product.brandId}) matches brandId "${brandId}": ${matches}`);
+        return matches;
+      });
+      
+      console.log(`Found ${filteredProducts.length} products for brand "${collection}" (brandId: ${brandId})`);
+      return filteredProducts;
+      
+    } catch (error) {
+      console.error('Error fetching products by collection:', error);
+      return [];
+    }
   },
 
   async getProductsByBrand(brandId: string): Promise<Product[]> {

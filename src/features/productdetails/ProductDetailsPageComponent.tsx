@@ -17,7 +17,7 @@ import {
 import { useStocks, useProduct } from '../../hooks/useStock';
 import { useWishlist } from '../../hooks/useWishlist';
 import { cartService } from '../../api/services/cartService';
-import { projectZeroProductService } from '../../api/services/projectZeroProductService';
+import { productsService } from '../../api/services/products';
 import { reviewService } from '../../api/services/reviewService';
 
 import type { Stock, Product } from '../../types/product';
@@ -77,11 +77,12 @@ export const ProductDetailsPageComponent: React.FC<ProductDetailsPageComponentPr
   useEffect(() => {
     const loadProductData = async () => {
       try {
-        const products = await projectZeroProductService.getProducts();
-        const currentProduct = products.find((p) => p.id === productId);
+        console.log('Loading product details for ID:', productId);
+        const currentProduct = await productsService.getProductById(productId);
         if (currentProduct) {
           setProductData(currentProduct);
           setDisplayImage(currentProduct.image || '');
+          console.log('Product loaded successfully:', currentProduct.name);
         }
       } catch (error) {
         console.error('Failed to load product data:', error);

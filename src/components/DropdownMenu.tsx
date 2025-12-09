@@ -47,6 +47,10 @@ export const DropdownMenu: React.FC<DropdownMenuProps> = ({ label, items }) => {
               color: 'white',
               '& .MuiMenuItem-root': {
                 fontSize: '1rem',
+                color: 'white',
+                '&:hover': {
+                  bgcolor: 'rgba(255, 255, 255, 0.21)',
+                }
               }
             }
           }
