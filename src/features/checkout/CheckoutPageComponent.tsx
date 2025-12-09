@@ -29,7 +29,7 @@ const CheckoutPageComponent: React.FC = () => {
   const cartItems = cart.items;
 
   // Calculate totals
-  const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  const subtotal = cartItems.reduce((sum, item) => sum + (Number(item.price) * item.quantity), 0);
   const shipping = 4.99;
   const total = subtotal + shipping;
 

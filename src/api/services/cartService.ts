@@ -96,7 +96,7 @@ export const cartService = {
    */
   getCartTotal(): number {
     const cart = this.getCart();
-    return cart.items.reduce((total: number, item: CartItem) => total + (item.price * item.quantity), 0);
+    return cart.items.reduce((total: number, item: CartItem) => total + (Number(item.price) * item.quantity), 0);
   },
 };
 

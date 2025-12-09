@@ -81,7 +81,7 @@ export const ProductDetailsPageComponent: React.FC<ProductDetailsPageComponentPr
         const currentProduct = await productsService.getProductById(productId);
         if (currentProduct) {
           setProductData(currentProduct);
-          setDisplayImage(currentProduct.image || '');
+          setDisplayImage(currentProduct.image || currentProduct.imageUrl || '');
           console.log('Product loaded successfully:', currentProduct.name);
         }
       } catch (error) {
@@ -369,7 +369,7 @@ export const ProductDetailsPageComponent: React.FC<ProductDetailsPageComponentPr
                     .filter((s: Stock) => s.isActive && s.quantity > 0)
                     .map((stock: Stock) => (
                       <Typography key={stock.id} variant="caption" sx={{ color: colors.text.gray }}>
-                        {stock.size} - {stock.color}: {stock.quantity} available (£{stock.price.toFixed(2)})
+                        {stock.size} - {stock.color}: {stock.quantity} available (£{Number(stock.price).toFixed(2)})
                       </Typography>
                     ))}
                 </Box>

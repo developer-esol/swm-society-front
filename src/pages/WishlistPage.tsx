@@ -136,7 +136,7 @@ const WishlistPage: React.FC = () => {
         return total;
       }
       const qty = quantities[item.stockId] || 1;
-      return total + (item.price * qty);
+      return total + (Number(item.price) * qty);
     }, 0);
   };
 

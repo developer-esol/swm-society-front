@@ -55,13 +55,13 @@ const TopSellingProducts = ({ products }: TopSellingProductsProps) => {
                   {product.name}
                 </TableCell>
                 <TableCell align="right" sx={{ color: colors.text.primary, fontSize: '0.9rem', fontWeight: 500 }}>
-                  ${product.price.toFixed(2)}
+                  ${Number(product.price).toFixed(2)}
                 </TableCell>
                 <TableCell align="right" sx={{ color: colors.text.primary, fontSize: '0.9rem', fontWeight: 500 }}>
                   {product.quantity}
                 </TableCell>
                 <TableCell align="right" sx={{ color: colors.text.primary, fontSize: '0.9rem', fontWeight: 600 }}>
-                  ${product.amount.toFixed(2)}
+                  ${Number(product.amount).toFixed(2)}
                 </TableCell>
               </TableRow>
             ))}

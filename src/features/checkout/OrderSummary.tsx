@@ -36,11 +36,11 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
                 {item.productName}
               </Typography>
               <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                £{(item.price * item.quantity).toFixed(2)}
+                £{(Number(item.price) * item.quantity).toFixed(2)}
               </Typography>
             </Box>
             <Typography variant="caption" sx={{ color: colors.text.disabled }}>
-              Qty: {item.quantity} × £{item.price.toFixed(2)}
+              Qty: {item.quantity} × £{Number(item.price).toFixed(2)}
             </Typography>
             {item.color && (
               <Typography variant="caption" sx={{ color: 'grey.600', display: 'block' }}>

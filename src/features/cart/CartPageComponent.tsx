@@ -61,7 +61,7 @@ export const CartPageComponent: React.FC = () => {
   const calculateTotal = () => {
     return cartItems.reduce((total, item) => {
       const qty = quantities[item.stockId] || 1;
-      return total + (item.price * qty);
+      return total + (Number(item.price) * qty);
     }, 0);
   };
 

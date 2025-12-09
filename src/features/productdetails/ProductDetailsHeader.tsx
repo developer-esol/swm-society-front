@@ -67,7 +67,7 @@ export const ProductDetailsHeader: React.FC<ProductDetailsHeaderProps> = ({
           fontSize: '1.875rem',
         }}
       >
-        £{product?.price?.toFixed(2)}
+        £{product?.price ? Number(product.price).toFixed(2) : '0.00'}
       </Typography>
 
       {/* Description */}

@@ -138,7 +138,7 @@ const WishlistCard: React.FC<WishlistCardProps> = ({
               fontSize: '0.9rem',
             }}
           >
-            £{item.price.toFixed(2)}
+            £{Number(item.price).toFixed(2)}
           </Typography>
         )}
 
@@ -222,7 +222,7 @@ const WishlistCard: React.FC<WishlistCardProps> = ({
             </Typography>
           )}
           <Typography sx={{ fontWeight: 700, color: isOutOfStock ? '#ccc' : colors.button.primary, fontSize: '1.1rem' }}>
-            £{(item.price * localQuantity).toFixed(2)}
+            £{(Number(item.price) * localQuantity).toFixed(2)}
           </Typography>
         </Box>
       </Box>

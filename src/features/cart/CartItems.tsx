@@ -125,7 +125,7 @@ export const CartItems: React.FC<CartItemsProps> = ({
           {/* Price */}
           <Box sx={{ textAlign: 'center' }}>
             <Typography sx={{ fontWeight: 600, color: colors.text.primary, fontSize: '0.9rem' }}>
-              £{item.price.toFixed(2)}
+              £{Number(item.price).toFixed(2)}
             </Typography>
           </Box>
 
@@ -167,7 +167,7 @@ export const CartItems: React.FC<CartItemsProps> = ({
           {/* Total */}
           <Box sx={{ textAlign: 'right' }}>
             <Typography sx={{ fontWeight: 700, color: colors.button.primary, fontSize: '0.95rem' }}>
-              £{(item.price * (quantities[item.stockId] || item.quantity)).toFixed(2)}
+              £{(Number(item.price) * (quantities[item.stockId] || item.quantity)).toFixed(2)}
             </Typography>
           </Box>
         </Box>
