@@ -16,6 +16,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down('md'))
   const [isCollapsed, setIsCollapsed] = useState(false)
   const DRAWER_WIDTH = 230
+  const COLLAPSED_WIDTH = 72
 
   // Determine active menu based on current path
   const getActiveMenu = () => {
@@ -53,9 +54,9 @@ const AdminLayout: React.FC<AdminLayoutProps> = () => {
 
       {/* Main Content with Sidebar */}
       <Box sx={{ display: 'flex', flex: 1, mt: { xs: '80px', md: '85px' }, position: 'relative' }}>
-        {/* Sidebar - Always render, AdminSidebar handles mobile/desktop logic */}
-        {!isMobile && !isCollapsed && (
-          <Box sx={{ width: DRAWER_WIDTH, flexShrink: 0 }}>
+        {/* Sidebar - Always render on desktop */}
+        {!isMobile && (
+          <Box sx={{ width: isCollapsed ? COLLAPSED_WIDTH : DRAWER_WIDTH, flexShrink: 0 }}>
             <AdminSidebar activeMenu={activeMenu} onCollapseChange={setIsCollapsed} />
           </Box>
         )}
@@ -90,7 +91,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = () => {
           component="main"
           sx={{
             flex: 1,
-            width: isMobile || isCollapsed ? '100%' : `calc(100% - ${DRAWER_WIDTH}px)`,
+            width: isMobile ? '100%' : `calc(100% - ${isCollapsed ? COLLAPSED_WIDTH : DRAWER_WIDTH}px)`,
             display: 'flex',
             flexDirection: 'column',
           }}

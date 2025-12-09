@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Box, Container, Typography, CircularProgress } from '@mui/material';
 import { useLocation } from 'react-router-dom';
 import { useProductsByCollection } from '../../hooks/useProducts';
+import { useAllStocks } from '../../hooks/useStock';
 import type { Product } from '../../types';
 import { ShopFilter } from './ShopFilter';
 import { ProductsGrid } from './ProductsGrid';
@@ -32,9 +33,13 @@ export const ShopPageComponent: React.FC = () => {
   // Use the new hook to fetch products by collection from the real API
   const productsQuery = useProductsByCollection(activeCollection);
   
+  // Fetch all stocks to get size/color information
+  const stocksQuery = useAllStocks();
+  
   const allProducts: Product[] = productsQuery.data || [];
-  const isLoading = productsQuery.isLoading;
-  const error = productsQuery.error;
+  const allStocks = stocksQuery.data || [];
+  const isLoading = productsQuery.isLoading || stocksQuery.isLoading;
+  const error = productsQuery.error || stocksQuery.error;
 
   console.log('ShopPage: Active collection:', activeCollection);
   console.log('ShopPage: Products query state:', {
@@ -47,36 +52,49 @@ export const ShopPageComponent: React.FC = () => {
   // Filter products
   let filteredProducts = allProducts;
 
-  // Filter by price range
+  // Filter by price range - convert price to number
   filteredProducts = filteredProducts.filter(
-    (product) => product.price >= priceRange[0] && product.price <= priceRange[1]
+    (product) => {
+      const price = Number(product.price);
+      return price >= priceRange[0] && price <= priceRange[1];
+    }
   );
 
-  // Filter by sizes (if product has tags that include sizes)
+  // Filter by sizes - check if product has stock in selected sizes
   if (selectedSizes.length > 0) {
-    filteredProducts = filteredProducts.filter((product) =>
-      selectedSizes.some((size) => product.tags.includes(size.toLowerCase()))
-    );
+    filteredProducts = filteredProducts.filter((product) => {
+      const productStocks = allStocks.filter(stock => 
+        stock.productId === product.id && 
+        stock.isActive && 
+        stock.quantity > 0
+      );
+      return selectedSizes.some((size) =>
+        productStocks.some(stock => stock.size === size)
+      );
+    });
   }
 
-  // Filter by colors (if product has tags that include colors)
+  // Filter by colors - check if product has stock in selected colors
   if (selectedColors.length > 0) {
-    filteredProducts = filteredProducts.filter((product) =>
-      selectedColors.some(
-        (color) =>
-          product.tags.includes(color.toLowerCase()) ||
-          product.name.toLowerCase().includes(color.toLowerCase())
-      )
-    );
+    filteredProducts = filteredProducts.filter((product) => {
+      const productStocks = allStocks.filter(stock => 
+        stock.productId === product.id && 
+        stock.isActive && 
+        stock.quantity > 0
+      );
+      return selectedColors.some((color) =>
+        productStocks.some(stock => stock.color === color)
+      );
+    });
   }
 
   // Sort products
   switch (sortBy) {
     case 'price-low-high':
-      filteredProducts.sort((a, b) => a.price - b.price);
+      filteredProducts.sort((a, b) => Number(a.price) - Number(b.price));
       break;
     case 'price-high-low':
-      filteredProducts.sort((a, b) => b.price - a.price);
+      filteredProducts.sort((a, b) => Number(b.price) - Number(a.price));
       break;
     case 'newest':
       filteredProducts.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
@@ -115,9 +133,18 @@ export const ShopPageComponent: React.FC = () => {
     ? `Discover our exclusive ${activeCollection} collection.`
     : 'Browse our complete range of collections.';
 
-  // Get unique sizes and colors for filter options (from product tags and names)
-  const allSizes = Array.from(new Set(['S', 'M', 'L', 'XL', 'XXL']));
-  const allColors = Array.from(new Set(['Red', 'Blue', 'Black', 'White', 'Orange']));
+  // Get unique sizes and colors from actual stock data
+  const allSizes = Array.from(new Set(
+    allStocks
+      .filter(stock => stock.isActive && stock.quantity > 0)
+      .map(stock => stock.size)
+  )).sort();
+  
+  const allColors = Array.from(new Set(
+    allStocks
+      .filter(stock => stock.isActive && stock.quantity > 0)
+      .map(stock => stock.color)
+  )).sort();
 
   const clearAllFilters = () => {
     setSelectedSizes([]);

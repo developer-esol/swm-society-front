@@ -32,6 +32,7 @@ import { colors } from '../../theme';
 import type { SidebarMenuItem } from '../../types/Admin/sidebar';
 
 const DRAWER_WIDTH = 230;
+const COLLAPSED_WIDTH = 72;
 
 const menuItems: SidebarMenuItem[] = [
   { id: 'dashboard', label: 'Dashboard', icon: 'dashboard', path: '/admin', badge: 0 },
@@ -165,12 +166,13 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeMenu, onCollapseChang
             onClick={() => handleMenuClick(item.path)}
             component="li"
             sx={{
-              px: 1.75,
+              px: isCollapsed ? 1 : 1.75,
               py: 1,
               my: 0.25,
               display: 'flex',
               alignItems: 'center',
-              gap: 1.75,
+              justifyContent: isCollapsed ? 'center' : 'flex-start',
+              gap: isCollapsed ? 0 : 1.75,
               borderRadius: 0.75,
               cursor: 'pointer',
               color: activeMenu === item.id ? colors.button.primary : colors.text.gray,
@@ -182,6 +184,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeMenu, onCollapseChang
               },
               transition: 'all 0.2s ease',
               listStyle: 'none',
+              minHeight: '40px',
             }}
           >
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.15rem', minWidth: '22px' }}>
@@ -196,18 +199,20 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeMenu, onCollapseChang
               {item.icon === 'roles' && <RolesIcon sx={{ color: 'inherit', fontSize: '1.15rem' }} />}
               {item.icon === 'access' && <AccessIcon sx={{ color: 'inherit', fontSize: '1.15rem' }} />}
             </Box>
-            <Typography
-              variant="body2"
-              sx={{
-                fontWeight: 600,
-                fontSize: '0.925rem',
-                flex: 1,
-                letterSpacing: '0.3px',
-              }}
-            >
-              {item.label}
-            </Typography>
-            {item.badge ? (
+            {!isCollapsed && (
+              <Typography
+                variant="body2"
+                sx={{
+                  fontWeight: 600,
+                  fontSize: '0.925rem',
+                  flex: 1,
+                  letterSpacing: '0.3px',
+                }}
+              >
+                {item.label}
+              </Typography>
+            )}
+            {!isCollapsed && item.badge ? (
               <Badge
                 badgeContent={item.badge}
                 sx={{
@@ -230,14 +235,15 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeMenu, onCollapseChang
           onClick={handleLogout}
           component="button"
           sx={{
-            px: 1.75,
+            px: isCollapsed ? 1 : 1.75,
             py: 1,
             width: '100%',
             borderRadius: 0.75,
             border: 'none',
             display: 'flex',
             alignItems: 'center',
-            gap: 1.75,
+            justifyContent: isCollapsed ? 'center' : 'flex-start',
+            gap: isCollapsed ? 0 : 1.75,
             color: colors.button.primary,
             bgcolor: 'transparent',
             cursor: 'pointer',
@@ -250,16 +256,18 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeMenu, onCollapseChang
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.15rem' }}>
             <SecurityIcon sx={{ color: 'inherit', fontSize: '1.15rem' }} />
           </Box>
-          <Typography
-            variant="body2"
-            sx={{
-              fontWeight: 600,
-              fontSize: '0.925rem',
-              letterSpacing: '0.3px',
-            }}
-          >
-            Log out
-          </Typography>
+          {!isCollapsed && (
+            <Typography
+              variant="body2"
+              sx={{
+                fontWeight: 600,
+                fontSize: '0.925rem',
+                letterSpacing: '0.3px',
+              }}
+            >
+              Log out
+            </Typography>
+          )}
         </Box>
       </Box>
     </Box>
@@ -303,13 +311,15 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeMenu, onCollapseChang
         <Drawer
           variant="permanent"
           sx={{
-            width: DRAWER_WIDTH,
+            width: isCollapsed ? COLLAPSED_WIDTH : DRAWER_WIDTH,
             flexShrink: 0,
             '& .MuiDrawer-paper': {
-              width: DRAWER_WIDTH,
+              width: isCollapsed ? COLLAPSED_WIDTH : DRAWER_WIDTH,
               boxSizing: 'border-box',
               border: 'none',
               boxShadow: `2px 0 8px rgba(0, 0, 0, 0.1)`,
+              transition: 'width 0.3s ease',
+              overflowX: 'hidden',
             },
           }}
         >
