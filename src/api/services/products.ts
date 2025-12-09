@@ -1,5 +1,5 @@
 import { apiClient } from '../apiClient';
-import type { Product, ProductFilters, CreateProductData, UpdateProductData } from '../../types';
+import type { Product, ProductFilters, CreateProductData, UpdateProductData, CreateProductResponse } from '../../types';
 
 // Import the individual product services for demo data
 import { hmvProductService } from './hmvProductsService';
@@ -12,7 +12,7 @@ export const productsService = {
     // For demo purposes, combine all product services
     try {
       const hmvProducts = await hmvProductService.getProducts(filters);
-      const projectZeroProducts = await projectZeroProductService.getProducts(filters);
+      const projectZeroProducts = await projectZeroProductService.getProducts();
       const thomasMushetProducts = await thomasMushetProductService.getProducts(filters);
       
       return [...hmvProducts, ...projectZeroProducts, ...thomasMushetProducts];
@@ -74,5 +74,14 @@ export const productsService = {
 
   async updateProductStock(id: string, inStock: boolean): Promise<Product> {
     return apiClient.put<Product>(`/products/${id}/stock`, { inStock });
+  },
+
+  async createProductAPI(productData: CreateProductData): Promise<CreateProductResponse> {
+    try {
+      return await apiClient.post<CreateProductResponse>('/products', productData);
+    } catch (error) {
+      console.error('Failed to create product:', error);
+      throw error;
+    }
   },
 };

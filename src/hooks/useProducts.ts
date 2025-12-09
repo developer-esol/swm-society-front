@@ -3,6 +3,17 @@ import { QUERY_KEYS } from "../configs/queryKeys";
 import { hmvProductService } from "../api/services/hmvProductsService";
 import { projectZeroProductService } from "../api/services/projectZeroProductService";
 import { thomasMushetProductService } from "../api/services/thomasMushetService";
+import { getAdminProducts } from "../api/services/admin/productsService";
+
+export function useAdminProducts() {
+  return useQuery({
+    queryKey: QUERY_KEYS.products.admin,
+    queryFn: getAdminProducts,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    gcTime: 1000 * 60 * 10, // 10 minutes
+    retry: 3,
+  });
+}
 
 
 export function useProjectZeroProduct(enabled: boolean = true) {

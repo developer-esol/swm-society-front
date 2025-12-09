@@ -46,17 +46,49 @@ export interface ProductFilters {
 }
 
 export interface CreateProductData {
-  name: string;
-  description: string;
-  price: number;
-  images: string[];
-  collection: string;
   brandId: string;
-  sizes: string[];
-  colors: string[];
-  category: string;
-  tags: string[];
+  name: string;
+  price: number;
+  description: string;
+  imageUrl: string;
+  deliveryMethod: string;
 }
+
+export interface CreateProductResponse {
+  id: string;
+  brandId: string;
+  name: string;
+  price: string; // Backend returns price as string "149.99"
+  description: string;
+  imageUrl: string;
+  deliveryMethod: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+  createdBy: null | string;
+  updatedBy: null | string;
+}
+
+export interface Brand {
+  id: string;
+  name: string;
+}
+
+export interface BrandsResponse {
+  brands: Brand[];
+  total: number;
+  page: number;
+  limit: number;
+}
+//   price: number;
+//   images: string[];
+//   collection: string;
+//   brandId: string;
+//   sizes: string[];
+//   colors: string[];
+//   category: string;
+//   tags: string[];
+// }
 
 export interface UpdateProductData extends Partial<CreateProductData> {
   id: string;

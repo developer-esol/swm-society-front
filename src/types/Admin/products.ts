@@ -3,10 +3,10 @@ export interface AdminProduct {
   productName: string
   description: string
   brandId: string
-  brandName: string
+  brandName?: string  // Optional since we resolve from brandId
   deliveryMethod: string
-  imageUrl: string
-  price: number
+  imageUrl?: string
+  price?: number
 }
 export interface AddProductFormData {
   brandId: string

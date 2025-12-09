@@ -1,31 +1,23 @@
-import React, { useState } from 'react'
-import { Box, Typography, TextField, Button, Select, MenuItem, FormControl, InputLabel, Alert, Container } from '@mui/material'
+import React, { useState, useEffect } from 'react'
+import { Box, Typography, TextField, Button, Select, MenuItem, FormControl, InputLabel, Alert, Container, CircularProgress } from '@mui/material'
 import type { SelectChangeEvent } from '@mui/material'
 import { useNavigate } from 'react-router-dom'
 import { useFormik } from 'formik'
 import * as Yup from 'yup'
 import { colors } from '../../theme'
-import { useProductsStore } from '../../store/useProductsStore'
-import type { AddProductFormData, AdminProduct } from '../../types/Admin'
-
-// Mock data for brands and delivery methods
-const BRANDS = [
-  { id: 'shirt-monkey', name: 'Shirt Monkey' },
-  { id: 'hmv', name: 'Hear My Voice' },
-  { id: 'project-zero', name: 'Project Zero' },
-]
-
-const DELIVERY_METHODS = ['Shirt Monkey', 'Standard', 'Express']
+import { productsService } from '../../api/services/products';
+import type { CreateProductData, CreateProductResponse } from '../../types/product'
+import { useBrands } from '../../hooks/useBrands'
 
 // Validation Schema
 const addProductValidationSchema = Yup.object().shape({
   brandId: Yup.string()
-    .required('Brand Name is required'),
-  productName: Yup.string()
+    .required('Brand is required'),
+  name: Yup.string()
     .min(3, 'Product name must be at least 3 characters')
-    .required('Product Name is required'),
+    .required('Product name is required'),
   deliveryMethod: Yup.string()
-    .required('Delivery Method is required'),
+    .required('Delivery method is required'),
   price: Yup.number()
     .typeError('Price must be a number')
     .positive('Price must be greater than 0')
@@ -33,8 +25,6 @@ const addProductValidationSchema = Yup.object().shape({
   description: Yup.string()
     .min(10, 'Description must be at least 10 characters')
     .required('Description is required'),
-  imageUrl: Yup.string()
-    .required('Image is required'),
 })
 
 // Field styling matching checkout page
@@ -55,6 +45,7 @@ const fieldSx = {
 
 const selectSx = {
   bgcolor: colors.input.bg,
+  color: colors.text.primary,
   '& .MuiOutlinedInput-notchedOutline': {
     borderColor: colors.border.default,
   },
@@ -64,77 +55,79 @@ const selectSx = {
   '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
     borderColor: colors.border.default,
   },
+  '& .MuiSelect-select': {
+    color: colors.text.primary,
+  },
 }
 
 const AddProduct: React.FC = () => {
   const navigate = useNavigate()
   const [submitError, setSubmitError] = useState<string | null>(null)
-  const fileInputRef = React.useRef<HTMLInputElement>(null)
-  const { addProduct, getNextProductId } = useProductsStore()
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
+  
+  // Use React Query hook for brands
+  const { data: brands = [], isLoading: brandsLoading, error: brandsError } = useBrands()
 
-  const BRANDS_MAP: Record<string, string> = {
-    'shirt-monkey': 'Shirt Monkey',
-    'hmv': 'Hear My Voice',
-    'project-zero': 'Project Zero',
-  }
+  // Debug logging
+  useEffect(() => {
+    console.log('Brands data:', brands);
+    console.log('Brands loading:', brandsLoading);
+    console.log('Brands error:', brandsError);
+  }, [brands, brandsLoading, brandsError]);
 
-  const formik = useFormik<AddProductFormData>({
+  // Set error message if brands failed to load
+  React.useEffect(() => {
+    if (brandsError && !submitError) {
+      setSubmitError('Failed to load brands. Please refresh the page.')
+    }
+  }, [brandsError, submitError])
+
+  const DELIVERY_METHODS = ['standard', 'express', 'pickup']
+  const HARDCODED_IMAGE_URL = 'https://example.com/product.jpg'
+
+  const formik = useFormik<CreateProductData>({
     initialValues: {
       brandId: '',
-      productName: '',
+      name: '',
       deliveryMethod: '',
       description: '',
-      price: '',
-      imageUrl: '',
+      price: 0,
+      imageUrl: HARDCODED_IMAGE_URL,
     },
     validationSchema: addProductValidationSchema,
     onSubmit: async (values) => {
       setSubmitError(null)
+      setSuccessMessage(null)
       try {
-        // Simulate API call delay
-        await new Promise(resolve => setTimeout(resolve, 500))
+        const response: CreateProductResponse = await productsService.createProductAPI(values)
+        console.log('Product created successfully:', response)
         
-        // Create new product object
-        const newProduct: AdminProduct = {
-          id: getNextProductId(), // Generate sequential ID like 001, 002, etc.
-          productName: values.productName,
-          description: values.description,
-          brandId: values.brandId,
-          brandName: BRANDS_MAP[values.brandId] || values.brandId,
-          deliveryMethod: values.deliveryMethod,
-          imageUrl: values.imageUrl,
-          price: parseFloat(values.price),
-        }
+        setSuccessMessage(`Product "${response.name}" created successfully with ID: ${response.id}`)
         
-        // Add product to store
-        addProduct(newProduct)
-        console.log('Product added:', newProduct)
+        // Reset form
+        formik.resetForm()
         
-        // Navigate back to products page on success
-        navigate('/admin/products')
-      } catch (error) {
-        setSubmitError('Failed to save product. Please try again.')
-        console.error('Error saving product:', error)
+        // Navigate back to products page after a short delay
+        setTimeout(() => {
+          navigate('/admin/products')
+        }, 2000)
+      } catch (error: any) {
+        const errorMessage = error?.message || 'Failed to create product. Please try again.'
+        setSubmitError(errorMessage)
+        console.error('Error creating product:', error)
       }
     },
   })
 
-  const handleSelectChange = (field: keyof AddProductFormData) => (e: SelectChangeEvent<string>) => {
+  const handleSelectChange = (field: keyof CreateProductData) => (e: SelectChangeEvent<string>) => {
     formik.setFieldValue(field, e.target.value)
   }
 
-  const handleTextChange = (field: keyof AddProductFormData) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    formik.setFieldValue(field, e.target.value)
-  }
-
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) {
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        formik.setFieldValue('imageUrl', reader.result as string)
-      }
-      reader.readAsDataURL(file)
+  const handleTextChange = (field: keyof CreateProductData) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    if (field === 'price') {
+      formik.setFieldValue(field, parseFloat(e.target.value) || 0)
+    } else {
+      formik.setFieldValue(field, e.target.value)
     }
   }
 
@@ -167,6 +160,13 @@ const AddProduct: React.FC = () => {
               width: '100%',
             }}
           >
+            {/* Success Alert */}
+            {successMessage && (
+              <Alert severity="success" sx={{ mb: 2 }}>
+                {successMessage}
+              </Alert>
+            )}
+            
             {/* Error Alert */}
             {submitError && (
               <Alert severity="error" sx={{ mb: 2 }}>
@@ -201,24 +201,70 @@ const AddProduct: React.FC = () => {
                   fullWidth 
                   size="small" 
                   sx={{ mb: { xs: 1.5, sm: 2 } }}
+                  disabled={brandsLoading}
                 >
-                  <InputLabel>Brand Name</InputLabel>
+                  <InputLabel>Brand</InputLabel>
                   <Select
                     value={formik.values.brandId}
                     onChange={handleSelectChange('brandId')}
-                    label="Brand Name"
+                    label="Brand"
                     sx={selectSx}
                     error={formik.touched.brandId && Boolean(formik.errors.brandId)}
+                    MenuProps={{
+                      PaperProps: {
+                        sx: {
+                          backgroundColor: colors.menu.background,
+                          border: `1px solid ${colors.menu.border}`,
+                          boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+                          '& .MuiMenuItem-root': {
+                            color: `${colors.menu.text} !important`,
+                            backgroundColor: colors.menu.background,
+                            fontSize: '14px',
+                            fontWeight: '400',
+                            padding: '8px 16px',
+                            '&:hover': {
+                              backgroundColor: `${colors.menu.hover} !important`,
+                              color: `${colors.menu.text} !important`,
+                            },
+                            '&.Mui-selected': {
+                              backgroundColor: `${colors.menu.selected} !important`,
+                              color: `${colors.menu.text} !important`,
+                              '&:hover': {
+                                backgroundColor: `${colors.menu.selectedHover} !important`,
+                                color: `${colors.menu.text} !important`,
+                              },
+                            },
+                            '& em': {
+                              color: `${colors.menu.textSecondary} !important`,
+                            },
+                          },
+                        },
+                      },
+                    }}
                   >
                     <MenuItem value="">
                       <em>Select Brand</em>
                     </MenuItem>
-                    {BRANDS.map((brand) => (
-                      <MenuItem key={brand.id} value={brand.id}>
-                        {brand.name}
+                    {brands && brands.length > 0 ? (
+                      brands.map((brand) => (
+                        <MenuItem key={brand.id} value={brand.id}>
+                          {brand.brandName || brand.name || `Brand ${brand.id}`}
+                        </MenuItem>
+                      ))
+                    ) : (
+                      <MenuItem disabled>
+                        <em>No brands available</em>
                       </MenuItem>
-                    ))}
+                    )}
                   </Select>
+                  {brandsLoading && (
+                    <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
+                      <CircularProgress size={16} sx={{ mr: 1 }} />
+                      <Typography sx={{ fontSize: '0.75rem', color: colors.text.secondary }}>
+                        Loading brands...
+                      </Typography>
+                    </Box>
+                  )}
                   {formik.touched.brandId && formik.errors.brandId && (
                     <Typography sx={{ color: colors.status.error, fontSize: '0.75rem', mt: 0.5 }}>
                       {formik.errors.brandId}
@@ -230,11 +276,11 @@ const AddProduct: React.FC = () => {
                 <TextField
                   fullWidth
                   label="Product Name"
-                  value={formik.values.productName}
-                  onChange={handleTextChange('productName')}
+                  value={formik.values.name}
+                  onChange={handleTextChange('name')}
                   onBlur={formik.handleBlur}
-                  error={formik.touched.productName && Boolean(formik.errors.productName)}
-                  helperText={formik.touched.productName && formik.errors.productName}
+                  error={formik.touched.name && Boolean(formik.errors.name)}
+                  helperText={formik.touched.name && formik.errors.name}
                   variant="outlined"
                   size="small"
                   sx={{ ...fieldSx, mb: { xs: 1.5, sm: 2 } }}
@@ -253,13 +299,54 @@ const AddProduct: React.FC = () => {
                     label="Delivery Method"
                     sx={selectSx}
                     error={formik.touched.deliveryMethod && Boolean(formik.errors.deliveryMethod)}
+                    MenuProps={{
+                      PaperProps: {
+                        sx: {
+                          backgroundColor: colors.menu.background,
+                          border: `1px solid ${colors.menu.border}`,
+                          boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+                          '& .MuiMenuItem-root': {
+                            color: `${colors.menu.text} !important`,
+                            backgroundColor: colors.menu.background,
+                            fontSize: '14px',
+                            fontWeight: '400',
+                            padding: '8px 16px',
+                            '&:hover': {
+                              backgroundColor: `${colors.menu.hover} !important`,
+                              color: `${colors.menu.text} !important`,
+                            },
+                            '&.Mui-selected': {
+                              backgroundColor: `${colors.menu.selected} !important`,
+                              color: `${colors.menu.text} !important`,
+                              '&:hover': {
+                                backgroundColor: `${colors.menu.selectedHover} !important`,
+                                color: `${colors.menu.text} !important`,
+                              },
+                            },
+                            '& em': {
+                              color: `${colors.menu.textSecondary} !important`,
+                            },
+                          },
+                        },
+                      },
+                    }}
                   >
-                    <MenuItem value="">
+                    <MenuItem value="" sx={{ color: colors.text.secondary }}>
                       <em>Select Delivery Method</em>
                     </MenuItem>
                     {DELIVERY_METHODS.map((method) => (
-                      <MenuItem key={method} value={method}>
-                        {method}
+                      <MenuItem 
+                        key={method} 
+                        value={method}
+                        sx={{ 
+                          color: colors.text.primary,
+                          '&:hover': {
+                            backgroundColor: colors.background.paper,
+                            color: colors.text.primary
+                          }
+                        }}
+                      >
+                        {method.charAt(0).toUpperCase() + method.slice(1)}
                       </MenuItem>
                     ))}
                   </Select>
@@ -318,7 +405,7 @@ const AddProduct: React.FC = () => {
                 />
               </Box>
 
-              {/* Image Upload Section */}
+              {/* Image URL Info */}
               <Box>
                 <Typography 
                   variant="h6" 
@@ -329,75 +416,12 @@ const AddProduct: React.FC = () => {
                     fontSize: { xs: '1rem', sm: '1.1rem', md: '1.25rem' }
                   }}
                 >
-                  Image Upload
+                  Product Image
                 </Typography>
 
-                <Box
-                  sx={{
-                    border: `2px dashed ${colors.border.default}`,
-                    borderRadius: '8px',
-                    p: 4,
-                    textAlign: 'center',
-                    cursor: 'pointer',
-                    transition: 'all 0.3s ease',
-                    bgcolor: colors.background.default,
-                    '&:hover': {
-                      borderColor: colors.text.primary,
-                      bgcolor: `${colors.text.primary}05`,
-                    },
-                  }}
-                  onClick={() => fileInputRef.current?.click()}
-                >
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    hidden
-                    accept="image/*"
-                    onChange={handleImageUpload}
-                  />
-                  {formik.values.imageUrl ? (
-                    <Box>
-                      <img 
-                        src={formik.values.imageUrl} 
-                        alt="Preview" 
-                        style={{ maxHeight: '200px', maxWidth: '100%', marginBottom: '16px' }}
-                      />
-                      <Typography sx={{ color: colors.text.secondary, fontSize: '0.875rem' }}>
-                        Click to change image
-                      </Typography>
-                    </Box>
-                  ) : (
-                    <Box>
-                      <Typography sx={{ color: colors.text.secondary, mb: 1, fontSize: '1rem' }}>
-                        📁
-                      </Typography>
-                      <Typography sx={{ color: colors.text.primary, fontWeight: 500, mb: 0.5 }}>
-                        Select a file or drag and drop here
-                      </Typography>
-                      <Typography sx={{ color: colors.text.secondary, fontSize: '0.875rem' }}>
-                        JPG, PNG, GIF up to 50MB
-                      </Typography>
-                      <Button
-                        variant="outlined"
-                        sx={{
-                          mt: 2,
-                          borderColor: colors.border.default,
-                          color: colors.text.primary,
-                          '&:hover': {
-                            borderColor: colors.text.primary,
-                          },
-                        }}
-                      >
-                        SELECT FILE
-                      </Button>
-                    </Box>
-                  )}
-                </Box>
-                {formik.touched.imageUrl && formik.errors.imageUrl && (
-                  <Typography sx={{ color: colors.status.error, fontSize: '0.75rem', mt: 0.5 }}>
-                    {formik.errors.imageUrl}
-                  </Typography>
-                )}
+                <Alert severity="info" sx={{ mb: 2 }}>
+                  Image URL is currently hardcoded: {HARDCODED_IMAGE_URL}
+                </Alert>
               </Box>
 
               {/* Action Buttons */}
@@ -431,7 +455,7 @@ const AddProduct: React.FC = () => {
                     },
                   }}
                 >
-                  {formik.isSubmitting ? 'Saving...' : 'Save product'}
+                  {formik.isSubmitting ? 'Creating Product...' : 'Create Product'}
                 </Button>
               </Box>
             </Box>

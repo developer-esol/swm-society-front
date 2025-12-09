@@ -1,69 +1,25 @@
-// Dummy data service for admin products
+import { apiClient } from '../../apiClient'
 import type { AdminProduct } from '../../../types/Admin'
 
-export const getAdminProducts = (): AdminProduct[] => {
-  return [
-    {
-      id: '1',
-      productName: 'Old English Hoodie',
-      description: 'The Project ZerO\'s Puffer...',
-      brandId: '2',
-      brandName: 'Shirt Monkey',
-      deliveryMethod: 'Shirt Monkey',
-      imageUrl: '',
-      price: 99.99,
-    },
-    {
-      id: '2',
-      productName: 'Blue English Hoodie',
-      description: 'The Project ZerO\'s Puffer...',
-      brandId: '1',
-      brandName: 'Shirt Monkey',
-      deliveryMethod: 'Direct',
-      imageUrl: '',
-      price: 89.99,
-    },
-    {
-      id: '3',
-      productName: 'Yellow English Hoodie',
-      description: 'The Project ZerO\'s Puffer...',
-      brandId: '3',
-      brandName: 'Shirt Monkey',
-      deliveryMethod: 'Shirt Monkey',
-      imageUrl: '',
-      price: 89.99,
-    },
-    {
-      id: '4',
-      productName: 'Brown English Hoodie',
-      description: 'The Project ZerO\'s Puffer...',
-      brandId: '3',
-      brandName: 'Shirt Monkey',
-      deliveryMethod: 'Shirt Monkey',
-      imageUrl: '',
-      price: 79.99,
-    },
-    {
-      id: '5',
-      productName: 'Black English Hoodie',
-      description: 'The Project ZerO\'s Puffer...',
-      brandId: '2',
-      brandName: 'Shirt Monkey',
-      deliveryMethod: 'Shirt Monkey',
-      imageUrl: '',
-      price: 84.99,
-    },
-    {
-      id: '6',
-      productName: 'Green English Hoodie',
-      description: 'The Project ZerO\'s Puffer...',
-      brandId: '1',
-      brandName: 'Shirt Monkey',
-      deliveryMethod: 'Shirt Monkey',
-      imageUrl: '',
-      price: 94.99,
-    },
-  ]
+// Updated service to fetch from backend API
+export const getAdminProducts = async (): Promise<AdminProduct[]> => {
+  try {
+    const products = await apiClient.get<any[]>('/products?page=1&limit=10')
+    // Transform backend response to AdminProduct format
+    return products.map((product) => ({
+      id: product.id,
+      productName: product.name,
+      description: product.description,
+      brandId: product.brandId,
+      deliveryMethod: product.deliveryMethod,
+      imageUrl: product.imageUrl || '',
+      price: parseFloat(product.price) || 0,
+    }))
+  } catch (error) {
+    console.error('Failed to fetch admin products:', error)
+    // Return empty array on error
+    return []
+  }
 }
 
 export const searchProducts = (query: string, products: AdminProduct[]): AdminProduct[] => {
@@ -75,7 +31,40 @@ export const searchProducts = (query: string, products: AdminProduct[]): AdminPr
   )
 }
 
-export const deleteProduct = (id: string): void => {
-  // TODO: Implement API call to delete product
-  console.log(`Delete product: ${id}`)
+export const updateAdminProduct = async (productId: string, productData: Partial<AdminProduct>): Promise<AdminProduct> => {
+  try {
+    const updatedProduct = await apiClient.put<any>(`/products/${productId}`, {
+      brandId: productData.brandId,
+      name: productData.productName,
+      price: productData.price || 0,  // Send as number, not string
+      description: productData.description,
+      imageUrl: productData.imageUrl,
+      deliveryMethod: productData.deliveryMethod,
+    })
+    
+    // Transform response back to AdminProduct format
+    return {
+      id: updatedProduct.id,
+      productName: updatedProduct.name,
+      description: updatedProduct.description,
+      brandId: updatedProduct.brandId,
+      brandName: updatedProduct.brandName || `Brand ${updatedProduct.brandId}`,
+      deliveryMethod: updatedProduct.deliveryMethod,
+      imageUrl: updatedProduct.imageUrl || '',
+      price: parseFloat(updatedProduct.price) || 0,
+    }
+  } catch (error) {
+    console.error('Failed to update product:', error)
+    throw error
+  }
+}
+
+export const deleteProduct = async (id: string): Promise<boolean> => {
+  try {
+    await apiClient.delete(`/products/${id}`)
+    return true
+  } catch (error) {
+    console.error('Failed to delete product:', error)
+    throw error
+  }
 }

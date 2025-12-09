@@ -1,28 +1,31 @@
-import { Box, Container, Typography, Pagination, Stack } from '@mui/material'
-import { useState, useEffect, useMemo } from 'react'
+import { Box, Container, Typography, Pagination, Stack, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Button } from '@mui/material'
+import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ProductsTable, ProductTableHeader, ProductViewModal, ProductEditModal } from '../../features/Admin/products'
-import { useProductsStore } from '../../store/useProductsStore'
+import { useAdminProducts } from '../../hooks/useProducts'
 import { colors } from '../../theme'
 import type { AdminProduct } from '../../types/Admin'
+import { useQueryClient } from '@tanstack/react-query'
+import { QUERY_KEYS } from '../../configs/queryKeys'
+import { deleteProduct } from '../../api/services/admin/productsService'
 
 const AdminProducts = () => {
   const navigate = useNavigate()
-  const { products, initializeProducts, updateProduct, deleteProduct } = useProductsStore()
+  const { data: products = [], isLoading, error } = useAdminProducts()
   const [viewModalOpen, setViewModalOpen] = useState(false)
   const [editModalOpen, setEditModalOpen] = useState(false)
   const [selectedProduct, setSelectedProduct] = useState<AdminProduct | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
+  const [deleteConfirm, setDeleteConfirm] = useState<{ open: boolean; productId: string; productName: string }>({
+    open: false,
+    productId: '',
+    productName: ''
+  })
+  const [isDeleting, setIsDeleting] = useState(false)
+  const queryClient = useQueryClient()
 
   const ITEMS_PER_PAGE = 5
-
-  // Initialize products on mount
-  useEffect(() => {
-    if (products.length === 0) {
-      initializeProducts()
-    }
-  }, [initializeProducts, products.length])
 
   // Filter products based on search query
   const filteredProducts = useMemo(() => {
@@ -71,17 +74,60 @@ const AdminProducts = () => {
   }
 
   const handleSaveEdit = (updatedProduct: AdminProduct) => {
-    updateProduct(updatedProduct)
+    console.log('Update product:', updatedProduct)
+    // TODO: Implement update functionality with API call
     setEditModalOpen(false)
     setSelectedProduct(null)
   }
 
   const handleDeleteProduct = (id: string) => {
-    deleteProduct(id)
+    const product = products.find(p => p.id === id)
+    setDeleteConfirm({
+      open: true,
+      productId: id,
+      productName: product?.productName || 'this product'
+    })
+  }
+
+  const confirmDelete = async () => {
+    setIsDeleting(true)
+    try {
+      await deleteProduct(deleteConfirm.productId)
+      // Invalidate and refetch products
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.admin })
+      setDeleteConfirm({ open: false, productId: '', productName: '' })
+    } catch (error) {
+      console.error('Error deleting product:', error)
+      // You can add error handling here if needed
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
+  const cancelDelete = () => {
+    setDeleteConfirm({ open: false, productId: '', productName: '' })
   }
 
   const handleAddProduct = () => {
     navigate('/admin/add-product')
+  }
+
+  // Show loading state
+  if (isLoading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
+        <Typography>Loading products...</Typography>
+      </Box>
+    )
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
+        <Typography color="error">Failed to load products. Please try again.</Typography>
+      </Box>
+    )
   }
 
   return (
@@ -158,6 +204,69 @@ const AdminProducts = () => {
           onClose={handleCloseEditModal}
           onSave={handleSaveEdit}
         />
+
+        {/* Delete Confirmation Dialog */}
+        <Dialog
+          open={deleteConfirm.open}
+          onClose={cancelDelete}
+          maxWidth="sm"
+          fullWidth
+          PaperProps={{
+            sx: {
+              borderRadius: '8px',
+              boxShadow: '0 8px 32px rgba(205, 159, 159, 0.12)',
+            },
+          }}
+        >
+          <DialogTitle 
+            sx={{ 
+              fontWeight: 700, 
+              color: colors.text.primary,
+              fontSize: '1.2rem',
+              pb: 1,
+            }}
+          >
+            Confirm Delete
+          </DialogTitle>
+          <DialogContent>
+            <DialogContentText sx={{ color: colors.text.primary, fontSize: '1rem' }}>
+              Are you sure you want to delete "{deleteConfirm.productName}"? This action cannot be undone.
+            </DialogContentText>
+          </DialogContent>
+          <DialogActions sx={{ p: 3, gap: 1 }}>
+            <Button
+              onClick={cancelDelete}
+              variant="outlined"
+              sx={{
+                borderColor: colors.border.default,
+                color: colors.text.primary,
+                '&:hover': {
+                  backgroundColor: colors.background.lighter,
+                  borderColor: colors.border.default,
+                },
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={confirmDelete}
+              variant="contained"
+              disabled={isDeleting}
+              sx={{
+                backgroundColor: '#dc2626',
+                color: 'white',
+                '&:hover': {
+                  backgroundColor: '#b91c1c',
+                },
+                '&:disabled': {
+                  backgroundColor: '#9ca3af',
+                },
+              }}
+            >
+              {isDeleting ? 'Deleting...' : 'Delete'}
+            </Button>
+          </DialogActions>
+        </Dialog>
       </Container>
     </Box>
   )
