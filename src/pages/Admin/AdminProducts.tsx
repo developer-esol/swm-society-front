@@ -1,4 +1,4 @@
-import { Box, Container, Typography } from '@mui/material'
+import { Box, Container, Typography, Pagination, Stack } from '@mui/material'
 import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ProductsTable, ProductTableHeader, ProductViewModal, ProductEditModal } from '../../features/Admin/products'
@@ -13,6 +13,9 @@ const AdminProducts = () => {
   const [editModalOpen, setEditModalOpen] = useState(false)
   const [selectedProduct, setSelectedProduct] = useState<AdminProduct | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
+  const [currentPage, setCurrentPage] = useState(1)
+
+  const ITEMS_PER_PAGE = 5
 
   // Initialize products on mount
   useEffect(() => {
@@ -32,8 +35,19 @@ const AdminProducts = () => {
     )
   }, [searchQuery, products])
 
+  // Paginate products
+  const totalPages = Math.ceil(filteredProducts.length / ITEMS_PER_PAGE)
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE
+  const endIndex = startIndex + ITEMS_PER_PAGE
+  const paginatedProducts = filteredProducts.slice(startIndex, endIndex)
+
+  const handlePageChange = (_event: React.ChangeEvent<unknown>, page: number) => {
+    setCurrentPage(page)
+  }
+
   const handleSearch = (query: string) => {
     setSearchQuery(query)
+    setCurrentPage(1) // Reset to first page when searching
   }
 
   const handleView = (product: AdminProduct) => {
@@ -100,11 +114,37 @@ const AdminProducts = () => {
         />
 
         <ProductsTable
-          products={filteredProducts}
+          products={paginatedProducts}
           onView={handleView}
           onEdit={handleEdit}
           onDelete={handleDeleteProduct}
         />
+
+        {/* Pagination and Info */}
+        {totalPages > 1 && (
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 4 }}>
+            <Typography sx={{ color: colors.text.secondary, fontSize: '0.9rem' }}>
+              {(currentPage - 1) * 5 + 1}-{Math.min(currentPage * 5, filteredProducts.length)} of {filteredProducts.length} products
+            </Typography>
+            <Stack spacing={2} direction="row">
+              <Pagination
+                count={totalPages}
+                page={currentPage}
+                onChange={handlePageChange}
+                sx={{
+                  '& .MuiPaginationItem-root': {
+                    color: colors.text.primary,
+                    borderColor: colors.border.default,
+                    '&.Mui-selected': {
+                      backgroundColor: '#dc2626',
+                      color: 'white',
+                    },
+                  },
+                }}
+              />
+            </Stack>
+          </Box>
+        )}
 
         <ProductViewModal
           open={viewModalOpen}

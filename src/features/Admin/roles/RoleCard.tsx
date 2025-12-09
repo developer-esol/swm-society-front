@@ -7,7 +7,7 @@ import type { Role } from '../../../types/Admin/roles'
 interface RoleCardProps {
   role: Role
   onEdit: (role: Role) => void
-  onDelete: (id: string) => void
+  onDelete: (role: Role) => void
 }
 
 const getRoleColor = (roleName: string) => {
@@ -114,7 +114,7 @@ const RoleCard: React.FC<RoleCardProps> = ({ role, onEdit, onDelete }) => {
           <EditIcon size={18} />
         </Button>
         <Button
-          onClick={() => onDelete(role.id)}
+          onClick={() => onDelete(role)}
           sx={{
             minWidth: '40px',
             width: '40px',

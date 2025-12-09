@@ -8,7 +8,7 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material'
-import { AccountCircle, Logout, Home } from '@mui/icons-material'
+import { AccountCircle, Logout, Home, Person } from '@mui/icons-material'
 import { useNavigate } from 'react-router-dom'
 import { colors } from '../../theme'
 
@@ -94,6 +94,7 @@ const AdminNavbar: React.FC<AdminNavbarProps> = () => {
           open={open}
           onClose={handleClose}
           onClick={handleClose}
+          disableScrollLock={true}
           PaperProps={{
             elevation: 0,
             sx: {
@@ -116,11 +117,15 @@ const AdminNavbar: React.FC<AdminNavbarProps> = () => {
             onClick={handleProfile}
             sx={{
               color: colors.text.primary,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1,
               '&:hover': {
                 backgroundColor: colors.background.lighter,
               },
             }}
           >
+            <Person sx={{ fontSize: '1.2rem' }} />
             <Typography variant="body2" sx={{ fontWeight: 500 }}>
               Profile
             </Typography>

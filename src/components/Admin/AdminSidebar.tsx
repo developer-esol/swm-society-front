@@ -24,6 +24,8 @@ import {
   // Collapse/Expand Icon
   ChevronLeft as ChevronLeftIcon,
   ChevronRight as ChevronRightIcon,
+  // Mobile Menu Icons
+  Menu as MenuIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { colors } from '../../theme';
@@ -55,6 +57,11 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeMenu, onCollapseChang
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
+
+  // Debug: Log mobile status
+  React.useEffect(() => {
+    console.log('AdminSidebar - isMobile:', isMobile);
+  }, [isMobile])
 
   const handleCollapseToggle = () => {
     const newState = !isCollapsed;
@@ -114,6 +121,23 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeMenu, onCollapseChang
             objectFit: 'contain',
           }}
         />
+        {/* Close button for mobile */}
+        {isMobile && (
+          <IconButton
+            onClick={() => setMobileOpen(false)}
+            sx={{
+              color: colors.text.secondary,
+              padding: '4px',
+              '&:hover': {
+                bgcolor: colors.overlay.darkHover,
+              },
+            }}
+            size="small"
+          >
+            <ChevronLeftIcon sx={{ fontSize: '1.5rem' }} />
+          </IconButton>
+        )}
+        {/* Collapse button for desktop */}
         {!isMobile && (
           <IconButton
             onClick={() => handleCollapseToggle()}
@@ -243,27 +267,33 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeMenu, onCollapseChang
 
   return (
     <>
-      {/* Mobile Menu Toggle */}
-      {isMobile && (
+      {/* Mobile Menu Toggle - Only show when drawer is closed */}
+      {isMobile && !mobileOpen && (
         <Box
           sx={{
             position: 'fixed',
-            top: 16,
-            left: 16,
-            zIndex: 1000,
+            top: 20,
+            left: 20,
+            zIndex: 1300,
+            pointerEvents: 'auto',
           }}
         >
           <IconButton
             onClick={() => setMobileOpen(!mobileOpen)}
             sx={{
               bgcolor: colors.overlay.dark,
-              color: colors.text.secondary,
+              color: 'white',
+              width: 48,
+              height: 48,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
               '&:hover': {
                 bgcolor: colors.overlay.darkHover,
               },
             }}
           >
-            {mobileOpen ? <CloseIcon /> : <MenuIcon />}
+            <MenuIcon sx={{ fontSize: '1.5rem' }} />
           </IconButton>
         </Box>
       )}

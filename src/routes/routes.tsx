@@ -35,6 +35,7 @@ import AdminSales from '../pages/Admin/AdminSales'
 import AdminRoles from '../pages/Admin/AdminRoles'
 import PermissionLevels from '../pages/Admin/PermissionLevels'
 import RoleCreation from '../pages/Admin/RoleCreation'
+import AdminProfilePage from '../pages/Admin/AdminProfilePage'
 import NotFoundPage from '../pages/NotFoundPage';
 
 
@@ -199,6 +200,10 @@ export const routes: RouteObject[] = [
       {
         path: 'role-creation',
         element: <RoleCreation />,
+      },
+      {
+        path: 'profile',
+        element: <AdminProfilePage />,
       },
       {
         path: '*',

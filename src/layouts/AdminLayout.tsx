@@ -53,11 +53,16 @@ const AdminLayout: React.FC<AdminLayoutProps> = () => {
 
       {/* Main Content with Sidebar */}
       <Box sx={{ display: 'flex', flex: 1, mt: { xs: '80px', md: '85px' }, position: 'relative' }}>
-        {/* Sidebar - Hidden on mobile or when collapsed */}
+        {/* Sidebar - Always render, AdminSidebar handles mobile/desktop logic */}
         {!isMobile && !isCollapsed && (
           <Box sx={{ width: DRAWER_WIDTH, flexShrink: 0 }}>
             <AdminSidebar activeMenu={activeMenu} onCollapseChange={setIsCollapsed} />
           </Box>
+        )}
+
+        {/* Mobile Sidebar - AdminSidebar renders its own mobile drawer */}
+        {isMobile && (
+          <AdminSidebar activeMenu={activeMenu} onCollapseChange={setIsCollapsed} />
         )}
 
         {/* Toggle Sidebar Button - Shows when sidebar is collapsed */}
