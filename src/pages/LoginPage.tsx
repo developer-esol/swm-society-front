@@ -14,6 +14,7 @@ import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { useNavigate } from 'react-router-dom';
 import { colors } from '../theme';
+import { useAuthStore } from '../store/useAuthStore';
 import { authService } from '../api/services';
 
 // Validation Schema using Yup
@@ -35,8 +36,11 @@ interface LoginFormValues {
 
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();
-  const [isLoading, setIsLoading] = useState(false);
-  const [loginError, setLoginError] = useState<string | null>(null);
+  const { login, isLoading, error } = useAuthStore();
+  const [localError, setLocalError] = useState<string | null>(null);
+
+  // Combined error from store and local
+  const loginError = error || localError;
 
   const formik = useFormik<LoginFormValues>({
     initialValues: {
@@ -47,28 +51,23 @@ const LoginPage: React.FC = () => {
     validationSchema: loginValidationSchema,
     onSubmit: async (values: LoginFormValues) => {
       try {
-        setIsLoading(true);
-        setLoginError(null);
+        setLocalError(null);
 
-        // Call auth service to login
-        const response = await authService.login({
-          email: values.email,
-          password: values.password,
-        });
+        console.log('Starting login process for:', values.email);
 
-        // Store token and user data
-        localStorage.setItem('authToken', response.token);
-        localStorage.setItem('userEmail', response.user.email);
-        localStorage.setItem('userName', response.user.fullName);
+        // Use auth store to login
+        await login(values.email, values.password);
 
-        // Redirect to home
+        console.log('Login successful, redirecting to home');
+
+        // Redirect to home page
         navigate('/');
       } catch (error) {
-        const errorMessage =
-          error instanceof Error ? error.message : 'Login failed. Please try again.';
-        setLoginError(errorMessage);
-      } finally {
-        setIsLoading(false);
+        console.error('Login failed:', error);
+        const errorMessage = error instanceof Error 
+          ? error.message 
+          : 'Login failed. Please check your email and password.';
+        setLocalError(errorMessage);
       }
     },
   });

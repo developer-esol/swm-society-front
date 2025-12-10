@@ -14,11 +14,12 @@ import { DropdownMenu } from './DropdownMenu';
 import { NavLink } from './NavLink';
 import { MobileMenu } from './MobileMenu';
 import { useBrands } from '../hooks/useBrands';
+import { useAuthStore } from '../store/useAuthStore';
 import { colors } from '../theme';
 
 export const NavigationBar: React.FC = () => {
     const navigate = useNavigate();
-    const [isAuthenticated, setIsAuthenticated] = useState<boolean>(true);
+    const { isAuthenticated, user, logout } = useAuthStore();
     const [totalItems] = useState<number>(0);
     const [wishlistItems] = useState<number>(0);
     const [mobileOpen, setMobileOpen] = useState(false);
@@ -29,9 +30,9 @@ export const NavigationBar: React.FC = () => {
     const { data: brands } = useBrands();
     const activeBrands = brands ? brands.filter(b => b.isActive) : [];
 
-    const logout = () => {
-        // Placeholder logout function
-        setIsAuthenticated(false);
+    const handleLogout = () => {
+        console.log('NavigationBar: Logging out user');
+        logout();
         setProfileAnchor(null);
         navigate('/login');
     }

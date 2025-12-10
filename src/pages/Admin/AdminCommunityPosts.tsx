@@ -1,6 +1,7 @@
 import { Box, Container, Typography, Button as MuiButton } from '@mui/material'
 import { useState, useEffect } from 'react'
 import { communityService } from '../../api/services/communityService'
+import { ConfirmDeleteDialog } from '../../components'
 import { colors } from '../../theme'
 import type { CommunityPost } from '../../types/community'
 import AdminCommunityPostCard from '../../components/AdminCommunityPostCard'
@@ -13,6 +14,8 @@ const AdminCommunityPosts = () => {
   const [searchQuery, setSearchQuery] = useState('')
   const [showAll, setShowAll] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [postToDelete, setPostToDelete] = useState<{ id: string; caption: string } | null>(null)
 
   const ITEMS_PER_PAGE = 3
 
@@ -54,15 +57,29 @@ const AdminCommunityPosts = () => {
   }
 
   // Handle delete post
-  const handleDeletePost = async (postId: string) => {
+  const handleDeletePost = (post: CommunityPost) => {
+    setPostToDelete({ id: post.id, caption: post.caption })
+    setDeleteDialogOpen(true)
+  }
+
+  const confirmDeletePost = async () => {
+    if (!postToDelete) return
+    
     try {
-      await communityService.deletePost(postId)
-      const updatedPosts = posts.filter((p) => p.id !== postId)
+      await communityService.deletePost(postToDelete.id)
+      const updatedPosts = posts.filter((p) => p.id !== postToDelete.id)
       setPosts(updatedPosts)
       setFilteredPosts(updatedPosts)
+      setDeleteDialogOpen(false)
+      setPostToDelete(null)
     } catch (error) {
       console.error('Error deleting post:', error)
     }
+  }
+
+  const cancelDelete = () => {
+    setDeleteDialogOpen(false)
+    setPostToDelete(null)
   }
 
   // Get posts to display
@@ -174,6 +191,14 @@ const AdminCommunityPosts = () => {
           </Box>
         )}
       </Container>
+
+      {/* Confirmation Dialog */}
+      <ConfirmDeleteDialog
+        open={deleteDialogOpen}
+        message={`Are you sure you want to delete "${postToDelete?.caption}"? This action cannot be undone.`}
+        onConfirm={confirmDeletePost}
+        onCancel={cancelDelete}
+      />
     </Box>
   )
 }

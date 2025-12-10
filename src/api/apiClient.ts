@@ -40,8 +40,8 @@ class ApiClient {
   }
 
   private getAuthToken(): string | null {
-    // Get token from localStorage or your Zustand store
-    return localStorage.getItem('auth_token');
+    // Get token from localStorage using the correct key
+    return localStorage.getItem('authToken');
   }
 
   async get<T>(endpoint: string, params?: Record<string, any>): Promise<T> {

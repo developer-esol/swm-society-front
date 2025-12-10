@@ -14,21 +14,15 @@ import type { CommunityPost } from '../types/community'
 
 interface AdminCommunityPostCardProps {
   post: CommunityPost
-  onDelete: (postId: string) => Promise<void>
+  onDelete: (post: CommunityPost) => void
 }
 
 const AdminCommunityPostCard: React.FC<AdminCommunityPostCardProps> = ({
   post,
   onDelete,
 }) => {
-  const handleDelete = async () => {
-    if (window.confirm('Are you sure you want to delete this post?')) {
-      try {
-        await onDelete(post.id)
-      } catch (error) {
-        console.error('Failed to delete post:', error)
-      }
-    }
+  const handleDelete = () => {
+    onDelete(post)
   }
 
   return (

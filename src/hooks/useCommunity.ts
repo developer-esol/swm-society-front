@@ -15,7 +15,8 @@ export const useCommunity = () => {
   const getPaginated = useCallback(
     async (page: number = 1, limit: number = 6): Promise<CommunityPost[]> => {
       try {
-        return await communityService.getPaginated(page, limit);
+        // Use getRecent for paginated-like behavior
+        return await communityService.getRecent(limit);
       } catch (error) {
         console.error('Failed to fetch paginated posts:', error);
         throw error;
@@ -26,7 +27,8 @@ export const useCommunity = () => {
 
   const likePost = useCallback(async (postId: string): Promise<CommunityPost | null> => {
     try {
-      return await communityService.likePost(postId);
+      // Toggle like on the post
+      return await communityService.toggleLike(postId, true);
     } catch (error) {
       console.error('Failed to like post:', error);
       throw error;
@@ -35,7 +37,9 @@ export const useCommunity = () => {
 
   const getById = useCallback(async (postId: string): Promise<CommunityPost | null> => {
     try {
-      return await communityService.getById(postId);
+      // Get all posts and find by ID
+      const allPosts = await communityService.getAll();
+      return allPosts.find(post => post.id === postId) || null;
     } catch (error) {
       console.error('Failed to fetch post:', error);
       throw error;
@@ -44,7 +48,8 @@ export const useCommunity = () => {
 
   const getMockPosts = useCallback((): CommunityPost[] => {
     try {
-      return communityService.getMockPosts();
+      // Return empty array since we're using real API now
+      return [];
     } catch (error) {
       console.error('Failed to get mock posts:', error);
       throw error;
@@ -77,5 +82,8 @@ export const useCommunity = () => {
     getMockPosts,
     getByUserId,
     deletePost,
+    create: communityService.create,
+    getFeatured: communityService.getFeatured,
+    getRecent: communityService.getRecent,
   };
 };

@@ -1,6 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Box, Typography, Button as MuiButton, CircularProgress } from '@mui/material';
-import CommunityPostCard from '../../components/CommunityPostCard';
+import { 
+  Container, 
+  Box, 
+  Typography, 
+  Button as MuiButton, 
+  CircularProgress,
+  Avatar,
+  IconButton 
+} from '@mui/material';
+import { Favorite, FavoriteBorder } from '@mui/icons-material';
 import { useCommunity } from '../../hooks/useCommunity';
 import { colors } from '../../theme';
 import type { CommunityPost } from '../../types/community';
@@ -103,12 +111,116 @@ export const StyleInspiration: React.FC<StyleInspirationProps> = ({ onLike }) =>
               },
               gap: 3,
               mb: 1,
-              justifyItems: 'center',
             }}
           >
             {posts.map((post) => (
               <Box key={post.id}>
-                <CommunityPostCard post={post} onLike={handleLikePost} />
+                <Box
+                  sx={{
+                    bgcolor: 'white',
+                    borderRadius: '12px',
+                    overflow: 'hidden',
+                    transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+                    '&:hover': {
+                      transform: 'translateY(-4px)',
+                      boxShadow: '0 8px 24px rgba(0, 0, 0, 0.1)',
+                    },
+                    display: 'flex',
+                    flexDirection: 'column',
+                    height: '100%',
+                  }}
+                >
+                  {/* Post Image */}
+                  <Box
+                    component="img"
+                    src={post.image}
+                    alt={post.caption}
+                    sx={{
+                      width: '100%',
+                      height: '280px',
+                      objectFit: 'cover',
+                    }}
+                  />
+
+                  {/* Post Content */}
+                  <Box sx={{ p: 3, display: 'flex', flexDirection: 'column', flex: 1 }}>
+                    {/* User Info */}
+                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                      <Avatar
+                        src={post.userAvatar}
+                        alt={post.userName}
+                        sx={{
+                          width: 48,
+                          height: 48,
+                          mr: 2,
+                          border: `2px solid ${colors.button.primary}`,
+                        }}
+                      />
+                      <Box sx={{ flex: 1 }}>
+                        <Typography
+                          sx={{
+                            fontWeight: 600,
+                            color: colors.text.primary,
+                            fontSize: '0.95rem',
+                          }}
+                        >
+                          {post.userName}
+                        </Typography>
+                        <Typography
+                          sx={{
+                            color: 'grey.600',
+                            fontSize: '0.85rem',
+                          }}
+                        >
+                          @{post.userHandle}
+                        </Typography>
+                      </Box>
+                    </Box>
+
+                    {/* Post Caption */}
+                    <Typography
+                      sx={{
+                        color: colors.text.primary,
+                        fontSize: '0.9rem',
+                        lineHeight: 1.6,
+                        mb: 2,
+                        flex: 1,
+                      }}
+                    >
+                      "{post.caption}"
+                    </Typography>
+
+                    {/* Like Button */}
+                    <Box sx={{ display: 'flex', gap: 1, mt: 'auto', pt: 2, borderTop: '1px solid #e0e0e0' }}>
+                      <IconButton
+                        size="small"
+                        onClick={() => handleLikePost(post.id)}
+                        sx={{
+                          color: post.isLiked ? colors.button.primary : 'grey.600',
+                          '&:hover': {
+                            color: colors.button.primary,
+                          },
+                        }}
+                      >
+                        {post.isLiked ? (
+                          <Favorite sx={{ fontSize: 18 }} />
+                        ) : (
+                          <FavoriteBorder sx={{ fontSize: 18 }} />
+                        )}
+                      </IconButton>
+                      <Typography
+                        sx={{
+                          color: 'grey.600',
+                          fontSize: '0.85rem',
+                          display: 'flex',
+                          alignItems: 'center',
+                        }}
+                      >
+                        {post.likes} likes
+                      </Typography>
+                    </Box>
+                  </Box>
+                </Box>
               </Box>
             ))}
           </Box>

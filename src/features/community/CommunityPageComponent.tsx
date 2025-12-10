@@ -19,23 +19,31 @@ export const CommunityPageComponent: React.FC<CommunityPageComponentProps> = ({ 
   const [spotlightPosts, setSpotlightPosts] = React.useState<CommunityPost[]>([]);
 
   // Load all posts and set spotlight
-  useEffect(() => {
-    const loadPosts = async () => {
-      try {
-        const allPosts = await getAll();
-        setPosts(allPosts);
-        // Get top 3 most-liked posts for spotlight
-        const topPosts = allPosts
-          .sort((a, b) => b.likes - a.likes)
-          .slice(0, 3);
-        setSpotlightPosts(topPosts);
-      } catch (error) {
-        console.error('Failed to load posts:', error);
-      }
-    };
+  const loadPosts = async () => {
+    try {
+      const allPosts = await getAll();
+      setPosts(allPosts);
+      // Get top 3 most-liked posts for spotlight
+      const topPosts = allPosts
+        .sort((a, b) => b.likes - a.likes)
+        .slice(0, 3);
+      setSpotlightPosts(topPosts);
+    } catch (error) {
+      console.error('Failed to load posts:', error);
+    }
+  };
 
+  useEffect(() => {
     loadPosts();
   }, [getAll]);
+
+  const handlePostSuccess = () => {
+    // Refresh posts after successful creation
+    loadPosts();
+    if (onPostSuccess) {
+      onPostSuccess();
+    }
+  };
 
   const handleShareYourLook = () => {
     if (shareYourStyleRef.current) {
@@ -62,12 +70,6 @@ export const CommunityPageComponent: React.FC<CommunityPageComponentProps> = ({ 
       }
     } catch (error) {
       console.error('Failed to like post:', error);
-    }
-  };
-
-  const handlePostSuccess = () => {
-    if (onPostSuccess) {
-      onPostSuccess();
     }
   };
 

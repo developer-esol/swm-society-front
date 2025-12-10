@@ -91,7 +91,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = () => {
           component="main"
           sx={{
             flex: 1,
-            width: isMobile ? '100%' : `calc(100% - ${isCollapsed ? COLLAPSED_WIDTH : DRAWER_WIDTH}px)`,
+            width: isMobile || isCollapsed ? '100%' : `calc(100% - ${DRAWER_WIDTH}px)`,
             display: 'flex',
             flexDirection: 'column',
           }}
