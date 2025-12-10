@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect, useMemo } from 'react'
 import { rolesService } from '../../api/services/admin/rolesService'
+import { userService } from '../../api/services/admin/userService'
 import type { Role } from '../../types/Admin/roles'
 
 export const useAdminRoles = () => {
@@ -16,8 +17,24 @@ export const useAdminRoles = () => {
       setIsLoading(true)
       try {
         const allRoles = await rolesService.getAll()
-        console.log('useAdminRoles - loaded allRoles:', allRoles)
-        setRoles(allRoles)
+        // fetch users to compute usersCount per role
+        let users = [] as Array<{ id: string; role?: string }>
+        try {
+          const fetched = await userService.getAll()
+          // userService returns AdminUser with `role` set to roleId (per implementation)
+          users = fetched.map((u) => ({ id: u.id, role: u.role }))
+        } catch (err) {
+          console.warn('useAdminRoles - failed to fetch users for role counts', err)
+        }
+
+        // compute usersCount for each role using role.id matching user.role
+        const rolesWithCounts = allRoles.map((role) => {
+          const count = users.filter((u) => (u.role || '').toString() === role.id.toString()).length
+          return { ...role, usersCount: count }
+        })
+
+        console.log('useAdminRoles - loaded allRoles with counts:', rolesWithCounts)
+        setRoles(rolesWithCounts)
       } catch (error) {
         console.error('Failed to load roles:', error)
       } finally {

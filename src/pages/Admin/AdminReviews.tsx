@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
-import { Box, TextField, IconButton, Typography, Button as MuiButton } from '@mui/material'
+import { Box, TextField, IconButton, Typography, Button as MuiButton, Pagination, Stack } from '@mui/material'
 import { Search as SearchIcon } from '@mui/icons-material'
 import { colors } from '../../theme'
+import AdminBreadcrumbs from '../../components/AdminBreadcrumbs'
 import { reviewService } from '../../api/services/reviewService'
 import type { Review } from '../../types/review'
 import ReviewsCard from '../../features/Admin/reviews/ReviewsCard'
@@ -12,8 +13,9 @@ const AdminReviews = () => {
   const [searchQuery, setSearchQuery] = useState('')
   const [showAll, setShowAll] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [currentPage, setCurrentPage] = useState(1)
 
-  const ITEMS_PER_PAGE = 3
+  const ITEMS_PER_PAGE = 5
 
   // Fetch reviews on mount
   useEffect(() => {
@@ -69,9 +71,15 @@ const AdminReviews = () => {
     // Can add modal view here if needed
   }
 
-  // Get reviews to display
-  const displayedReviews = showAll ? filteredReviews : filteredReviews.slice(0, ITEMS_PER_PAGE)
-  const hasMoreReviews = filteredReviews.length > ITEMS_PER_PAGE
+  // Calculate pagination
+  const totalPages = Math.ceil(filteredReviews.length / ITEMS_PER_PAGE)
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE
+  const endIndex = startIndex + ITEMS_PER_PAGE
+  const paginatedReviews = filteredReviews.slice(startIndex, endIndex)
+
+  const handlePageChange = (_event: React.ChangeEvent<unknown>, page: number) => {
+    setCurrentPage(page)
+  }
 
   if (loading) {
     return (
@@ -83,22 +91,14 @@ const AdminReviews = () => {
 
   return (
     <Box sx={{ p: 3 }}>
-      {/* Header with Title and Search */}
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          mb: 3,
-          gap: 2,
-          flexWrap: 'wrap',
-        }}
-      >
-        <Typography variant="h4" sx={{ fontWeight: 700, color: colors.text.primary }}>
-          Customer Reviews
+      {/* Header with Title */}
+        <AdminBreadcrumbs items={[{ label: 'Admin', to: '/admin' }, { label: 'Reviews', to: '/admin/reviews' }]} />
+        <Typography variant="h4" sx={{ fontWeight: 700, color: colors.text.primary, mb: 3 }}>
+          Reviews
         </Typography>
 
-        {/* Search Box */}
+      {/* Search Box */}
+      <Box sx={{ mb: 3, display: 'flex', justifyContent: 'flex-start' }}>
         <Box
           sx={{
             display: 'flex',
@@ -137,7 +137,7 @@ const AdminReviews = () => {
       <Box>
         {filteredReviews.length > 0 ? (
           <>
-            {displayedReviews.map((review) => (
+            {paginatedReviews.map((review) => (
               <ReviewsCard
                 key={review.id}
                 review={review}
@@ -146,26 +146,29 @@ const AdminReviews = () => {
               />
             ))}
 
-            {/* View More Button */}
-            {hasMoreReviews && !showAll && (
-              <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3, mb: 2 }}>
-                <MuiButton
-                  variant="text"
-                  sx={{
-                    color: colors.text.primary,
-                    textTransform: 'none',
-                    fontSize: '1rem',
-                    px: 4,
-                    py: 1.5,
-                    '&:hover': {
-                      color: colors.button.primary,
-                      bgcolor: 'transparent',
-                    },
-                  }}
-                  onClick={() => setShowAll(true)}
-                >
-                  View More
-                </MuiButton>
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 4 }}>
+                <Typography sx={{ color: colors.text.secondary, fontSize: '0.9rem' }}>
+                  {(currentPage - 1) * ITEMS_PER_PAGE + 1}-{Math.min(currentPage * ITEMS_PER_PAGE, filteredReviews.length)} of {filteredReviews.length} reviews
+                </Typography>
+                <Stack spacing={2} direction="row">
+                  <Pagination
+                    count={totalPages}
+                    page={currentPage}
+                    onChange={handlePageChange}
+                    sx={{
+                      '& .MuiPaginationItem-root': {
+                        color: colors.text.primary,
+                        borderColor: colors.border.default,
+                        '&.Mui-selected': {
+                          backgroundColor: '#dc2626',
+                          color: 'white',
+                        },
+                      },
+                    }}
+                  />
+                </Stack>
               </Box>
             )}
           </>

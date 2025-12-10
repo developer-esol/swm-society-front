@@ -6,7 +6,7 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  IconButton,
+  Button,
   Chip,
   Paper,
 } from '@mui/material'
@@ -194,19 +194,27 @@ const LoyaltyTable: React.FC<LoyaltyTableProps> = ({ transactions, onEditBalance
                 {transaction.balance}
               </TableCell>
               <TableCell sx={{ padding: '12px 16px' }} align="center">
-                <IconButton
-                  size="small"
+                <Button
                   onClick={() => onEditBalance(transaction)}
                   sx={{
+                    minWidth: '40px',
+                    width: '40px',
+                    height: '40px',
+                    p: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    border: `1px solid ${colors.border.default}`,
+                    borderRadius: '6px',
                     color: colors.text.primary,
+                    bgcolor: 'transparent',
                     '&:hover': {
-                      backgroundColor: `${colors.button.primary}20`,
-                      color: colors.button.primary,
+                      bgcolor: colors.background.lighter,
                     },
                   }}
                 >
                   <EditIcon size={18} />
-                </IconButton>
+                </Button>
               </TableCell>
             </TableRow>
           ))}

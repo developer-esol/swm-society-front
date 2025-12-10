@@ -1,4 +1,5 @@
 import type { Role, Permission } from '../../../types/Admin/roles'
+import { apiClient } from '../../apiClient'
 
 // Mock permissions data
 const mockPermissions: Permission[] = [
@@ -65,20 +66,31 @@ class RolesService {
   ]
 
   async getAll(): Promise<Role[]> {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        console.log('rolesService.getAll() - returning roles:', this.mockRoles)
-        resolve(this.mockRoles)
-      }, 300)
-    })
+    try {
+      const data = await apiClient.get<Role[]>('/roles')
+      return data
+    } catch (err) {
+      console.warn('rolesService.getAll() - failed to fetch roles from API, falling back to mock', err)
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          resolve(this.mockRoles)
+        }, 300)
+      })
+    }
   }
 
   async getById(id: string): Promise<Role | undefined> {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve(this.mockRoles.find((role) => role.id === id))
-      }, 300)
-    })
+    try {
+      const data = await apiClient.get<Role>(`/roles/${id}`)
+      return data
+    } catch (err) {
+      console.warn('rolesService.getById() - failed to fetch role by id from API, falling back to mock', err)
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          resolve(this.mockRoles.find((role) => role.id === id))
+        }, 300)
+      })
+    }
   }
 
   async create(role: Omit<Role, 'id'>): Promise<Role> {
@@ -109,17 +121,25 @@ class RolesService {
   }
 
   async delete(id: string): Promise<boolean> {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const index = this.mockRoles.findIndex((r) => r.id === id)
-        if (index > -1) {
-          this.mockRoles.splice(index, 1)
-          resolve(true)
-        } else {
-          resolve(false)
-        }
-      }, 300)
-    })
+    try {
+      // try backend delete first
+      await apiClient.delete(`/roles/${id}`)
+      return true
+    } catch (err) {
+      console.warn('rolesService.delete() - backend delete failed, falling back to mock', err)
+      // fallback to mock behavior
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          const index = this.mockRoles.findIndex((r) => r.id === id)
+          if (index > -1) {
+            this.mockRoles.splice(index, 1)
+            resolve(true)
+          } else {
+            resolve(false)
+          }
+        }, 300)
+      })
+    }
   }
 
   async search(query: string): Promise<Role[]> {

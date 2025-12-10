@@ -92,48 +92,52 @@ const RoleCard: React.FC<RoleCardProps> = ({ role, onEdit, onDelete }) => {
       </Box>
 
       <Box sx={{ display: 'flex', gap: 1.5 }}>
-        <Button
-          onClick={() => onEdit(role)}
-          sx={{
-            minWidth: '40px',
-            width: '40px',
-            height: '40px',
-            p: 0,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            border: `1px solid ${colors.border.default}`,
-            borderRadius: '6px',
-            color: colors.text.primary,
-            bgcolor: 'transparent',
-            '&:hover': {
-              bgcolor: colors.background.lighter,
-            },
-          }}
-        >
-          <EditIcon size={18} />
-        </Button>
-        <Button
-          onClick={() => onDelete(role)}
-          sx={{
-            minWidth: '40px',
-            width: '40px',
-            height: '40px',
-            p: 0,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            border: `1px solid ${colors.border.default}`,
-            borderRadius: '6px',
-            color: '#dc2626',
-            bgcolor: 'transparent',
-            '&:hover': {
-              bgcolor: '#fee2e2',
-            },
-          }}
-        >
-          <DeleteIcon size={18} />
-        </Button>
+        {!(role.name || '').toLowerCase().trim().includes('admin') && (
+          <>
+            <Button
+              onClick={() => onEdit(role)}
+              sx={{
+                minWidth: '40px',
+                width: '40px',
+                height: '40px',
+                p: 0,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                border: `1px solid ${colors.border.default}`,
+                borderRadius: '6px',
+                color: colors.text.primary,
+                bgcolor: 'transparent',
+                '&:hover': {
+                  bgcolor: colors.background.lighter,
+                },
+              }}
+            >
+              <EditIcon size={18} />
+            </Button>
+            <Button
+              onClick={() => onDelete(role)}
+              sx={{
+                minWidth: '40px',
+                width: '40px',
+                height: '40px',
+                p: 0,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                border: `1px solid ${colors.border.default}`,
+                borderRadius: '6px',
+                color: '#dc2626',
+                bgcolor: 'transparent',
+                '&:hover': {
+                  bgcolor: '#fee2e2',
+                },
+              }}
+            >
+              <DeleteIcon size={18} />
+            </Button>
+          </>
+        )}
       </Box>
     </Box>
   )

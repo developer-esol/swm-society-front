@@ -8,10 +8,9 @@ import {
   TableHead,
   TableRow,
   Typography,
-  IconButton,
-  Tooltip,
+  Button,
 } from '@mui/material'
-import { Visibility as ViewIcon, Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material'
+import { Eye as ViewIcon, Edit as EditIcon, Trash2 as DeleteIcon } from 'lucide-react'
 import { colors } from '../../../theme'
 import type { AdminProduct } from '../../../types/Admin'
 import { useBrands } from '../../../hooks/useBrands'
@@ -78,43 +77,70 @@ const ProductsTable = ({ products, onView, onEdit, onDelete }: ProductsTableProp
                     {product.deliveryMethod}
                   </TableCell>
                   <TableCell sx={{ textAlign: 'center' }}>
-                    <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'center' }}>
-                      <Tooltip title="View">
-                        <IconButton
-                          size="small"
-                          onClick={() => onView(product)}
-                          sx={{
-                            color: colors.text.primary,
-                            '&:hover': { bgcolor: `${colors.text.primary}10` },
-                          }}
-                        >
-                          <ViewIcon sx={{ fontSize: '1rem' }} />
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title="Edit">
-                        <IconButton
-                          size="small"
-                          onClick={() => onEdit(product)}
-                          sx={{
-                            color: colors.text.primary,
-                            '&:hover': { bgcolor: `${colors.text.primary}10` },
-                          }}
-                        >
-                          <EditIcon sx={{ fontSize: '1rem' }} />
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title="Delete">
-                        <IconButton
-                          size="small"
-                          onClick={() => onDelete(product.id)}
-                          sx={{
-                            color: colors.button.primary,
-                            '&:hover': { bgcolor: `${colors.button.primary}10` },
-                          }}
-                        >
-                          <DeleteIcon sx={{ fontSize: '1rem' }} />
-                        </IconButton>
-                      </Tooltip>
+                    <Box sx={{ display: 'flex', gap: 1.5, justifyContent: 'center' }}>
+                      <Button
+                        onClick={() => onView(product)}
+                        sx={{
+                          minWidth: '40px',
+                          width: '40px',
+                          height: '40px',
+                          p: 0,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          border: `1px solid ${colors.border.default}`,
+                          borderRadius: '6px',
+                          color: colors.text.primary,
+                          bgcolor: 'transparent',
+                          '&:hover': {
+                            bgcolor: colors.background.lighter,
+                          },
+                        }}
+                      >
+                        <ViewIcon size={18} />
+                      </Button>
+                      <Button
+                        onClick={() => onEdit(product)}
+                        sx={{
+                          minWidth: '40px',
+                          width: '40px',
+                          height: '40px',
+                          p: 0,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          border: `1px solid ${colors.border.default}`,
+                          borderRadius: '6px',
+                          color: colors.text.primary,
+                          bgcolor: 'transparent',
+                          '&:hover': {
+                            bgcolor: colors.background.lighter,
+                          },
+                        }}
+                      >
+                        <EditIcon size={18} />
+                      </Button>
+                      <Button
+                        onClick={() => onDelete(product.id)}
+                        sx={{
+                          minWidth: '40px',
+                          width: '40px',
+                          height: '40px',
+                          p: 0,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          border: `1px solid ${colors.border.default}`,
+                          borderRadius: '6px',
+                          color: '#dc2626',
+                          bgcolor: 'transparent',
+                          '&:hover': {
+                            bgcolor: '#fee2e2',
+                          },
+                        }}
+                      >
+                        <DeleteIcon size={18} />
+                      </Button>
                     </Box>
                   </TableCell>
                 </TableRow>

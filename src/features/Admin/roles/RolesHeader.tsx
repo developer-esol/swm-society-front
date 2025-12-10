@@ -1,57 +1,51 @@
 import React from 'react'
-import { Box, TextField } from '@mui/material'
+import { Box, TextField, IconButton, Button } from '@mui/material'
 import { Search as SearchIcon } from 'lucide-react'
 import { colors } from '../../../theme'
 
 interface RolesHeaderProps {
   searchQuery: string
   onSearch: (query: string) => void
+  onCreateRole?: () => void
 }
 
-const RolesHeader: React.FC<RolesHeaderProps> = ({ searchQuery, onSearch }) => {
+const RolesHeader: React.FC<RolesHeaderProps> = ({ searchQuery, onSearch, onCreateRole }) => {
   return (
-    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 4 }}>
-      <TextField
-        placeholder="Search roles..."
-        value={searchQuery}
-        onChange={(e) => onSearch(e.target.value)}
-        variant="outlined"
-        color='#000000'
-        size="small"
-        sx={{
-          width: { xs: '100%', sm: '350px' },
-          '& .MuiOutlinedInput-root': {
-            borderRadius: '24px',
-            bgcolor: colors.background.default,
-            '& fieldset': {
-              borderColor: colors.border.default,
+    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2, mb: 4 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+        <TextField
+          placeholder="Search roles..."
+          value={searchQuery}
+          onChange={(e) => onSearch(e.target.value)}
+          size="small"
+          sx={{
+            width: 250,
+            '& .MuiOutlinedInput-root': {
+              borderRadius: 1,
+              bgcolor: colors.background.default,
             },
-            '&:hover fieldset': {
-              borderColor: colors.border.default,
+          }}
+        />
+        <IconButton
+          sx={{
+            bgcolor: '#C62C2B',
+            color: 'white',
+            borderRadius: 1,
+            width: 40,
+            height: 40,
+            ml: 1,
+            p: 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            '&:hover': {
+              bgcolor: '#A82421',
             },
-            '&.Mui-focused fieldset': {
-              borderColor: colors.border.default,
-              borderWidth: '1px',
-            },
-          },
-          '& .MuiOutlinedInput-input': {
-            fontSize: '0.95rem',
-            color: colors.text.primary,
-            paddingLeft: '12px',
-            '&::placeholder': {
-              color: colors.text.secondary,
-              opacity: 0.7,
-            },
-          },
-        }}
-        InputProps={{
-          startAdornment: (
-            <Box sx={{ mr: 1, display: 'flex', alignItems: 'center' }}>
-              <SearchIcon size={18} color={colors.button.primary} strokeWidth={2.5} />
-            </Box>
-          ),
-        }}
-      />
+          }}
+        >
+          <SearchIcon size={18} />
+        </IconButton>
+      </Box>
     </Box>
   )
 }

@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom'
 import { useFormik } from 'formik'
 import * as Yup from 'yup'
 import { colors } from '../../theme'
+import AdminBreadcrumbs from '../../components/AdminBreadcrumbs'
 import { useAllProducts, useCreateStock } from '../../hooks/useStock'
 import type { CreateStockData } from '../../types'
 
@@ -130,6 +131,7 @@ const AddStock: React.FC = () => {
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', bgcolor: colors.background.default }}>
       <Container maxWidth="lg" sx={{ py: 4, flex: 1, px: { xs: 2, sm: 3, md: 4 } }}>
         {/* Header */}
+        <AdminBreadcrumbs items={[{ label: 'Admin', to: '/admin' }, { label: 'Stock', to: '/admin/stock' }, { label: 'Add Stock' }]} />
         <Typography
           variant="h4"
           sx={{

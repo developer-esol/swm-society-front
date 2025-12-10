@@ -1,9 +1,11 @@
-import { Box, Container, Typography, Pagination, Stack, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Button } from '@mui/material'
+import { Box, Container, Typography, Pagination, Stack, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Button, TextField, IconButton } from '@mui/material'
 import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ProductsTable, ProductTableHeader, ProductViewModal, ProductEditModal } from '../../features/Admin/products'
+import { Search as SearchIcon } from '@mui/icons-material'
+import { ProductsTable, ProductViewModal, ProductEditModal } from '../../features/Admin/products'
 import { useAdminProducts } from '../../hooks/useProducts'
 import { colors } from '../../theme'
+import AdminBreadcrumbs from '../../components/AdminBreadcrumbs'
 import type { AdminProduct } from '../../types/Admin'
 import { useQueryClient } from '@tanstack/react-query'
 import { QUERY_KEYS } from '../../configs/queryKeys'
@@ -48,8 +50,8 @@ const AdminProducts = () => {
     setCurrentPage(page)
   }
 
-  const handleSearch = (query: string) => {
-    setSearchQuery(query)
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value)
     setCurrentPage(1) // Reset to first page when searching
   }
 
@@ -141,11 +143,13 @@ const AdminProducts = () => {
           width: '100%'
         }}
       >
-        <Typography 
-          variant="h4" 
-          sx={{ 
-            mb: { xs: 3, sm: 4 }, 
-            fontWeight: 700, 
+        {/* Header */}
+        <AdminBreadcrumbs items={[{ label: 'Admin', to: '/admin' }, { label: 'Products', to: '/admin/products' }]} />
+        <Typography
+          variant="h4"
+          sx={{
+            mb: 3,
+            fontWeight: 700,
             color: colors.text.primary,
             fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' }
           }}
@@ -153,11 +157,59 @@ const AdminProducts = () => {
           All Products
         </Typography>
 
-        <ProductTableHeader
-          searchQuery={searchQuery}
-          onSearch={handleSearch}
-          onAddProduct={handleAddProduct}
-        />
+        {/* Search Box with Add Button */}
+        <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Box
+            sx={{
+              display: 'flex',
+              gap: 1,
+              alignItems: 'center',
+            }}
+          >
+            <TextField
+              placeholder="Search Products..."
+              value={searchQuery}
+              onChange={handleSearch}
+              size="small"
+              sx={{
+                width: 250,
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: 1,
+                  bgcolor: colors.background.default,
+                },
+              }}
+            />
+            <IconButton
+              sx={{
+                bgcolor: '#C62C2B',
+                color: 'white',
+                borderRadius: 1,
+                p: 1,
+                '&:hover': { bgcolor: '#A82421' },
+              }}
+            >
+              <SearchIcon />
+            </IconButton>
+          </Box>
+          
+          <Button
+            variant="contained"
+            onClick={handleAddProduct}
+            sx={{
+              bgcolor: colors.button.primary,
+              color: 'white',
+              textTransform: 'none',
+              fontWeight: 600,
+              px: 2.5,
+              py: 1,
+              '&:hover': {
+                bgcolor: colors.button.primaryHover,
+              },
+            }}
+          >
+            Add Product
+          </Button>
+        </Box>
 
         <ProductsTable
           products={paginatedProducts}

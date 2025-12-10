@@ -44,7 +44,7 @@ const menuItems: SidebarMenuItem[] = [
   { id: 'posts', label: 'Posts', icon: 'posts', path: '/admin/posts', badge: 0 },
   { id: 'reviews', label: 'Reviews', icon: 'reviews', path: '/admin/reviews', badge: 0 },
   { id: 'roles', label: 'Roles', icon: 'roles', path: '/admin/roles', badge: 0 },
-  { id: 'access', label: 'Access Control', icon: 'access', path: '/admin/access-control', badge: 0 },
+  // { id: 'access', label: 'Access Control', icon: 'access', path: '/admin/access-control', badge: 0 },
 ];
 
 interface AdminSidebarProps {

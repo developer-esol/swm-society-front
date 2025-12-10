@@ -1,9 +1,12 @@
-import { Box, Container, Typography, Pagination, Stack, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Button } from '@mui/material'
+import { Box, Container, Typography, Pagination, Stack, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Button, TextField, IconButton } from '@mui/material'
 import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { StockTable, StockTableHeader, StockEditModal } from '../../features/Admin/stock'
+import { Search as SearchIcon } from '@mui/icons-material'
+import { StockTable, StockEditModal } from '../../features/Admin/stock'
+import StockViewModal from '../../features/Admin/stock/StockViewModal'
 import { useAllStocks, useAllProducts, useUpdateStock, useDeleteStock } from '../../hooks/useStock'
 import { colors } from '../../theme'
+import AdminBreadcrumbs from '../../components/AdminBreadcrumbs'
 import type { StockItem } from '../../types/Admin'
 
 const AdminStock = () => {
@@ -13,6 +16,7 @@ const AdminStock = () => {
   const updateStockMutation = useUpdateStock()
   const deleteStockMutation = useDeleteStock()
   const [editModalOpen, setEditModalOpen] = useState(false)
+  const [viewModalOpen, setViewModalOpen] = useState(false)
   const [selectedItem, setSelectedItem] = useState<StockItem | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
@@ -66,8 +70,8 @@ const AdminStock = () => {
     setCurrentPage(page)
   }
 
-  const handleSearch = (query: string) => {
-    setSearchQuery(query)
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value)
     setCurrentPage(1)
   }
 
@@ -104,9 +108,19 @@ const AdminStock = () => {
     }
   }
 
+  const handleView = (item: StockItem) => {
+    setSelectedItem(item)
+    setViewModalOpen(true)
+  }
+
   const handleEdit = (item: StockItem) => {
     setSelectedItem(item)
     setEditModalOpen(true)
+  }
+
+  const handleCloseViewModal = () => {
+    setViewModalOpen(false)
+    setSelectedItem(null)
   }
 
   const handleDelete = (id: string) => {
@@ -145,10 +159,12 @@ const AdminStock = () => {
           width: '100%',
         }}
       >
+        {/* Header */}
+        <AdminBreadcrumbs items={[{ label: 'Admin', to: '/admin' }, { label: 'Stock', to: '/admin/stock' }]} />
         <Typography
           variant="h4"
           sx={{
-            mb: { xs: 3, sm: 4 },
+            mb: 3,
             fontWeight: 700,
             color: colors.text.primary,
             fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' },
@@ -157,14 +173,72 @@ const AdminStock = () => {
           Your Stock
         </Typography>
 
-        <StockTableHeader searchQuery={searchQuery} onSearch={handleSearch} onAddStock={handleAddStock} />
-        <StockTable items={paginatedItems} onEdit={handleEdit} onDelete={handleDelete} />
+        {/* Search Box with Add Button */}
+        <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Box
+            sx={{
+              display: 'flex',
+              gap: 1,
+              alignItems: 'center',
+            }}
+          >
+            <TextField
+              placeholder="Search Stock..."
+              value={searchQuery}
+              onChange={handleSearch}
+              size="small"
+              sx={{
+                width: 250,
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: 1,
+                  bgcolor: colors.background.default,
+                },
+              }}
+            />
+            <IconButton
+              sx={{
+                bgcolor: '#C62C2B',
+                color: 'white',
+                borderRadius: 1,
+                p: 1,
+                '&:hover': { bgcolor: '#A82421' },
+              }}
+            >
+              <SearchIcon />
+            </IconButton>
+          </Box>
+          
+          <Button
+            variant="contained"
+            onClick={handleAddStock}
+            sx={{
+              bgcolor: colors.button.primary,
+              color: 'white',
+              textTransform: 'none',
+              fontWeight: 600,
+              px: 2.5,
+              py: 1,
+              '&:hover': {
+                bgcolor: colors.button.primaryHover,
+              },
+            }}
+          >
+            Add Stock
+          </Button>
+        </Box>
+        <StockTable items={paginatedItems} onView={handleView} onEdit={handleEdit} onDelete={handleDelete} />
+
+        <StockViewModal
+          open={viewModalOpen}
+          stock={selectedItem}
+          onClose={handleCloseViewModal}
+        />
 
         {/* Pagination and Info */}
         {totalPages > 1 && (
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 4 }}>
             <Typography sx={{ color: colors.text.secondary, fontSize: '0.9rem' }}>
-              {(currentPage - 1) * 5 + 1}-{Math.min(currentPage * 5, filteredItems.length)} of {filteredItems.length} items
+              {(currentPage - 1) * ITEMS_PER_PAGE + 1}-{Math.min(currentPage * ITEMS_PER_PAGE, filteredItems.length)} of {filteredItems.length} items
             </Typography>
             <Stack spacing={2} direction="row">
               <Pagination

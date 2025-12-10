@@ -1,4 +1,5 @@
 import { Box, Container, Typography } from '@mui/material'
+import AdminBreadcrumbs from '../../components/AdminBreadcrumbs'
 import { useDashboard } from '../../hooks/admin'
 import { StatBoxes, SalesRevenue, RevenueByLocation, TotalSales, TopSellingProducts } from '../../features/Admin/dashboard'
 import { colors } from '../../theme'
@@ -9,6 +10,7 @@ const AdminDashboard = () => {
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', bgcolor: colors.background.default }}>
       <Container maxWidth="lg" sx={{ py: 4, flex: 1, px: { xs: 2, sm: 3, md: 4 } }}>
+        <AdminBreadcrumbs items={[{ label: 'Admin', to: '/admin' }, { label: 'Dashboard' }]} />
         <Typography variant="h4" sx={{ mb: 4, fontWeight: 700, color: colors.text.primary }}>
           Dashboard
         </Typography>

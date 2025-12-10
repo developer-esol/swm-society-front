@@ -8,20 +8,20 @@ import {
   TableHead,
   TableRow,
   Typography,
-  IconButton,
-  Tooltip,
+  Button,
 } from '@mui/material'
-import { Visibility as ViewIcon, Delete as DeleteIcon } from '@mui/icons-material'
+import { Eye as ViewIcon, Edit2 as EditIcon, Trash2 as DeleteIcon } from 'lucide-react'
 import { colors } from '../../../theme'
 import type { CommunityPost } from '../../../types/community'
 
 interface CommunityPostsTableProps {
   posts: CommunityPost[]
   onView: (post: CommunityPost) => void
+  onEdit: (post: CommunityPost) => void
   onDelete: (id: string) => void
 }
 
-const CommunityPostsTable = ({ posts, onView, onDelete }: CommunityPostsTableProps) => {
+const CommunityPostsTable = ({ posts, onView, onEdit, onDelete }: CommunityPostsTableProps) => {
   return (
     <Paper sx={{ bgcolor: colors.background.default, border: `1px solid ${colors.border.default}` }}>
       <TableContainer>
@@ -62,31 +62,70 @@ const CommunityPostsTable = ({ posts, onView, onDelete }: CommunityPostsTablePro
                     ❤️ {post.likes}
                   </TableCell>
                   <TableCell sx={{ textAlign: 'center' }}>
-                    <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'center' }}>
-                      <Tooltip title="View">
-                        <IconButton
-                          size="small"
-                          onClick={() => onView(post)}
-                          sx={{
-                            color: colors.text.primary,
-                            '&:hover': { bgcolor: `${colors.text.primary}10` },
-                          }}
-                        >
-                          <ViewIcon sx={{ fontSize: '1rem' }} />
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title="Delete">
-                        <IconButton
-                          size="small"
-                          onClick={() => onDelete(post.id)}
-                          sx={{
-                            color: '#d32f2f',
-                            '&:hover': { bgcolor: '#d32f2f10' },
-                          }}
-                        >
-                          <DeleteIcon sx={{ fontSize: '1rem' }} />
-                        </IconButton>
-                      </Tooltip>
+                    <Box sx={{ display: 'flex', gap: 1.5, justifyContent: 'center' }}>
+                      <Button
+                        onClick={() => onView(post)}
+                        sx={{
+                          minWidth: '40px',
+                          width: '40px',
+                          height: '40px',
+                          p: 0,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          border: `1px solid ${colors.border.default}`,
+                          borderRadius: '6px',
+                          color: colors.text.primary,
+                          bgcolor: 'transparent',
+                          '&:hover': {
+                            bgcolor: colors.background.lighter,
+                          },
+                        }}
+                      >
+                        <ViewIcon size={18} />
+                      </Button>
+                      <Button
+                        onClick={() => onEdit(post)}
+                        sx={{
+                          minWidth: '40px',
+                          width: '40px',
+                          height: '40px',
+                          p: 0,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          border: `1px solid ${colors.border.default}`,
+                          borderRadius: '6px',
+                          color: colors.text.primary,
+                          bgcolor: 'transparent',
+                          '&:hover': {
+                            bgcolor: colors.background.lighter,
+                          },
+                        }}
+                      >
+                        <EditIcon size={18} />
+                      </Button>
+                      <Button
+                        onClick={() => onDelete(post.id)}
+                        sx={{
+                          minWidth: '40px',
+                          width: '40px',
+                          height: '40px',
+                          p: 0,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          border: `1px solid ${colors.border.default}`,
+                          borderRadius: '6px',
+                          color: '#dc2626',
+                          bgcolor: 'transparent',
+                          '&:hover': {
+                            bgcolor: '#fee2e2',
+                          },
+                        }}
+                      >
+                        <DeleteIcon size={18} />
+                      </Button>
                     </Box>
                   </TableCell>
                 </TableRow>

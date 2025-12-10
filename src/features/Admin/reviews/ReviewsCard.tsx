@@ -1,5 +1,5 @@
-import { Box, Paper, Typography, IconButton, Tooltip, Rating } from '@mui/material'
-import { Visibility as ViewIcon, Delete as DeleteIcon } from '@mui/icons-material'
+import { Box, Paper, Typography, Button, Rating } from '@mui/material'
+import { Eye as ViewIcon, Trash2 as DeleteIcon } from 'lucide-react'
 import { colors } from '../../../theme'
 import type { Review } from '../../../types/review'
 
@@ -99,33 +99,49 @@ const ReviewsCard = ({ review, onView, onDelete }: ReviewsCardProps) => {
         </Box>
 
         {/* Action Buttons */}
-        <Box sx={{ display: 'flex', gap: { xs: 0.5, sm: 0.4 } }}>
-          <Tooltip title="View">
-            <IconButton
-              size="small"
-              onClick={() => onView?.(review)}
-              sx={{
-                color: colors.text.primary,
-                p: 0.5,
-                '&:hover': { bgcolor: `${colors.text.primary}10` },
-              }}
-            >
-              <ViewIcon sx={{ fontSize: { xs: '1.1rem', sm: '1.3rem' } }} />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Delete">
-            <IconButton
-              size="small"
-              onClick={() => onDelete?.(review.id)}
-              sx={{
-                color: '#d32f2f',
-                p: 0.5,
-                '&:hover': { bgcolor: '#d32f2f10' },
-              }}
-            >
-              <DeleteIcon sx={{ fontSize: { xs: '1.1rem', sm: '1.3rem' } }} />
-            </IconButton>
-          </Tooltip>
+        <Box sx={{ display: 'flex', gap: 1.5 }}>
+          <Button
+            onClick={() => onView?.(review)}
+            sx={{
+              minWidth: '40px',
+              width: '40px',
+              height: '40px',
+              p: 0,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              border: `1px solid ${colors.border.default}`,
+              borderRadius: '6px',
+              color: colors.text.primary,
+              bgcolor: 'transparent',
+              '&:hover': {
+                bgcolor: colors.background.lighter,
+              },
+            }}
+          >
+            <ViewIcon size={18} />
+          </Button>
+          <Button
+            onClick={() => onDelete?.(review.id)}
+            sx={{
+              minWidth: '40px',
+              width: '40px',
+              height: '40px',
+              p: 0,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              border: `1px solid ${colors.border.default}`,
+              borderRadius: '6px',
+              color: '#dc2626',
+              bgcolor: 'transparent',
+              '&:hover': {
+                bgcolor: '#fee2e2',
+              },
+            }}
+          >
+            <DeleteIcon size={18} />
+          </Button>
         </Box>
       </Box>
     </Paper>

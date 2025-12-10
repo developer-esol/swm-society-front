@@ -1,10 +1,11 @@
 import { useState } from 'react'
-import { Box, Container, Typography, TextField, Select, MenuItem, FormControl, InputAdornment, Pagination, Stack, Autocomplete } from '@mui/material'
+import { Box, Container, Typography, TextField, Select, MenuItem, FormControl, Pagination, Stack, Autocomplete, IconButton } from '@mui/material'
 import { Search as SearchIcon } from 'lucide-react'
 import { useAdminLoyalty } from '../../hooks/admin'
 import { adminLoyaltyService } from '../../api/services/admin/loyaltyService'
 import { EditPointsModal, LoyaltyTable, CustomerInfoBox } from '../../features/Admin/loyalty'
 import { colors } from '../../theme'
+import AdminBreadcrumbs from '../../components/AdminBreadcrumbs'
 import type { LoyaltyTransactionType } from '../../types/Admin/loyalty'
 
 const AdminLoyalty = () => {
@@ -61,79 +62,67 @@ const AdminLoyalty = () => {
         }}
       >
         {/* Header */}
-        <Typography
-          variant="h4"
-          sx={{
-            fontWeight: 700,
-            color: colors.text.primary,
-            fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' },
-            mb: 4,
-          }}
-        >
-          Loyalty Management
-        </Typography>
+        <AdminBreadcrumbs items={[{ label: 'Admin', to: '/admin' }, { label: 'Loyalty', to: '/admin/loyalty' }]} />
 
-        {/* Search Bar */}
-        <Box
-          sx={{
-            mb: 4,
-            display: 'flex',
-          }}
-        >
-          <Autocomplete
-            options={searchResults}
-            getOptionLabel={(option) => `${option.name} (${option.id})`}
-            inputValue={searchQuery}
-            onInputChange={handleSearchChange}
-            onChange={handleCustomerSelect}
+        <Box sx={{ mb: 3 }}>
+          <Typography
+            variant="h4"
             sx={{
-              width: { xs: '70%', sm: '400px' },
-              '& .MuiOutlinedInput-root': {
-                bgcolor: colors.input.bg,
-                borderRadius: '24px',
-                paddingLeft: '12px',
-                '& fieldset': {
-                  borderColor: colors.input.border,
-                },
-                '&:hover fieldset': {
-                  borderColor: colors.input.border,
-                },
-                '&.Mui-focused fieldset': {
-                  borderColor: colors.input.border,
-                  borderWidth: '1px',
-                },
-              },
+              fontWeight: 700,
+              color: colors.text.primary,
+              fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' },
+              mb: 2,
             }}
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                placeholder="Search customers..."
-                variant="outlined"
-                size="small"
-                InputProps={{
-                  ...params.InputProps,
-                  startAdornment: (
-                    <>
-                      <InputAdornment position="start" sx={{ ml: 0.5 }}>
-                        <SearchIcon size={20} color={colors.input.searchIconColor} strokeWidth={2.5} />
-                      </InputAdornment>
-                      {params.InputProps.startAdornment}
-                    </>
-                  ),
-                }}
-                sx={{
-                  '& .MuiOutlinedInput-input': {
-                    fontSize: '0.95rem',
-                    color: colors.text.primary,
-                    '&::placeholder': {
-                      color: colors.input.placeholderText,
-                      opacity: 1,
-                    },
+          >
+            Loyalty Management
+          </Typography>
+
+          <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+            <Autocomplete
+              options={searchResults}
+              getOptionLabel={(option) => `${option.name} (${option.id})`}
+              inputValue={searchQuery}
+              onInputChange={handleSearchChange}
+              onChange={handleCustomerSelect}
+              sx={{
+                width: 250,
+                '& .MuiOutlinedInput-root': {
+                  bgcolor: colors.background.default,
+                  borderRadius: 1,
+                  paddingLeft: '12px',
+                  '& fieldset': {
+                    borderColor: colors.border.default,
                   },
-                }}
-              />
-            )}
-          />
+                  '&:hover fieldset': {
+                    borderColor: colors.border.default,
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: colors.border.default,
+                    borderWidth: '1px',
+                  },
+                },
+              }}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  placeholder="Search customers..."
+                  variant="outlined"
+                  size="small"
+                />
+              )}
+            />
+            <IconButton
+              sx={{
+                bgcolor: '#C62C2B',
+                color: 'white',
+                borderRadius: 1,
+                p: 1,
+                '&:hover': { bgcolor: '#A82421' },
+              }}
+            >
+              <SearchIcon size={16} />
+            </IconButton>
+          </Box>
         </Box>
 
         {/* Customer Info and Stats */}

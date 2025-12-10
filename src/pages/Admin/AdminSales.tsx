@@ -1,6 +1,8 @@
-import { Box, Container, Typography, Pagination, Stack } from '@mui/material'
+import { Box, Container, Typography, Pagination, Stack, TextField, IconButton } from '@mui/material'
+import { Search as SearchIcon } from '@mui/icons-material'
+import AdminBreadcrumbs from '../../components/AdminBreadcrumbs'
 import { useAdminSales } from '../../hooks/admin'
-import { SalesTableHeader, SalesTable } from '../../features/Admin/sales'
+import { SalesTable } from '../../features/Admin/sales'
 import { colors } from '../../theme'
 
 const AdminSales = () => {
@@ -37,10 +39,11 @@ const AdminSales = () => {
         }}
       >
         {/* Header */}
+        <AdminBreadcrumbs items={[{ label: 'Admin', to: '/admin' }, { label: 'Sales', to: '/admin/sales' }]} />
         <Typography
           variant="h4"
           sx={{
-            mb: { xs: 3, sm: 4 },
+            mb: 3,
             fontWeight: 700,
             color: colors.text.primary,
             fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' },
@@ -49,12 +52,43 @@ const AdminSales = () => {
           Sales
         </Typography>
 
-        {/* Search and Filter Section */}
-        <Box sx={{ display: 'flex', gap: 3, mb: 4, alignItems: 'flex-start' }}>
-          <SalesTableHeader searchQuery={searchQuery} onSearch={handleSearch} />
-
-          {/* Date Range Inputs - Aligned with Search Bar */}
-          <Box sx={{ display: 'flex', gap: 3, alignItems: 'center', pt: 0.5 }}>
+        {/* Search Box with Date Filters */}
+        <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Box
+            sx={{
+              display: 'flex',
+              gap: 1,
+              alignItems: 'center',
+            }}
+          >
+            <TextField
+              placeholder="Search Sales..."
+              value={searchQuery}
+              onChange={(e) => handleSearch(e.target.value)}
+              size="small"
+              sx={{
+                width: 250,
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: 1,
+                  bgcolor: colors.background.default,
+                },
+              }}
+            />
+            <IconButton
+              sx={{
+                bgcolor: '#C62C2B',
+                color: 'white',
+                borderRadius: 1,
+                p: 1,
+                '&:hover': { bgcolor: '#A82421' },
+              }}
+            >
+              <SearchIcon />
+            </IconButton>
+          </Box>
+          
+          {/* Date Range Inputs */}
+          <Box sx={{ display: 'flex', gap: 3, alignItems: 'center' }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
               <Typography sx={{ fontSize: '0.95rem', color: colors.text.primary, fontWeight: 500, whiteSpace: 'nowrap' }}>From:</Typography>
               <Box

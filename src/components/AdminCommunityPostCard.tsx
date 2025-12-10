@@ -5,10 +5,10 @@ import {
   CardContent,
   Box,
   Typography,
-  IconButton,
+  Button,
   Chip,
 } from '@mui/material'
-import { Delete as DeleteIcon } from '@mui/icons-material'
+import { Trash2 as DeleteIcon } from 'lucide-react'
 import { colors } from '../theme'
 import type { CommunityPost } from '../types/community'
 
@@ -95,17 +95,27 @@ const AdminCommunityPostCard: React.FC<AdminCommunityPostCardProps> = ({
 
           {/* Right Actions */}
           <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
-            <IconButton
-              size="small"
+            <Button
               onClick={handleDelete}
               sx={{
-                color: '#d32f2f',
-                p: 0.5,
-                '&:hover': { bgcolor: '#d32f2f10' },
+                minWidth: '40px',
+                width: '40px',
+                height: '40px',
+                p: 0,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                border: `1px solid ${colors.border.default}`,
+                borderRadius: '6px',
+                color: '#dc2626',
+                bgcolor: 'transparent',
+                '&:hover': {
+                  bgcolor: '#fee2e2',
+                },
               }}
             >
-              <DeleteIcon sx={{ fontSize: '1.2rem' }} />
-            </IconButton>
+              <DeleteIcon size={18} />
+            </Button>
             <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 0.5 }}>
               <Typography sx={{ fontSize: '1.1rem' }}>❤️</Typography>
               <Typography sx={{ fontSize: '0.85rem', color: colors.text.disabled, fontWeight: 500 }}>

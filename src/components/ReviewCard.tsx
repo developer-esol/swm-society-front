@@ -6,7 +6,6 @@ import {
   Typography,
   Rating,
   Button,
-  IconButton,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -142,16 +141,27 @@ const ReviewCard: React.FC<ReviewCardProps> = ({
           {/* Delete Button - Only for own reviews */}
           {isOwnReview && onDelete && (
             <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 1 }}>
-              <IconButton
-                size="small"
-                color="error"
+              <Button
                 onClick={handleDeleteClick}
                 sx={{
-                  padding: '4px',
+                  minWidth: '40px',
+                  width: '40px',
+                  height: '40px',
+                  p: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  border: `1px solid ${colors.border.default}`,
+                  borderRadius: '6px',
+                  color: '#dc2626',
+                  bgcolor: 'transparent',
+                  '&:hover': {
+                    bgcolor: '#fee2e2',
+                  },
                 }}
               >
                 <Trash2 size={18} />
-              </IconButton>
+              </Button>
             </Box>
           )}
         </CardContent>

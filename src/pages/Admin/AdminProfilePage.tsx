@@ -17,6 +17,7 @@ import {
 import { Edit as EditIcon, Camera as CameraIcon, Lock as LockIcon } from '@mui/icons-material'
 import { useAdminProfile } from '../../hooks/admin/useAdminProfile'
 import { colors } from '../../theme'
+import AdminBreadcrumbs from '../../components/AdminBreadcrumbs'
 
 const AdminProfilePage: React.FC = () => {
   const { profile, isLoading, error, updateProfile, updateProfilePicture, changePassword } = useAdminProfile()
@@ -158,8 +159,9 @@ const AdminProfilePage: React.FC = () => {
 
             {/* Profile Info */}
             <Box sx={{ flex: 1 }}>
-              <Typography variant="h5" sx={{ fontWeight: 700, color: colors.text.primary, mb: 1 }}>
-                {profile.firstName} {profile.lastName}
+              <AdminBreadcrumbs items={[{ label: 'Admin', to: '/admin' }, { label: 'Profile', to: '/admin/profile' }]} />
+              <Typography variant="h4" sx={{ fontWeight: 700, color: colors.text.primary, mb: 1 }}>
+                Profile
               </Typography>
               <Typography sx={{ color: colors.text.gray, mb: 0.5 }}>{profile.email}</Typography>
               <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>

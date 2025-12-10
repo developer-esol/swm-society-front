@@ -7,20 +7,21 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  IconButton,
-  Tooltip,
+  Button,
 } from '@mui/material'
-import { Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material'
+import { Eye as ViewIcon, Edit as EditIcon, Trash2 as DeleteIcon } from 'lucide-react'
 import { colors } from '../../../theme'
+
 import type { StockItem } from '../../../types/Admin'
 
 interface StockTableProps {
-  items: StockItem[]
-  onEdit: (item: StockItem) => void
-  onDelete: (id: string) => void
+  items: StockItem[];
+  onView: (item: StockItem) => void;
+  onEdit: (item: StockItem) => void;
+  onDelete: (id: string) => void;
 }
 
-const StockTable = ({ items, onEdit, onDelete }: StockTableProps) => {
+const StockTable = ({ items, onView, onEdit, onDelete }: StockTableProps) => {
   return (
     <Paper sx={{ bgcolor: colors.background.default, border: `1px solid ${colors.border.default}` }}>
       <TableContainer>
@@ -73,31 +74,70 @@ const StockTable = ({ items, onEdit, onDelete }: StockTableProps) => {
                     ${item.price}
                   </TableCell>
                   <TableCell sx={{ textAlign: 'center' }}>
-                    <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'center' }}>
-                      <Tooltip title="Edit">
-                        <IconButton
-                          size="small"
-                          onClick={() => onEdit(item)}
-                          sx={{
-                            color: colors.text.primary,
-                            '&:hover': { bgcolor: `${colors.text.primary}10` },
-                          }}
-                        >
-                          <EditIcon sx={{ fontSize: '1rem' }} />
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title="Delete">
-                        <IconButton
-                          size="small"
-                          onClick={() => onDelete(item.id)}
-                          sx={{
-                            color: colors.button.primary,
-                            '&:hover': { bgcolor: `${colors.button.primary}10` },
-                          }}
-                        >
-                          <DeleteIcon sx={{ fontSize: '1rem' }} />
-                        </IconButton>
-                      </Tooltip>
+                    <Box sx={{ display: 'flex', gap: 1.5, justifyContent: 'center' }}>
+                      <Button
+                        onClick={() => onView(item)}
+                        sx={{
+                          minWidth: '40px',
+                          width: '40px',
+                          height: '40px',
+                          p: 0,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          border: `1px solid ${colors.border.default}`,
+                          borderRadius: '6px',
+                          color: colors.text.primary,
+                          bgcolor: 'transparent',
+                          '&:hover': {
+                            bgcolor: colors.background.lighter,
+                          },
+                        }}
+                      >
+                        <ViewIcon size={18} />
+                      </Button>
+                      <Button
+                        onClick={() => onEdit(item)}
+                        sx={{
+                          minWidth: '40px',
+                          width: '40px',
+                          height: '40px',
+                          p: 0,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          border: `1px solid ${colors.border.default}`,
+                          borderRadius: '6px',
+                          color: colors.text.primary,
+                          bgcolor: 'transparent',
+                          '&:hover': {
+                            bgcolor: colors.background.lighter,
+                          },
+                        }}
+                      >
+                        <EditIcon size={18} />
+                      </Button>
+                      <Button
+                        onClick={() => onDelete(item.id)}
+                        sx={{
+                          minWidth: '40px',
+                          width: '40px',
+                          height: '40px',
+                          p: 0,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          border: `1px solid ${colors.border.default}`,
+                          borderRadius: '6px',
+                          color: '#dc2626',
+                          bgcolor: 'transparent',
+                          '&:hover': {
+                            bgcolor: '#fee2e2',
+                          },
+                        }}
+                      >
+                        <DeleteIcon size={18} />
+                      </Button>
                     </Box>
                   </TableCell>
                 </TableRow>

@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom'
 import { useFormik } from 'formik'
 import * as Yup from 'yup'
 import { colors } from '../../theme'
+import AdminBreadcrumbs from '../../components/AdminBreadcrumbs'
 import { productsService } from '../../api/services/products';
 import type { CreateProductData, CreateProductResponse } from '../../types/product'
 import { useBrands } from '../../hooks/useBrands'
@@ -135,6 +136,7 @@ const AddProduct: React.FC = () => {
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', bgcolor: colors.background.default }}>
       <Container maxWidth="lg" sx={{ py: 4, flex: 1, px: { xs: 2, sm: 3, md: 4 } }}>
         {/* Header */}
+        <AdminBreadcrumbs items={[{ label: 'Admin', to: '/admin' }, { label: 'Product', to: '/admin/products' }, { label: 'Add Product' }]} />
         <Typography 
           variant="h4" 
             sx={{ 
