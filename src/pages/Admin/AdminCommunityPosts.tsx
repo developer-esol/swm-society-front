@@ -6,10 +6,10 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { communityService } from '../../api/services/communityService'
 import { QUERY_KEYS } from '../../configs/queryKeys'
 import { ConfirmDeleteDialog } from '../../components'
-import AdminBreadcrumbs from '../../components/AdminBreadcrumbs'
+import AdminBreadcrumbs from '../../components/Admin/AdminBreadcrumbs'
 import { colors } from '../../theme'
 import type { CommunityPost } from '../../types/community'
-import AdminCommunityPostCard from '../../components/AdminCommunityPostCard'
+import AdminCommunityPostCard from '../../components/Admin/AdminCommunityPostCard'
 
 const AdminCommunityPosts = () => {
   const [filteredPosts, setFilteredPosts] = useState<CommunityPost[]>([])

@@ -31,6 +31,12 @@ export const GuestNavigationBar: React.FC = () => {
         navigate('/login');
     };
 
+    const storyItems = activeBrands.map(b => {
+        const isProjectZero = b.brandName.toLowerCase().includes('project zero');
+        const route = isProjectZero ? '/project-zero-story' : `${b.route.replace(/\/$/, '')}-story`;
+        return { name: b.brandName, path: `/guest${route}` };
+    });
+
     return (
         <>
             <AppBar 
@@ -62,7 +68,7 @@ export const GuestNavigationBar: React.FC = () => {
                     <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center', gap: 2 }}>
                         <NavLink to="/guest" label="Home" />
                         <DropdownMenu label="Shop" items={activeBrands.map(b => ({ name: b.brandName, path: `/guest/shop?collection=${encodeURIComponent(b.brandName)}` }))} />
-                        <DropdownMenu label="Our Story" items={activeBrands.map(b => ({ name: b.brandName, path: `/guest${b.route}-story` }))} />
+                        <DropdownMenu label="Our Story" items={storyItems} />
                         <NavLink to="/guest/community" label="Community" />
                     </Box>
 

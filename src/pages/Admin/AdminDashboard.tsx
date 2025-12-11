@@ -1,5 +1,5 @@
 import { Box, Container, Typography } from '@mui/material'
-import AdminBreadcrumbs from '../../components/AdminBreadcrumbs'
+import AdminBreadcrumbs from '../../components/Admin/AdminBreadcrumbs'
 import { useDashboard } from '../../hooks/admin'
 import { StatBoxes, SalesRevenue, RevenueByLocation, TotalSales, TopSellingProducts } from '../../features/Admin/dashboard'
 import { colors } from '../../theme'

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Container } from '@mui/material';
+import { Box, Container, Typography } from '@mui/material';
 import { ProjectZeroHero } from '../features/project-zero-story/ProjectZeroHero';
 import { ProjectZeroIntro } from '../features/project-zero-story/ProjectZeroIntro';
 import { ProjectZeroQuote } from '../features/project-zero-story/ProjectZeroQuote';
@@ -10,6 +10,10 @@ import { ProjectZeroShopButton } from '../features/project-zero-story/ProjectZer
 import { ProjectZeroMentorshipQuotes } from '../features/project-zero-story/ProjectZeroMentorshipQuotes';
 import { ProjectZeroTransitionQuotes } from '../features/project-zero-story/ProjectZeroTransitionQuotes';
 import { ProjectZeroPurposeSection } from '../features/project-zero-story/ProjectZeroPurposeSection';
+import { ProjectZeroPlayerQuotes } from '../features/project-zero-story/ProjectZeroPlayerQuotes';
+import ProjectZeroStyle from '../features/project-zero-story/ProjectZeroStyle';
+import ProjectZeroZECHOBIIERO from '../features/project-zero-story/ProjectZeroZECHOBIIERO';
+import ProjectZeroFanCulture from '../features/project-zero-story/ProjectZeroFanCulture';
 
 export const ProjectZeroStoryPage: React.FC = () => (
   <Box sx={{ bgcolor: 'white', width: '100%' }}>
@@ -22,6 +26,22 @@ export const ProjectZeroStoryPage: React.FC = () => (
       />
       <ProjectZeroImages />
       <ProjectZeroSectionTitle>A COLLECTION INSPIRED BY THE LEYTON ORIENT FAITHFUL</ProjectZeroSectionTitle>
+      <Box sx={{ fontSize: '1.125rem', mb: 3, lineHeight: 1.8 }}>
+        <Typography sx={{fontSize: '1.125rem', mb: 3, lineHeight: 1.8 }}>
+          Understanding the deep connection between the club and its supporters, we kept the Leyton
+          Orient faithful in mind when designing this collection. The colourways are inspired by the club’s
+          iconic kit, paying homage to the heritage and pride that come with representing The O’s—a
+          nickname that also perfectly ties into the theme of Project ZerO’s, symbolizing a fresh start and
+          new beginnings.
+        </Typography>
+        <Typography sx={{ mb: 3, lineHeight: 1.8}}>
+          We are immensely proud that this project was made possible by the dedication of Leyton
+          Orient’s first-team players—Omar Beckles, Zech Obiero, Sean Clare, and Sonny Perkins—who
+          went to great lengths to ensure it became a reality. Led by club captain Omar Beckles, their
+          commitment to this cause reflects the values of leadership, mentorship, and giving back to the
+          community.
+        </Typography>
+      </Box>
       <ProjectZeroQuote
         quote="As someone who grew up in this community, now representing the club and as a parent, I know how essential this is. I'm honored and love what SwMSociety has created and executed."
         author="— Omar Beckles, Leyton Orient Captain"
@@ -39,6 +59,14 @@ export const ProjectZeroStoryPage: React.FC = () => (
       <ProjectZeroMentorshipQuotes />
       <ProjectZeroSectionTitle>OMAR BECKLES – TRANSITION & EDUCATION</ProjectZeroSectionTitle>
       <ProjectZeroTransitionQuotes />
+      <ProjectZeroSectionTitle>OMAR BECKLES – PERSONAL STORY & ADVICE</ProjectZeroSectionTitle>
+      <ProjectZeroPlayerQuotes />
+      <ProjectZeroSectionTitle>SEAN CLARE – STYLE & COMMUNITY</ProjectZeroSectionTitle>
+      <ProjectZeroStyle />
+      <ProjectZeroSectionTitle>ZECH OBIIERO – STYLE & COMMUNITY SPIRIT</ProjectZeroSectionTitle>
+      <ProjectZeroZECHOBIIERO />
+      <ProjectZeroSectionTitle>SEAN & ZECH – FAN CULTURE (OFF CAMERA)</ProjectZeroSectionTitle>
+      <ProjectZeroFanCulture />
       <ProjectZeroShopButton />
     </Container>
   </Box>

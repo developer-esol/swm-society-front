@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom'
 import { useFormik } from 'formik'
 import * as Yup from 'yup'
 import { colors } from '../../theme'
-import AdminBreadcrumbs from '../../components/AdminBreadcrumbs'
+import AdminBreadcrumbs from '../../components/Admin/AdminBreadcrumbs'
 import { useAllProducts, useCreateStock } from '../../hooks/useStock'
 import type { CreateStockData } from '../../types'
 

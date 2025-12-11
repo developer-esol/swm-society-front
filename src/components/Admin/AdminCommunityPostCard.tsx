@@ -9,8 +9,8 @@ import {
   Chip,
 } from '@mui/material'
 import { Trash2 as DeleteIcon } from 'lucide-react'
-import { colors } from '../theme'
-import type { CommunityPost } from '../types/community'
+import { colors } from '../../theme'
+import type { CommunityPost } from '../../types/community'
 
 interface AdminCommunityPostCardProps {
   post: CommunityPost

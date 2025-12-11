@@ -6,7 +6,7 @@ import { StockTable, StockEditModal } from '../../features/Admin/stock'
 import StockViewModal from '../../features/Admin/stock/StockViewModal'
 import { useAllStocks, useAllProducts, useUpdateStock, useDeleteStock } from '../../hooks/useStock'
 import { colors } from '../../theme'
-import AdminBreadcrumbs from '../../components/AdminBreadcrumbs'
+import AdminBreadcrumbs from '../../components/Admin/AdminBreadcrumbs'
 import type { StockItem } from '../../types/Admin'
 
 const AdminStock = () => {

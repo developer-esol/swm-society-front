@@ -5,7 +5,7 @@ import { useAdminLoyalty } from '../../hooks/admin'
 import { adminLoyaltyService } from '../../api/services/admin/loyaltyService'
 import { EditPointsModal, LoyaltyTable, CustomerInfoBox } from '../../features/Admin/loyalty'
 import { colors } from '../../theme'
-import AdminBreadcrumbs from '../../components/AdminBreadcrumbs'
+import AdminBreadcrumbs from '../../components/Admin/AdminBreadcrumbs'
 import type { LoyaltyTransactionType } from '../../types/Admin/loyalty'
 
 const AdminLoyalty = () => {

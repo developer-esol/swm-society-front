@@ -1,7 +1,7 @@
 import React from 'react'
 import { Breadcrumbs, Link as MuiLink, Typography, Box } from '@mui/material'
 import { Link as RouterLink } from 'react-router-dom'
-import { colors } from '../theme'
+import { colors } from '../../theme'
 
 interface Crumb {
   label: string

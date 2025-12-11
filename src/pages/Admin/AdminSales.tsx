@@ -1,6 +1,6 @@
 import { Box, Container, Typography, Pagination, Stack, TextField, IconButton } from '@mui/material'
 import { Search as SearchIcon } from '@mui/icons-material'
-import AdminBreadcrumbs from '../../components/AdminBreadcrumbs'
+import AdminBreadcrumbs from '../../components/Admin/AdminBreadcrumbs'
 import { useAdminSales } from '../../hooks/admin'
 import { SalesTable } from '../../features/Admin/sales'
 import { colors } from '../../theme'

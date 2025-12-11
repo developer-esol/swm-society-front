@@ -1,7 +1,7 @@
 import { Box, Container, Typography, Pagination, Stack, TextField, IconButton, Select, MenuItem, FormControl, InputLabel } from '@mui/material'
 import { useState, useEffect, useMemo } from 'react'
 import { Search as SearchIcon } from '@mui/icons-material'
-import AdminBreadcrumbs from '../../components/AdminBreadcrumbs'
+import AdminBreadcrumbs from '../../components/Admin/AdminBreadcrumbs'
 import { UsersTable } from '../../features/Admin/users'
 import { useAdminUsers } from '../../hooks/useUsers'
 import { useRolesList } from '../../hooks/useRoles'

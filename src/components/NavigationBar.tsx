@@ -47,6 +47,12 @@ export const NavigationBar: React.FC = () => {
         setProfileAnchor(null);
     };
 
+    const storyItems = activeBrands.map(b => {
+        const isProjectZero = b.brandName.toLowerCase().includes('project zero');
+        const route = isProjectZero ? '/project-zero-story' : `${b.route.replace(/\/$/, '')}-story`;
+        return { name: b.brandName, path: route };
+    });
+
     return (
         <>
             <AppBar 
@@ -78,7 +84,7 @@ export const NavigationBar: React.FC = () => {
                     <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center', gap: 2 }}>
                         <NavLink to="/" label="Home" />
                             <DropdownMenu label="Shop" items={activeBrands.map(b => ({ name: b.brandName, path: `/shop?collection=${encodeURIComponent(b.brandName)}` }))} />
-                            <DropdownMenu label="Our Story" items={activeBrands.map(b => ({ name: b.brandName, path: b.route+"-story" }))} />
+                            <DropdownMenu label="Our Story" items={storyItems} />
                         <NavLink to="/community" label="Community" />
                     </Box>
 

@@ -17,7 +17,7 @@ import {
 import { Edit as EditIcon, Camera as CameraIcon, Lock as LockIcon } from '@mui/icons-material'
 import { useAdminProfile } from '../../hooks/admin/useAdminProfile'
 import { colors } from '../../theme'
-import AdminBreadcrumbs from '../../components/AdminBreadcrumbs'
+import AdminBreadcrumbs from '../../components/Admin/AdminBreadcrumbs'
 
 const AdminProfilePage: React.FC = () => {
   const { profile, isLoading, error, updateProfile, updateProfilePicture, changePassword } = useAdminProfile()

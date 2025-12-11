@@ -20,7 +20,7 @@ export const Carousel: React.FC = () => {
       name: "Project ZerO's",
       image: '/thumbnail.jpg',
       shopLink: "/shop?collection=Project%20ZerO's",
-      storyLink: '/brand-story',
+      storyLink:'/project-zero-story',
     },
     {
       id: 2,

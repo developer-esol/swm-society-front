@@ -56,16 +56,26 @@ export const DropdownMenu: React.FC<DropdownMenuProps> = ({ label, items }) => {
           }
         }}
       >
-        {items.map((item) => (
-          <MenuItem
-            key={item.name}
-            component={Link}
-            to={item.path}
-            onClick={handleClose}
-          >
-            {item.name}
-          </MenuItem>
-        ))}
+        {items.map((item) => {
+          const [pathname, search] = item.path.split('?');
+          // Collapse any repeated hyphens and slashes in the pathname, preserve querystring
+          const fixedPath = pathname
+            .replace(/-+/g, '-')
+            .replace(/\/+/g, '/')
+            .replace(/\/-/g, '/-');
+          const normalizedPathname = fixedPath.startsWith('/') ? fixedPath : `/${fixedPath}`;
+          const finalPath = search ? `${normalizedPathname}?${search}` : normalizedPathname;
+          return (
+            <MenuItem
+              key={item.name}
+              component={Link}
+              to={finalPath}
+              onClick={handleClose}
+            >
+              {item.name}
+            </MenuItem>
+          );
+        })}
       </Menu>
     </>
   );
