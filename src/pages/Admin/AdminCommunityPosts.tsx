@@ -1,7 +1,10 @@
 import { Box, Container, Typography, Button as MuiButton, TextField, IconButton, Pagination, Stack } from '@mui/material'
 import { useState, useEffect } from 'react'
 import { Search as SearchIcon } from '@mui/icons-material'
+import { useAdminCommunity } from '../../hooks/useCommunity'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { communityService } from '../../api/services/communityService'
+import { QUERY_KEYS } from '../../configs/queryKeys'
 import { ConfirmDeleteDialog } from '../../components'
 import AdminBreadcrumbs from '../../components/AdminBreadcrumbs'
 import { colors } from '../../theme'
@@ -9,34 +12,31 @@ import type { CommunityPost } from '../../types/community'
 import AdminCommunityPostCard from '../../components/AdminCommunityPostCard'
 
 const AdminCommunityPosts = () => {
-  const [posts, setPosts] = useState<CommunityPost[]>([])
   const [filteredPosts, setFilteredPosts] = useState<CommunityPost[]>([])
   const [searchQuery, setSearchQuery] = useState('')
   const [showAll, setShowAll] = useState(false)
-  const [loading, setLoading] = useState(true)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [postToDelete, setPostToDelete] = useState<{ id: string; caption: string } | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
 
   const ITEMS_PER_PAGE = 5
 
-  // Fetch posts on mount
-  useEffect(() => {
-    const loadPosts = async () => {
-      try {
-        setLoading(true)
-        const allPosts = await communityService.getAll()
-        setPosts(allPosts)
-        setFilteredPosts(allPosts)
-      } catch (error) {
-        console.error('Error loading posts:', error)
-      } finally {
-        setLoading(false)
-      }
-    }
+  const { data: posts = [], isLoading: postsLoading } = useAdminCommunity()
+  const loading = postsLoading
 
-    loadPosts()
-  }, [])
+  // initialize filtered posts when posts change
+  useEffect(() => {
+    setFilteredPosts(posts)
+  }, [posts])
+
+  const queryClient = useQueryClient()
+
+  const deletePostMutation = useMutation({
+    mutationFn: (id: string) => communityService.deletePost(id),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: QUERY_KEYS.community.admin })
+    },
+  })
 
   // Handle search filter
   const handleSearch = (query: string) => {
@@ -65,12 +65,8 @@ const AdminCommunityPosts = () => {
 
   const confirmDeletePost = async () => {
     if (!postToDelete) return
-    
     try {
-      await communityService.deletePost(postToDelete.id)
-      const updatedPosts = posts.filter((p) => p.id !== postToDelete.id)
-      setPosts(updatedPosts)
-      setFilteredPosts(updatedPosts)
+      await deletePostMutation.mutateAsync(postToDelete.id)
       setDeleteDialogOpen(false)
       setPostToDelete(null)
     } catch (error) {

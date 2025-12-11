@@ -1,5 +1,8 @@
 import { Box, Container, Typography, Button, CircularProgress } from '@mui/material'
 import { useState } from 'react'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { rolesService } from '../../api/services/admin/rolesService'
+import { QUERY_KEYS } from '../../configs/queryKeys'
 import { useNavigate } from 'react-router-dom'
 import AdminBreadcrumbs from '../../components/AdminBreadcrumbs'
 import { RoleCard, RolesHeader } from '../../features/Admin/roles'
@@ -31,15 +34,29 @@ const AdminRoles = () => {
 
   const handleDeleteConfirm = async () => {
     if (roleToDelete) {
-      await handleDeleteRole(roleToDelete.id)
-      setDeleteDialogOpen(false)
-      setRoleToDelete(null)
+      try {
+        await deleteRoleMutation.mutateAsync(roleToDelete.id)
+      } catch (err) {
+        console.error('Failed to delete role:', err)
+      } finally {
+        setDeleteDialogOpen(false)
+        setRoleToDelete(null)
+      }
     }
   }
 
   const handleEditRole = (role: Role) => {
     navigate(`/admin/permission-levels/${role.id}`)
   }
+
+  const queryClient = useQueryClient()
+
+  const deleteRoleMutation = useMutation({
+    mutationFn: (id: string) => rolesService.delete(id),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: QUERY_KEYS.roles.admin })
+    },
+  })
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', bgcolor: colors.background.default }}>

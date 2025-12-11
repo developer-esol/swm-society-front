@@ -1,4 +1,5 @@
-import { useState, useCallback, useEffect, useMemo } from 'react'
+import { useState, useCallback, useMemo, useEffect } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { rolesService } from '../../api/services/admin/rolesService'
 import { userService } from '../../api/services/admin/userService'
 import type { Role } from '../../types/Admin/roles'
@@ -6,59 +7,45 @@ import type { Role } from '../../types/Admin/roles'
 export const useAdminRoles = () => {
   const [roles, setRoles] = useState<Role[]>([])
   const [searchQuery, setSearchQuery] = useState('')
-  const [isLoading, setIsLoading] = useState(true)
   const [currentPage, setCurrentPage] = useState(1)
 
   const ITEMS_PER_PAGE = 5
 
-  // Load roles on mount
-  useEffect(() => {
-    const loadRoles = async () => {
-      setIsLoading(true)
+  // Use React Query to fetch roles and compute user counts
+  const { data: fetchedRoles = [], isLoading: rolesLoading } = useQuery({
+    queryKey: ['roles', 'admin'],
+    queryFn: async () => {
+      const allRoles = await rolesService.getAll()
+      let users: Array<{ id: string; role?: string }> = []
       try {
-        const allRoles = await rolesService.getAll()
-        // fetch users to compute usersCount per role
-        let users = [] as Array<{ id: string; role?: string }>
-        try {
-          const fetched = await userService.getAll()
-          // userService returns AdminUser with `role` set to roleId (per implementation)
-          users = fetched.map((u) => ({ id: u.id, role: u.role }))
-        } catch (err) {
-          console.warn('useAdminRoles - failed to fetch users for role counts', err)
-        }
-
-        // compute usersCount for each role using role.id matching user.role
-        const rolesWithCounts = allRoles.map((role) => {
-          const count = users.filter((u) => (u.role || '').toString() === role.id.toString()).length
-          return { ...role, usersCount: count }
-        })
-
-        console.log('useAdminRoles - loaded allRoles with counts:', rolesWithCounts)
-        setRoles(rolesWithCounts)
-      } catch (error) {
-        console.error('Failed to load roles:', error)
-      } finally {
-        setIsLoading(false)
+        const fetched = await userService.getAll()
+        users = fetched.map((u) => ({ id: u.id, role: u.role }))
+      } catch (err) {
+        console.warn('useAdminRoles - failed to fetch users for role counts', err)
       }
-    }
 
-    loadRoles()
-  }, [])
+      const rolesWithCounts = allRoles.map((role) => {
+        const count = users.filter((u) => (u.role || '').toString() === role.id.toString()).length
+        return { ...role, usersCount: count }
+      })
+      return rolesWithCounts
+    },
+    staleTime: 1000 * 60 * 5,
+    retry: 2,
+  })
+
+  // set local roles state when fetched
+  useEffect(() => {
+    setRoles(fetchedRoles)
+  }, [fetchedRoles])
+
+  const isLoading = rolesLoading
 
   // Filter roles by search query
-  const filteredRoles = useMemo(
-    () => {
-      if (searchQuery.trim() === '') {
-        return roles
-      }
-      return roles.filter(
-        (role) =>
-          role.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          role.description.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    },
-    [searchQuery, roles]
-  )
+  const filteredRoles = useMemo(() => {
+    if (searchQuery.trim() === '') return roles
+    return roles.filter((role) => role.name.toLowerCase().includes(searchQuery.toLowerCase()) || role.description.toLowerCase().includes(searchQuery.toLowerCase()))
+  }, [searchQuery, roles])
 
   // Paginate roles
   const totalPages = Math.ceil(filteredRoles.length / ITEMS_PER_PAGE)

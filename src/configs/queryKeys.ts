@@ -48,4 +48,15 @@ export const QUERY_KEYS = {
     profile: ['user', 'profile'] as const,
     orders: ['user', 'orders'] as const,
   },
+  // Admin-related lists
+  users: {
+    admin: ['users', 'admin'] as const,
+  },
+  community: {
+    admin: ['community', 'admin'] as const,
+  },
+  roles: {
+    admin: ['roles', 'admin'] as const,
+    all: ['roles', 'all'] as const,
+  },
 } as const;

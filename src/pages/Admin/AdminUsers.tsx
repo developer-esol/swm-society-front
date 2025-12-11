@@ -1,10 +1,13 @@
 import { Box, Container, Typography, Pagination, Stack, TextField, IconButton, Select, MenuItem, FormControl, InputLabel } from '@mui/material'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Search as SearchIcon } from '@mui/icons-material'
 import AdminBreadcrumbs from '../../components/AdminBreadcrumbs'
 import { UsersTable } from '../../features/Admin/users'
+import { useAdminUsers } from '../../hooks/useUsers'
+import { useRolesList } from '../../hooks/useRoles'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { userService } from '../../api/services/admin/userService'
-import { rolesService } from '../../api/services/admin/rolesService'
+import { QUERY_KEYS } from '../../configs/queryKeys'
 import { ConfirmDeleteDialog } from '../../components'
 import { colors } from '../../theme'
 import type { AdminUser } from '../../types/Admin/users'
@@ -12,45 +15,41 @@ import type { AdminUser } from '../../types/Admin/users'
 const ITEMS_PER_PAGE = 5
 
 const AdminUsers = () => {
-  const [users, setUsers] = useState<AdminUser[]>([])
   const [filteredUsers, setFilteredUsers] = useState<AdminUser[]>([])
-  const [rolesList, setRolesList] = useState<{ id: string; name: string }[]>([])
   const [selectedRole, setSelectedRole] = useState('all')
   const [searchQuery, setSearchQuery] = useState('')
-  const [loading, setLoading] = useState(true)
   const [currentPage, setCurrentPage] = useState(1)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [userToDelete, setUserToDelete] = useState<AdminUser | null>(null)
 
-  // Fetch users on mount
+  // Use React Query to fetch users and roles
+  const { data: users = [], isLoading: usersLoading } = useAdminUsers()
+  const { data: roles = [], isLoading: rolesLoading } = useRolesList()
+
+  const loading = usersLoading || rolesLoading
+
+  const rolesList = useMemo(() => (roles || []).map((r) => ({ id: r.id, name: r.name })), [roles])
+
+  // Map users to include role name
+  const usersWithRoleNames = useMemo(() => {
+    const roleMap = new Map<string, string>()
+    rolesList.forEach((r) => roleMap.set(r.id, r.name))
+    return (users || []).map((u) => ({ ...u, role: roleMap.get((u.role as string) || '') || (u.role as string) || '—' }))
+  }, [users, rolesList])
+
+  // Initialize filtered users when source users change
   useEffect(() => {
-    const loadUsers = async () => {
-      try {
-        setLoading(true)
-        const allUsers = await userService.getAll()
-        // fetch roles and map roleId -> role name
-        const roles = await rolesService.getAll()
-        setRolesList(roles.map((r) => ({ id: r.id, name: r.name })))
-        const roleMap = new Map<string, string>()
-        roles.forEach((r) => roleMap.set(r.id, r.name))
+    setFilteredUsers(usersWithRoleNames)
+  }, [usersWithRoleNames])
 
-        const usersWithRoleNames = allUsers.map((u) => ({
-          ...u,
-          // if u.role contains an id, map to name; otherwise keep as-is
-          role: roleMap.get(u.role) || u.role || '—',
-        }))
+  const queryClient = useQueryClient()
 
-        setUsers(usersWithRoleNames)
-        setFilteredUsers(usersWithRoleNames)
-      } catch (error) {
-        console.error('Error loading users:', error)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    loadUsers()
-  }, [])
+  const deleteUserMutation = useMutation({
+    mutationFn: (id: string) => userService.removeUser(id),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: QUERY_KEYS.users.admin })
+    },
+  })
 
   // Handle search filter
   const handleSearch = (query: string) => {
@@ -66,7 +65,7 @@ const AdminUsers = () => {
   }
 
   const applyFilters = (query: string, roleId: string) => {
-    let result = users
+    let result = usersWithRoleNames
     const lowerQuery = query.trim().toLowerCase()
 
     if (lowerQuery) {
@@ -97,13 +96,7 @@ const AdminUsers = () => {
   const handleConfirmDelete = async () => {
     if (!userToDelete) return
     try {
-      const success = await userService.removeUser(userToDelete.id)
-      if (success) {
-        const updatedUsers = users.filter((u) => u.id !== userToDelete.id)
-        setUsers(updatedUsers)
-        setFilteredUsers(updatedUsers)
-        setCurrentPage(1)
-      }
+      await deleteUserMutation.mutateAsync(userToDelete.id)
     } catch (error) {
       console.error('Error deleting user:', error)
     } finally {
