@@ -42,7 +42,7 @@ const SalesTable = ({ transactions }: SalesTableProps) => {
               Total
             </TableCell>
             <TableCell sx={{ fontWeight: 700, color: colors.text.primary, fontSize: '0.875rem' }}>Date</TableCell>
-            <TableCell sx={{ fontWeight: 700, color: colors.text.primary, fontSize: '0.875rem' }}>Status</TableCell>
+            {/* Status column hidden per request */}
           </TableRow>
         </TableHead>
         <TableBody>
@@ -65,17 +65,7 @@ const SalesTable = ({ transactions }: SalesTableProps) => {
                   ${transaction.total}
                 </TableCell>
                 <TableCell sx={{ color: colors.text.primary, fontSize: '0.875rem' }}>{transaction.date}</TableCell>
-                <TableCell>
-                  <Chip
-                    label={transaction.status}
-                    sx={{
-                      bgcolor: statusColor.bg,
-                      color: statusColor.text,
-                      fontWeight: 600,
-                      fontSize: '0.8rem',
-                    }}
-                  />
-                </TableCell>
+                {/* Status column removed */}
               </TableRow>
             )
           })}

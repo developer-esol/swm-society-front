@@ -13,17 +13,26 @@ const GuestHomePage = () => {
     <>
       <Carousel />
       {activeBrands &&
-        activeBrands.map((brand, idx) => (
-          <BrandSection
-            key={brand.id}
-            name={brand.brandName}
-            description={brand.description}
-            image={brand.url}
-            shopLink={`/guest/shop?collection=${encodeURIComponent(brand.brandName)}`}
-            storyLink={`/guest/${brand.route}-story`}
-            imagePosition={idx % 2 === 0 ? "left" : "right"}
-          />
-        ))}
+        activeBrands.map((brand, idx) => {
+          const isProjectZero = brand.brandName.toLowerCase().includes('project zero');
+          // remove leading/trailing slashes from route
+          const cleanRoute = brand.route.replace(/^\/+|\/+$/g, '');
+          const storyLink = isProjectZero
+            ? '/guest/project-zero-story'
+            : `/guest/${cleanRoute}-story`;
+
+          return (
+            <BrandSection
+              key={brand.id}
+              name={brand.brandName}
+              description={brand.description}
+              image={brand.url}
+              shopLink={`/guest/shop?collection=${encodeURIComponent(brand.brandName)}`}
+              storyLink={storyLink}
+              imagePosition={idx % 2 === 0 ? 'left' : 'right'}
+            />
+          );
+        })}
     </>
   )
 }

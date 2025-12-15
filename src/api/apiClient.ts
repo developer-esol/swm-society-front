@@ -32,11 +32,23 @@ class ApiClient {
     const response = await fetch(url, config);
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.message || `API Error: ${response.status} ${response.statusText}`);
+      const text = await response.text().catch(() => '');
+      let body: any = text;
+      try {
+        body = text ? JSON.parse(text) : {};
+      } catch {
+        body = { message: text };
+      }
+
+      const err: any = new Error(body.message || `API Error: ${response.status} ${response.statusText}`);
+      err.status = response.status;
+      err.statusText = response.statusText;
+      err.body = body;
+      throw err;
     }
 
-    return response.json();
+    const json = await response.json().catch(() => ({}));
+    return json as T;
   }
 
   private getAuthToken(): string | null {

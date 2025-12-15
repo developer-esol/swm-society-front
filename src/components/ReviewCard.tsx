@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { useEffect } from 'react';
+import { userService } from '../api/services/admin/userService';
 import {
   Card,
   CardContent,
@@ -31,8 +33,23 @@ const ReviewCard: React.FC<ReviewCardProps> = ({
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [userName, setUserName] = useState<string | null>(null);
 
   const isOwnReview = currentUserId === review.userId;
+
+  useEffect(() => {
+    let mounted = true;
+    const loadName = async () => {
+      try {
+        const u = await userService.getById(review.userId);
+        if (mounted) setUserName(u?.name || null);
+      } catch (e) {
+        // ignore
+      }
+    };
+    void loadName();
+    return () => { mounted = false };
+  }, [review.userId]);
 
   const handleDeleteClick = () => {
     setOpenDeleteDialog(true);
@@ -108,13 +125,8 @@ const ReviewCard: React.FC<ReviewCardProps> = ({
           >
             <Box>
               <Typography variant="subtitle2" sx={{ fontWeight: 600, fontSize: '0.95rem' }}>
-                {review.userName}
+                {userName ? userName : `User: ${review.userId}`}
               </Typography>
-              {review.verified && (
-                <Typography variant="caption" sx={{ color: '#4caf50', fontSize: '0.75rem' }}>
-                  ✓ Verified Purchase
-                </Typography>
-              )}
             </Box>
             <Typography variant="caption" sx={{ color: colors.text.disabled, fontSize: '0.75rem' }}>
               {formatDate(review.createdAt)}
@@ -127,11 +139,7 @@ const ReviewCard: React.FC<ReviewCardProps> = ({
           </Box>
 
           {/* Title */}
-          {review.title && (
-            <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 0.5, fontSize: '0.9rem' }}>
-              {review.title}
-            </Typography>
-          )}
+          {/* Title removed from review model; show comment only */}
 
           {/* Comment */}
           <Typography variant="body2" sx={{ color: colors.text.lightGray, mb: 1.5, fontSize: '0.85rem', lineHeight: 1.4 }}>

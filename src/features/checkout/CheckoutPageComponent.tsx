@@ -14,7 +14,7 @@ import { checkoutService } from '../../api/services/checkoutService';
 import { colors } from '../../theme';
 import { checkoutValidationSchema } from './checkoutSchema';
 import CheckoutInfo from './CheckoutInfo';
-import PaymentInfo from './PaymentInfo';
+// import PaymentInfo from './PaymentInfo';
 import OrderSummary from './OrderSummary';
 import type { CheckoutFormData, FormErrors } from '../../types/checkout';
 
@@ -151,7 +151,7 @@ const CheckoutPageComponent: React.FC = () => {
             onInputChange={handleInputChange}
           />
 
-          <PaymentInfo
+          {/* <PaymentInfo
             formData={formik.values}
             errors={formik.touched as unknown as FormErrors}
             onInputChange={handleInputChange}
@@ -190,7 +190,7 @@ const CheckoutPageComponent: React.FC = () => {
           >
             {isLoading ? <CircularProgress size={24} sx={{ color: 'inherit' }} /> : 'Complete Order'}
           </MuiButton>
-        </Box>
+        </Box> 
 
         {/* Right Column - Order Summary */}
         <Box>

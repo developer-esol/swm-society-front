@@ -79,8 +79,12 @@ export const CartItems: React.FC<CartItemsProps> = ({
                   '&:hover': {
                     color: colors.button.primary,
                   },
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
                 }}
                 onClick={() => navigate(`/product/${item.productId}`)}
+                title={item.productName}
               >
                 {item.productName}
               </Typography>
@@ -134,6 +138,7 @@ export const CartItems: React.FC<CartItemsProps> = ({
             <IconButton
               size="small"
               onClick={() => onDecreaseQuantity(item.stockId)}
+              disabled={(quantities[item.stockId] || item.quantity) <= 1}
               sx={{
                 border: `1px solid ${colors.border.light}`,
                 borderRadius: '4px',
@@ -151,6 +156,7 @@ export const CartItems: React.FC<CartItemsProps> = ({
             <IconButton
               size="small"
               onClick={() => onIncreaseQuantity(item.stockId, item.maxQuantity)}
+              disabled={(quantities[item.stockId] || item.quantity) >= (item.maxQuantity || 0)}
               sx={{
                 border: `1px solid ${colors.border.light}`,
                 borderRadius: '4px',

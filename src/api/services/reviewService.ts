@@ -1,63 +1,10 @@
 import type { Review } from '../../types/review';
+import { apiClient } from '../apiClient';
+import { authService } from './authService';
 
-// Mock/Dummy review data with productId
-const mockReviews: Review[] = [
-  {
-    id: '1',
-    productId: '1',
-    userId: '1',
-    userName: 'James K.',
-    rating: 5,
-    title: 'Amazing quality and fit',
-    comment: 'Love the design! Amazing quality and fit.',
-    createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-    verified: true,
-  },
-  {
-    id: '2',
-    productId: '1',
-    userId: '2',
-    userName: 'Sarah M.',
-    rating: 4,
-    title: 'Great product',
-    comment: 'Really happy with this purchase. Very comfortable.',
-    createdAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(),
-    verified: true,
-  },
-  {
-    id: '3',
-    productId: '1',
-    userId: '3',
-    userName: 'David L.',
-    rating: 5,
-    title: 'Highly recommend',
-    comment: 'Worth every penny. Fantastic quality and style.',
-    createdAt: new Date(Date.now() - 21 * 24 * 60 * 60 * 1000).toISOString(),
-    verified: true,
-  },
-  {
-    id: '4',
-    productId: '2',
-    userId: '4',
-    userName: 'Emma R.',
-    rating: 5,
-    title: 'Perfect fit and comfort',
-    comment: 'This is exactly what I was looking for. Highly satisfied!',
-    createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-    verified: true,
-  },
-  {
-    id: '5',
-    productId: '2',
-    userId: '5',
-    userName: 'Michael T.',
-    rating: 4,
-    title: 'Very good quality',
-    comment: 'Great value for money. Would recommend.',
-    createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
-    verified: true,
-  },
-];
+// Start with no dummy review data. If backend is unavailable,
+// behavior will fall back to the runtime mock list (initially empty).
+const mockReviews: Review[] = [];
 
 export const reviewService = {
   /**
@@ -65,14 +12,56 @@ export const reviewService = {
    * @param productId - Product ID to filter reviews
    * @returns Array of reviews for the product
    */
-  getReviewsByProduct: (productId: string): Promise<Review[]> => {
-    // Mock delay to simulate API call
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const productReviews = mockReviews.filter((review) => review.productId === productId);
-        resolve(productReviews);
-      }, 300);
-    });
+  getReviewsByProduct: async (productId: string): Promise<Review[]> => {
+    if (!productId) return [];
+    try {
+      // Prefer backend endpoint that returns reviews for a product
+      const items = await apiClient.get<any[]>(`/reviews/product/${productId}`);
+      const mapped: Review[] = (items || []).map((r) => ({
+        id: r.id,
+        productId: r.productId || r.productId,
+        userId: r.userId,
+        imageUrl: r.imageUrl || r.image || undefined,
+        rating: r.rating,
+        comment: r.description || r.comment || '',
+        createdAt: r.date || r.createdAt || new Date().toISOString(),
+        updatedAt: r.updatedAt || undefined,
+      } as Review));
+
+      return mapped;
+    } catch (err) {
+      console.warn('reviewService.getReviewsByProduct API failed, falling back to mock:', err);
+      // fallback to runtime mock list
+      return mockReviews.filter((review) => review.productId === productId);
+    }
+  },
+
+  /**
+   * Get all reviews (admin)
+   * @param page - page number
+   * @param limit - page size
+   */
+  getAllReviews: async (page = 1, limit = 100): Promise<Review[]> => {
+    try {
+      const items = await apiClient.get<any[]>('/reviews', { page, limit });
+      // Map backend `description` -> frontend `comment` if needed
+      const mapped: Review[] = items.map((r) => ({
+        id: r.id,
+        productId: r.productId || r.productId,
+        userId: r.userId,
+        imageUrl: r.imageUrl || r.imageUrl || undefined,
+        rating: r.rating,
+        comment: r.description || r.comment || '',
+        createdAt: r.date || r.createAt || r.createdAt || new Date().toISOString(),
+        updatedAt: r.updateAt || r.updatedAt || undefined,
+      } as Review));
+
+      return mapped;
+    } catch (err) {
+      console.error('reviewService.getAllReviews error:', err);
+      // fallback to mock reviews
+      return Promise.resolve([...mockReviews]);
+    }
   },
 
   /**
@@ -80,20 +69,23 @@ export const reviewService = {
    * @param review - Review data
    * @returns Created review
    */
-  createReview: (
+  createReview: async (
     review: Omit<Review, 'id' | 'createdAt'>
   ): Promise<Review> => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const newReview: Review = {
-          ...review,
-          id: Date.now().toString(),
-          createdAt: new Date().toISOString(),
-        };
-        mockReviews.unshift(newReview);
-        resolve(newReview);
-      }, 300);
-    });
+    // Build payload mapping to backend contract and call API.
+    const currentUser = authService.getCurrentUser();
+    const payload: Record<string, unknown> = {
+      productId: review.productId,
+      userId: review.userId || currentUser.id,
+      rating: review.rating,
+      // backend expects `description` for the comment text
+      description: review.comment || '',
+      imageUrl: (review as unknown as { imageUrl?: string }).imageUrl,
+    };
+
+    // Let apiClient.post throw on errors so callers can handle/display them.
+    const created = await apiClient.post<Review>('/reviews', payload);
+    return created;
   },
 
   /**
@@ -101,16 +93,18 @@ export const reviewService = {
    * @param reviewId - Review ID
    * @returns void
    */
-  deleteReview: (reviewId: string): Promise<void> => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const index = mockReviews.findIndex((r) => r.id === reviewId);
-        if (index > -1) {
-          mockReviews.splice(index, 1);
-        }
-        resolve();
-      }, 300);
-    });
+  deleteReview: async (reviewId: string): Promise<void> => {
+    if (!reviewId) throw new Error('reviewId is required')
+    try {
+      await apiClient.delete(`/reviews/${reviewId}`)
+      // also remove from runtime mock cache if present
+      const index = mockReviews.findIndex((r) => r.id === reviewId)
+      if (index > -1) mockReviews.splice(index, 1)
+    } catch (err) {
+      // Surface error to caller so UI can handle/display it
+      console.error('reviewService.deleteReview error:', err)
+      throw err
+    }
   },
 
   /**

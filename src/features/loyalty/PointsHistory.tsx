@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Box, Button, Card, Chip, Paper, Tab, Tabs, Typography } from '@mui/material';
+import { Box, Button, Chip, Paper, Tab, Tabs, Typography } from '@mui/material';
 import { colors } from '../../theme';
 import type { LoyaltyWallet, LoyaltyTransaction } from '../../types/loyalty';
 import { Add, Remove } from '@mui/icons-material';
@@ -71,8 +71,8 @@ export const PointsHistory: React.FC<PointsHistoryProps> = ({ loyaltyData }) => 
         }}
       >
         <Tab label="Points History" id="loyalty-tab-0" aria-controls="loyalty-tabpanel-0" />
-        <Tab label="Redeem Rewards" id="loyalty-tab-1" aria-controls="loyalty-tabpanel-1" />
-        <Tab label="Refer & Earn" id="loyalty-tab-2" aria-controls="loyalty-tabpanel-2" />
+        {/* <Tab label="Redeem Rewards" id="loyalty-tab-1" aria-controls="loyalty-tabpanel-1" />
+        <Tab label="Refer & Earn" id="loyalty-tab-2" aria-controls="loyalty-tabpanel-2" /> */}
       </Tabs>
 
       {/* Points History Tab */}
@@ -157,91 +157,7 @@ export const PointsHistory: React.FC<PointsHistoryProps> = ({ loyaltyData }) => 
         </Box>
       </TabPanel>
 
-      {/* Redeem Rewards Tab */}
-      <TabPanel value={tabValue} index={1}>
-        <Box sx={{ px: 3, pb: 3 }}>
-          <Typography variant="h6" sx={{ fontWeight: 600, mb: 3 }}>
-            Available Rewards
-          </Typography>
-          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' }, gap: 3 }}>
-            {[
-              { id: 1, name: '£5 Discount', points: 500, description: 'Get £5 off your next purchase' },
-              { id: 2, name: '£10 Discount', points: 1000, description: 'Get £10 off your next purchase' },
-              { id: 3, name: 'Free Shipping', points: 300, description: 'Free shipping on any order' },
-              { id: 4, name: '£20 Discount', points: 2000, description: 'Get £20 off your next purchase' },
-            ].map((reward) => (
-              <Card key={reward.id} sx={{ p: 2, border: `1px solid ${colors.border.default}`, borderRadius: 2 }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', mb: 2 }}>
-                  <Box>
-                    <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                      {reward.name}
-                    </Typography>
-                    <Typography variant="body2" sx={{ color: 'text.secondary', mt: 1 }}>
-                      {reward.description}
-                    </Typography>
-                  </Box>
-                  <Chip
-                    label={`${reward.points} pts`}
-                    sx={{ bgcolor: colors.loyalty.lightRed, color: colors.button.primary, fontWeight: 600 }}
-                  />
-                </Box>
-                <Button
-                  fullWidth
-                  variant="contained"
-                  disabled={loyaltyData.totalPoints < reward.points}
-                  sx={{
-                    bgcolor: colors.button.primary,
-                    '&:hover': { bgcolor: colors.button.primaryHover },
-                    '&:disabled': { bgcolor: colors.button.primaryDisabled, color: colors.text.disabled },
-                    textTransform: 'none',
-                    fontWeight: 500,
-                    borderRadius: 1.5,
-                  }}
-                >
-                  {loyaltyData.totalPoints < reward.points ? 'Not Enough Points' : 'Redeem'}
-                </Button>
-              </Card>
-            ))}
-          </Box>
-        </Box>
-      </TabPanel>
-
-      {/* Refer & Earn Tab */}
-      <TabPanel value={tabValue} index={2}>
-        <Box sx={{ textAlign: 'center', py: 4, px: 3 }}>
-          <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
-            Refer Friends & Earn Points
-          </Typography>
-          <Typography variant="body1" sx={{ color: 'text.secondary', mb: 4, maxWidth: '500px', mx: 'auto' }}>
-            Share your unique referral code with friends. When they make their first purchase, you both earn 100 bonus points!
-          </Typography>
-          <Card sx={{ bgcolor: colors.background.light, border: `1px solid ${colors.border.default}`, p: 3, mb: 3, maxWidth: '500px', mx: 'auto', borderRadius: 2 }}>
-            <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1 }}>
-              Your Referral Code
-            </Typography>
-            <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-              <Typography variant="h6" sx={{ fontWeight: 'bold', flex: 1, fontFamily: 'monospace' }}>
-                FRIEND50
-              </Typography>
-              <Button variant="outlined" size="small">
-                Copy
-              </Button>
-            </Box>
-          </Card>
-          <Button
-            variant="contained"
-            sx={{
-              bgcolor: colors.button.primary,
-              '&:hover': { bgcolor: colors.button.primaryHover },
-              textTransform: 'none',
-              px: 4,
-              borderRadius: 1.5,
-            }}
-          >
-            Share Referral Link
-          </Button>
-        </Box>
-      </TabPanel>
+      {/* Note: Redeem Rewards and Refer & Earn tabs removed - only Points History shown */}
     </Paper>
   );
 };

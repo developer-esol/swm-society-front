@@ -11,6 +11,18 @@ export const useCart = () => {
     cartService.addItem(item);
   }, []);
 
+  const addItemServer = useCallback(async (item: CartItem) => {
+    return cartService.addToServerCart(item);
+  }, []);
+
+  const getServerCart = useCallback(async () => {
+    return cartService.getServerCart();
+  }, []);
+
+  const syncServerCartToLocal = useCallback(async () => {
+    return cartService.syncServerCartToLocal();
+  }, []);
+
   const removeItem = useCallback((stockId: string) => {
     cartService.removeItem(stockId);
   }, []);
@@ -38,6 +50,9 @@ export const useCart = () => {
   return {
     getCart,
     addItem,
+    addItemServer,
+    getServerCart,
+    syncServerCartToLocal,
     removeItem,
     updateItemQuantity,
     isInCart,

@@ -24,6 +24,26 @@ class UserService {
   }
 
   /**
+   * Get a single user by id. Uses a small in-memory cache to avoid repeated calls.
+   */
+  private userCache: Record<string, { id: string; name?: string; email?: string }> = {}
+
+  async getById(userId: string): Promise<{ id: string; name?: string; email?: string } | null> {
+    if (!userId) return null
+    if (this.userCache[userId]) return this.userCache[userId]
+
+    try {
+      const user = await apiClient.get<any>(`/users/${userId}`)
+      const result = { id: user.id, name: user.name || user.fullName || user.email, email: user.email }
+      this.userCache[userId] = result
+      return result
+    } catch (err) {
+      console.error('userService.getById error:', err)
+      return null
+    }
+  }
+
+  /**
    * Remove a user by ID
    */
   async removeUser(userId: string): Promise<boolean> {

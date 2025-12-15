@@ -5,20 +5,20 @@ import { colors } from '../../theme';
 interface WriteReviewProps {
   reviewRating: number;
   setReviewRating: (rating: number) => void;
-  reviewTitle: string;
-  setReviewTitle: (title: string) => void;
   reviewComment: string;
   setReviewComment: (comment: string) => void;
+  reviewImageUrl?: string;
+  setReviewImageUrl?: (url: string) => void;
   onSubmitReview: () => void;
 }
 
 export const WriteReview: React.FC<WriteReviewProps> = ({
   reviewRating,
   setReviewRating,
-  reviewTitle,
-  setReviewTitle,
   reviewComment,
   setReviewComment,
+  reviewImageUrl,
+  setReviewImageUrl,
   onSubmitReview,
 }) => {
   return (
@@ -39,20 +39,7 @@ export const WriteReview: React.FC<WriteReviewProps> = ({
         />
       </Box>
 
-      {/* Review Title */}
-      <Box sx={{ mb: 3 }}>
-        <TextField
-          fullWidth
-          placeholder="Review Title"
-          value={reviewTitle}
-          onChange={(e) => setReviewTitle(e.target.value)}
-          sx={{
-            '& .MuiOutlinedInput-root': {
-              borderColor: colors.border.default,
-            },
-          }}
-        />
-      </Box>
+
 
       {/* Review Comment */}
       <Box sx={{ mb: 3 }}>
@@ -63,6 +50,21 @@ export const WriteReview: React.FC<WriteReviewProps> = ({
           onChange={(e) => setReviewComment(e.target.value)}
           multiline
           minRows={4}
+          sx={{
+            '& .MuiOutlinedInput-root': {
+              borderColor: colors.border.default,
+            },
+          }}
+        />
+      </Box>
+
+      {/* Optional Image URL */}
+      <Box sx={{ mb: 3 }}>
+        <TextField
+          fullWidth
+          placeholder="Image URL (optional)"
+          value={reviewImageUrl || ''}
+          onChange={(e) => setReviewImageUrl && setReviewImageUrl(e.target.value)}
           sx={{
             '& .MuiOutlinedInput-root': {
               borderColor: colors.border.default,

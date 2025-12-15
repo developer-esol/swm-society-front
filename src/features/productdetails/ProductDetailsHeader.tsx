@@ -3,15 +3,18 @@ import { Box, Typography, Rating } from '@mui/material';
 import { colors } from '../../theme';
 import type { Product} from '../../types/product';
 import type { Review } from '../../types/review';
+import type { Stock } from '../../types/product';
 
 interface ProductDetailsHeaderProps {
   product: Product;
   reviews: Review[];
+  currentStock?: Stock | null;
 }
 
 export const ProductDetailsHeader: React.FC<ProductDetailsHeaderProps> = ({
   product,
   reviews,
+  currentStock,
 }) => {
   return (
     <>
@@ -67,7 +70,7 @@ export const ProductDetailsHeader: React.FC<ProductDetailsHeaderProps> = ({
           fontSize: '1.875rem',
         }}
       >
-        £{product?.price ? Number(product.price).toFixed(2) : '0.00'}
+        £{currentStock && currentStock.price ? Number(currentStock.price).toFixed(2) : product?.price ? Number(product.price).toFixed(2) : '0.00'}
       </Typography>
 
       {/* Description */}

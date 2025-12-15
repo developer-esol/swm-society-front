@@ -172,7 +172,7 @@ export const NavigationBar: React.FC = () => {
                                     </MenuItem>
                                     <MenuItem
                                         onClick={() => {
-                                            logout();
+                                            handleLogout();
                                         }}
                                         sx={{
                                             color: colors.text.disabled,

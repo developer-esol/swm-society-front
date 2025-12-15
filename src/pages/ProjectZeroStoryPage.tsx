@@ -54,7 +54,6 @@ export const ProjectZeroStoryPage: React.FC = () => (
       />
       <ProjectZeroSectionTitle>STYLE WITH MEANING: A COLLECTION WITH PURPOSE</ProjectZeroSectionTitle>
       <ProjectZeroPurposeSection />
-      <ProjectZeroShopButton />
       <ProjectZeroSectionTitle>OMAR BECKLES – PURPOSE & MENTORSHIP</ProjectZeroSectionTitle>
       <ProjectZeroMentorshipQuotes />
       <ProjectZeroSectionTitle>OMAR BECKLES – TRANSITION & EDUCATION</ProjectZeroSectionTitle>

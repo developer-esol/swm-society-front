@@ -5,8 +5,8 @@ export const stockService = {
     async getStocksByProductId(productId: string): Promise<Stock[]> {
         console.log('Fetching stocks for product ID:', productId);
         try {
-            // Get stocks filtered by productId from real API
-            const stocks = await apiClient.get<Stock[]>('/stocks', { productId });
+            // Get stocks filtered by productId from real API (request up to 100 items)
+            const stocks = await apiClient.get<Stock[]>('/stocks', { productId, limit: 100 });
             console.log(`Found ${stocks.length} stocks for product ${productId}`);
             return stocks;
         } catch (error) {
@@ -27,7 +27,8 @@ export const stockService = {
     async getAllStocks(): Promise<Stock[]> {
         console.log('Fetching all stocks from database');
         try {
-            return await apiClient.get<Stock[]>('/stocks');
+            // Request up to 100 stocks when fetching all stocks
+            return await apiClient.get<Stock[]>('/stocks', { limit: 100 });
         } catch (error) {
             console.error('Failed to fetch all stocks:', error);
             return [];

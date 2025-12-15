@@ -17,6 +17,7 @@ import {
 import { useStocks, useProduct } from '../../hooks/useStock';
 import { useWishlist } from '../../hooks/useWishlist';
 import { cartService } from '../../api/services/cartService';
+import { authService } from '../../api/services/authService';
 import { productsService } from '../../api/services/products';
 import { reviewService } from '../../api/services/reviewService';
 
@@ -45,9 +46,10 @@ export const ProductDetailsPageComponent: React.FC<ProductDetailsPageComponentPr
   // State for reviews
   const [reviews, setReviews] = useState<Review[]>([]);
   const [reviewRating, setReviewRating] = useState(0);
-  const [reviewTitle, setReviewTitle] = useState('');
   const [reviewComment, setReviewComment] = useState('');
-  const currentUserId = 'user1';
+  const currentUser = authService.getCurrentUser();
+  const currentUserId = currentUser?.id || '';
+  const [reviewImageUrl, setReviewImageUrl] = useState('https://example.com/review-image.jpg');
 
   // Auto-refresh stock status every 30 seconds
   useEffect(() => {
@@ -81,7 +83,7 @@ export const ProductDetailsPageComponent: React.FC<ProductDetailsPageComponentPr
         const currentProduct = await productsService.getProductById(productId);
         if (currentProduct) {
           setProductData(currentProduct);
-          setDisplayImage(currentProduct.image || currentProduct.imageUrl || '');
+          setDisplayImage(String(currentProduct.image || currentProduct.imageUrl || ''));
           console.log('Product loaded successfully:', currentProduct.name);
         }
       } catch (error) {
@@ -119,51 +121,66 @@ export const ProductDetailsPageComponent: React.FC<ProductDetailsPageComponentPr
   // Get stock data using custom hook
   const { data: stocks = [], isLoading: stocksLoading } = useStocks(productId, refreshTrigger);
 
+  // Aggregate stocks by size+color so multiple rows for same variant are summed
+  type AggStock = {
+    size: string;
+    color: string;
+    totalQuantity: number;
+    minPrice: number;
+    stockIds: string[];
+  };
+
+  const aggregatedMap = stocks.reduce<Record<string, AggStock>>((map, s: Stock) => {
+    if (!s || !s.isActive) return map;
+    const key = `${s.size}||${s.color}`;
+    if (!map[key]) {
+      map[key] = {
+        size: s.size,
+        color: s.color,
+        totalQuantity: 0,
+        minPrice: Number(s.price) || 0,
+        stockIds: [],
+      };
+    }
+    map[key].totalQuantity += Number(s.quantity) || 0;
+    map[key].minPrice = Math.min(map[key].minPrice, Number(s.price) || map[key].minPrice);
+    map[key].stockIds.push(s.id);
+    return map;
+  }, {});
+
+  const aggregatedStocks: AggStock[] = Object.values(aggregatedMap);
+
   // Set initial selections when stocks are loaded
   useEffect(() => {
     if (stocks.length > 0 && !selectedSize && !selectedColor) {
-      const availableSizes = [
-        ...new Set(
-          stocks
-            .filter((s: Stock) => s.isActive && s.quantity > 0)
-            .map((s: Stock) => s.size)
-        ),
+      // Use aggregated stocks to pick initial size/color when multiple rows exist
+      const aggAvailableSizes = [
+        ...new Set(aggregatedStocks.filter((a) => a.totalQuantity > 0).map((a) => a.size)),
       ];
-      const availableColors = [
-        ...new Set(
-          stocks
-            .filter((s: Stock) => s.isActive && s.quantity > 0)
-            .map((s: Stock) => s.color)
-        ),
+      const aggAvailableColors = [
+        ...new Set(aggregatedStocks.filter((a) => a.totalQuantity > 0).map((a) => a.color)),
       ];
 
-      if (availableSizes.length > 0) setSelectedSize(availableSizes[0]);
-      if (availableColors.length > 0) setSelectedColor(availableColors[0]);
+      if (aggAvailableSizes.length > 0) setSelectedSize(aggAvailableSizes[0]);
+      if (aggAvailableColors.length > 0) setSelectedColor(aggAvailableColors[0]);
     }
   }, [stocks, selectedSize, selectedColor]);
 
   // Get available options from stock
+
   const availableSizes: string[] = [
-    ...new Set(
-      stocks
-        .filter((s: Stock) => s.isActive && s.quantity > 0)
-        .map((s: Stock) => s.size)
-    ),
+    ...new Set(aggregatedStocks.filter((a) => a.totalQuantity > 0).map((a) => a.size)),
   ];
   const availableColors: string[] = [
-    ...new Set(
-      stocks
-        .filter((s: Stock) => s.isActive && s.quantity > 0)
-        .map((s: Stock) => s.color)
-    ),
+    ...new Set(aggregatedStocks.filter((a) => a.totalQuantity > 0).map((a) => a.color)),
   ];
 
   const availableColorsForSize: string[] = selectedSize
     ? [
         ...new Set(
-          stocks
-            .filter((s: Stock) => s.isActive && s.quantity > 0 && s.size === selectedSize)
-            .map((s: Stock) => s.color)
+          aggregatedStocks
+            .filter((a) => a.totalQuantity > 0 && a.size === selectedSize)
+            .map((a) => a.color)
         ),
       ]
     : availableColors;
@@ -171,17 +188,43 @@ export const ProductDetailsPageComponent: React.FC<ProductDetailsPageComponentPr
   const availableSizesForColor: string[] = selectedColor
     ? [
         ...new Set(
-          stocks
-            .filter((s: Stock) => s.isActive && s.quantity > 0 && s.color === selectedColor)
-            .map((s: Stock) => s.size)
+          aggregatedStocks
+            .filter((a) => a.totalQuantity > 0 && a.color === selectedColor)
+            .map((a) => a.size)
         ),
       ]
     : availableSizes;
 
-  // Get current stock
-  const currentStock = stocks.find(
+  // Representative stock (first matching row) and aggregated quantity for the selected variant
+  const representativeStock = stocks.find(
     (s: Stock) => s.size === selectedSize && s.color === selectedColor && s.isActive
   );
+
+  const aggregatedForSelected = aggregatedStocks.find(
+    (a) => a.size === selectedSize && a.color === selectedColor
+  );
+
+  // Build a display stock object that keeps the representative's id/price but uses the aggregated totalQuantity
+  const currentStock: Stock | undefined = (() => {
+    if (representativeStock && aggregatedForSelected) {
+      return { ...representativeStock, quantity: aggregatedForSelected.totalQuantity } as Stock;
+    }
+    if (representativeStock) return representativeStock;
+    if (aggregatedForSelected) {
+      // create a minimal stock-like object when no single representative row exists
+      return {
+        id: aggregatedForSelected.stockIds[0] || '',
+        productId: productId,
+        size: aggregatedForSelected.size,
+        color: aggregatedForSelected.color,
+        quantity: aggregatedForSelected.totalQuantity,
+        price: aggregatedForSelected.minPrice,
+        imageUrl: displayImage,
+        isActive: true,
+      } as unknown as Stock;
+    }
+    return undefined;
+  })();
 
   // Check if product is in wishlist
   useEffect(() => {
@@ -203,11 +246,19 @@ export const ProductDetailsPageComponent: React.FC<ProductDetailsPageComponentPr
       return;
     }
 
+    const resolvedImage =
+      currentStock?.imageUrl ||
+      (product as any)?.imageUrl ||
+      (product as any)?.image ||
+      (product as any)?.imageurl ||
+      displayImage ||
+      '';
+
     const cartItem: CartItem = {
       stockId: currentStock.id,
       productId: product!.id,
       productName: product!.name,
-      productImage: product!.image || '',
+      productImage: resolvedImage,
       price: currentStock.price,
       color: selectedColor,
       size: selectedSize,
@@ -216,8 +267,27 @@ export const ProductDetailsPageComponent: React.FC<ProductDetailsPageComponentPr
       addedAt: new Date().toISOString(),
     };
 
-    cartService.addItem(cartItem);
-    navigate('/cart');
+    const doAdd = async () => {
+      try {
+        if (authService.isAuthenticated()) {
+          await cartService.addToServerCart(cartItem);
+        } else {
+          cartService.addItem(cartItem);
+        }
+        navigate('/cart');
+      } catch (error) {
+        console.error('Failed to add to cart:', error);
+
+        // Prefer the server-provided message when available
+        const serverMessage = (error as any)?.message || (error as any)?.body?.message;
+        const alertMessage = serverMessage || 'Failed to add to cart. Please try again.';
+
+        // Show a more specific message to the user
+        alert(alertMessage);
+      }
+    };
+
+    void doAdd();
   };
 
   const handleWishlistToggle = () => {
@@ -232,11 +302,19 @@ export const ProductDetailsPageComponent: React.FC<ProductDetailsPageComponentPr
       setInWishlist(false);
     } else {
       if (currentStock) {
+        const wishlistResolvedImage =
+          currentStock?.imageUrl ||
+          (product as any)?.imageUrl ||
+          (product as any)?.image ||
+          (product as any)?.imageurl ||
+          displayImage ||
+          '';
+
         const wishlistItem: WishlistItem = {
           stockId: currentStock.id,
           productId: product!.id,
           productName: product!.name,
-          productImage: product!.image || '',
+          productImage: wishlistResolvedImage,
           price: currentStock.price,
           color: selectedColor,
           size: selectedSize,
@@ -249,11 +327,14 @@ export const ProductDetailsPageComponent: React.FC<ProductDetailsPageComponentPr
         };
         addItem(wishlistItem);
       } else {
+        const wishlistResolvedImage =
+          (product as any)?.imageUrl || (product as any)?.image || (product as any)?.imageurl || displayImage || '';
+
         const wishlistItem: WishlistItem = {
           stockId: product!.id,
           productId: product!.id,
           productName: product!.name,
-          productImage: product!.image || '',
+          productImage: wishlistResolvedImage,
           price: product!.price,
           color: '',
           size: '',
@@ -272,8 +353,13 @@ export const ProductDetailsPageComponent: React.FC<ProductDetailsPageComponentPr
   };
 
   const handleSubmitReview = async () => {
-    if (!reviewTitle.trim() || !reviewComment.trim() || reviewRating === 0) {
+    if (!reviewComment.trim() || reviewRating === 0) {
       alert('Please fill in all fields');
+      return;
+    }
+
+    if (!authService.isAuthenticated() || !currentUserId) {
+      alert('Please log in to submit a review');
       return;
     }
 
@@ -281,20 +367,20 @@ export const ProductDetailsPageComponent: React.FC<ProductDetailsPageComponentPr
       const newReview = await reviewService.createReview({
         productId: productId,
         userId: currentUserId,
-        userName: 'Current User',
         rating: reviewRating,
-        title: reviewTitle,
         comment: reviewComment,
-        verified: true,
+        imageUrl: reviewImageUrl || undefined,
       });
 
       setReviews([newReview, ...reviews]);
       setReviewRating(0);
-      setReviewTitle('');
       setReviewComment('');
+      setReviewImageUrl('');
     } catch (error) {
       console.error('Failed to submit review:', error);
-      alert('Failed to submit review. Please try again.');
+      const err = error as unknown as { body?: { message?: string }; message?: string };
+      const serverMessage = err?.body?.message || err?.message || 'Failed to submit review. Please try again.';
+      alert(serverMessage);
     }
   };
 
@@ -334,10 +420,11 @@ export const ProductDetailsPageComponent: React.FC<ProductDetailsPageComponentPr
           {/* Right Column - Product Details and Options */}
           <Box>
             {/* Product Header Info */}
-            <ProductDetailsHeader
-              product={product}
-              reviews={reviews}
-            />
+              <ProductDetailsHeader
+                product={product}
+                reviews={reviews}
+                currentStock={currentStock}
+              />
 
             {/* Product Options Section */}
             <ProductOptions
@@ -365,11 +452,11 @@ export const ProductDetailsPageComponent: React.FC<ProductDetailsPageComponentPr
                   Available Stock Information:
                 </Typography>
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                  {stocks
-                    .filter((s: Stock) => s.isActive && s.quantity > 0)
-                    .map((stock: Stock) => (
-                      <Typography key={stock.id} variant="caption" sx={{ color: colors.text.gray }}>
-                        {stock.size} - {stock.color}: {stock.quantity} available (£{Number(stock.price).toFixed(2)})
+                  {aggregatedStocks
+                    .filter((a) => a.totalQuantity > 0)
+                    .map((a) => (
+                      <Typography key={a.stockIds.join('-')} variant="caption" sx={{ color: colors.text.gray }}>
+                        {a.size} - {a.color}: {a.totalQuantity} available (£{Number(a.minPrice).toFixed(2)})
                       </Typography>
                     ))}
                 </Box>
@@ -397,10 +484,10 @@ export const ProductDetailsPageComponent: React.FC<ProductDetailsPageComponentPr
         <WriteReview
           reviewRating={reviewRating}
           setReviewRating={setReviewRating}
-          reviewTitle={reviewTitle}
-          setReviewTitle={setReviewTitle}
           reviewComment={reviewComment}
           setReviewComment={setReviewComment}
+          reviewImageUrl={reviewImageUrl}
+          setReviewImageUrl={setReviewImageUrl}
           onSubmitReview={handleSubmitReview}
         />
       </Container>
