@@ -25,7 +25,7 @@ const WishlistPage: React.FC = () => {
   // Update wishlist items with latest stock information
   useEffect(() => {
     const updateWishlistWithLatestStock = async () => {
-      const wishlist = wishlistService.getWishlist();
+      const wishlist = await wishlistService.getWishlistAsync();
       const updatedItems: WishlistItem[] = [];
 
       for (const item of wishlist.items) {
@@ -60,22 +60,26 @@ const WishlistPage: React.FC = () => {
 
   useEffect(() => {
     // Load wishlist items on component mount
-    const wishlist = wishlistService.getWishlist();
-    setWishlistItems(wishlist.items);
-    
-    // Initialize quantities from wishlist items
-    const quantitiesMap: Record<string, number> = {};
-    wishlist.items.forEach(item => {
-      quantitiesMap[item.stockId] = item.quantity; // Use the quantity from wishlist item
-    });
-    setQuantities(quantitiesMap);
+    const loadWishlist = async () => {
+      const wishlist = await wishlistService.getWishlistAsync();
+      setWishlistItems(wishlist.items);
+
+      // Initialize quantities from wishlist items
+      const quantitiesMap: Record<string, number> = {};
+      wishlist.items.forEach(item => {
+        quantitiesMap[item.stockId] = item.quantity; // Use the quantity from wishlist item
+      });
+      setQuantities(quantitiesMap);
+    };
+
+    void loadWishlist();
   }, []);
 
-  const handleRemove = (stockId: string) => {
+  const handleRemove = async (stockId: string) => {
     wishlistService.removeItem(stockId);
-    const updatedWishlist = wishlistService.getWishlist();
+    const updatedWishlist = await wishlistService.getWishlistAsync();
     setWishlistItems(updatedWishlist.items);
-    
+
     // Remove quantity entry
     const newQuantities = { ...quantities };
     delete newQuantities[stockId];
@@ -88,11 +92,36 @@ const WishlistPage: React.FC = () => {
     window.dispatchEvent(new Event('wishlist-updated'));
   };
 
-  const handleUpdateQuantity = (stockId: string, quantity: number) => {
-    setQuantities(prev => ({
-      ...prev,
-      [stockId]: quantity
-    }));
+  const handleUpdateQuantity = async (stockId: string, quantity: number) => {
+    // Optimistically update UI: update quantities map and wishlistItems locally
+    const prevQuantities = { ...quantities };
+    const prevItems = wishlistItems.slice();
+
+    setQuantities(prev => ({ ...prev, [stockId]: quantity }));
+    setWishlistItems(items => items.map(it => (it.stockId === stockId ? { ...it, quantity } : it)));
+
+    // Find the wishlist item to obtain id if available
+    const item = prevItems.find(i => i.stockId === stockId);
+    if (!item) return;
+
+    try {
+      // Use server id if present; otherwise pass stockId so local update path can work
+      const id = item.id || stockId;
+      await wishlistService.updateItem(id, { quantity });
+
+      // After successful server update, refresh server-backed cache in background
+      // but do not block UI: sync local storage to latest server state
+      void wishlistService.getWishlistAsync().then(updated => setWishlistItems(updated.items)).catch(() => {});
+    } catch (error) {
+      // Revert optimistic changes on error
+      setQuantities(prevQuantities);
+      setWishlistItems(prevItems);
+
+      console.error('Failed to update wishlist quantity:', error);
+      const err = error as unknown as { body?: { message?: string }; message?: string };
+      const serverMessage = err?.body?.message || err?.message || 'Failed to update wishlist. Please try again.';
+      alert(serverMessage);
+    }
   };
 
   const handleAddToCart = (item: WishlistItem) => {

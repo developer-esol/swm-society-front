@@ -291,7 +291,7 @@ export const ProductDetailsPageComponent: React.FC<ProductDetailsPageComponentPr
     void doAdd();
   };
 
-  const handleWishlistToggle = () => {
+  const handleWishlistToggle = async () => {
     if (inWishlist) {
       if (currentStock) {
         removeItem(currentStock.id);
@@ -301,55 +301,65 @@ export const ProductDetailsPageComponent: React.FC<ProductDetailsPageComponentPr
         cartService.removeItem(product!.id);
       }
       setInWishlist(false);
+      return;
+    }
+
+    // Build wishlist item
+    let wishlistItem: WishlistItem;
+    if (currentStock) {
+      const wishlistResolvedImage =
+        currentStock?.imageUrl ||
+        (product as any)?.imageUrl ||
+        (product as any)?.image ||
+        (product as any)?.imageurl ||
+        displayImage ||
+        '';
+
+      wishlistItem = {
+        stockId: currentStock.id,
+        productId: product!.id,
+        productName: product!.name,
+        productImage: wishlistResolvedImage,
+        price: currentStock.price,
+        color: selectedColor,
+        size: selectedSize,
+        quantity: quantity,
+        maxQuantity: currentStock.quantity,
+        addedAt: new Date().toISOString(),
+        expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+      };
     } else {
-      if (currentStock) {
-        const wishlistResolvedImage =
-          currentStock?.imageUrl ||
-          (product as any)?.imageUrl ||
-          (product as any)?.image ||
-          (product as any)?.imageurl ||
-          displayImage ||
-          '';
+      const wishlistResolvedImage =
+        (product as any)?.imageUrl || (product as any)?.image || (product as any)?.imageurl || displayImage || '';
 
-        const wishlistItem: WishlistItem = {
-          stockId: currentStock.id,
-          productId: product!.id,
-          productName: product!.name,
-          productImage: wishlistResolvedImage,
-          price: currentStock.price,
-          color: selectedColor,
-          size: selectedSize,
-          quantity: quantity,
-          maxQuantity: currentStock.quantity,
-          addedAt: new Date().toISOString(),
-          expiresAt: new Date(
-            Date.now() + 30 * 24 * 60 * 60 * 1000
-          ).toISOString(),
-        };
-        addItem(wishlistItem);
+      wishlistItem = {
+        stockId: product!.id,
+        productId: product!.id,
+        productName: product!.name,
+        productImage: wishlistResolvedImage,
+        price: product!.price,
+        color: '',
+        size: '',
+        quantity: 1,
+        maxQuantity: 0,
+        isOutOfStock: true,
+        addedAt: new Date().toISOString(),
+        expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+      };
+    }
+
+    try {
+      const success = await addItem(wishlistItem);
+      if (success) {
+        setInWishlist(true);
       } else {
-        const wishlistResolvedImage =
-          (product as any)?.imageUrl || (product as any)?.image || (product as any)?.imageurl || displayImage || '';
-
-        const wishlistItem: WishlistItem = {
-          stockId: product!.id,
-          productId: product!.id,
-          productName: product!.name,
-          productImage: wishlistResolvedImage,
-          price: product!.price,
-          color: '',
-          size: '',
-          quantity: 1,
-          maxQuantity: 0,
-          isOutOfStock: true,
-          addedAt: new Date().toISOString(),
-          expiresAt: new Date(
-            Date.now() + 30 * 24 * 60 * 60 * 1000
-          ).toISOString(),
-        };
-        addItem(wishlistItem);
+        alert('Failed to add item to wishlist. Please try again.');
       }
-      setInWishlist(true);
+    } catch (error) {
+      console.error('Failed to add wishlist item:', error);
+      const err = error as unknown as { body?: { message?: string }; message?: string };
+      const serverMessage = err?.body?.message || err?.message || 'Failed to add item to wishlist. Please try again.';
+      alert(serverMessage);
     }
   };
 

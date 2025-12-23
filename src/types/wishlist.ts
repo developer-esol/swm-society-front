@@ -3,6 +3,8 @@
  */
 
 export interface WishlistItem {
+  /** Server-side wishlist item id (optional) */
+  id?: string;
   stockId: string;
   productId: string;
   productName: string;

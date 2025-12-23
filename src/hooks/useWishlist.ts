@@ -7,14 +7,10 @@ import type { WishlistItem } from '../types/wishlist';
  * Provides methods to add, remove, and check wishlist items
  */
 export const useWishlist = () => {
-  const addItem = useCallback((item: WishlistItem) => {
-    try {
-      wishlistService.addItem(item);
-      return true;
-    } catch (error) {
-      console.error('Error adding item to wishlist:', error);
-      return false;
-    }
+  const addItem = useCallback(async (item: WishlistItem) => {
+    // Let errors propagate so callers can inspect server response and show messages
+    await wishlistService.addItem(item as WishlistItem);
+    return true;
   }, []);
 
   const removeItem = useCallback((stockId: string) => {
@@ -45,12 +41,12 @@ export const useWishlist = () => {
     }
   }, []);
 
-  const getWishlist = useCallback(() => {
+  const getWishlist = useCallback(async () => {
     try {
-      return wishlistService.getWishlist();
+      return await wishlistService.getWishlistAsync();
     } catch (error) {
       console.error('Error getting wishlist:', error);
-      return { items: [], totalItems: 0 };
+      return { items: [], totalItems: 0 } as any;
     }
   }, []);
 
