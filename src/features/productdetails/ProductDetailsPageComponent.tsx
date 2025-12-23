@@ -259,6 +259,7 @@ export const ProductDetailsPageComponent: React.FC<ProductDetailsPageComponentPr
       productId: product!.id,
       productName: product!.name,
       productImage: resolvedImage,
+      brandName: (product as any)?.brandName,
       price: currentStock.price,
       color: selectedColor,
       size: selectedSize,
@@ -435,8 +436,8 @@ export const ProductDetailsPageComponent: React.FC<ProductDetailsPageComponentPr
               setSelectedColor={setSelectedColor}
               quantity={quantity}
               setQuantity={setQuantity}
-              availableSizes={availableSizesForColor}
-              availableColors={availableColorsForSize}
+              availableSizes={availableSizes}
+              availableColors={availableColors}
               availableColorsForSize={availableColorsForSize}
               availableSizesForColor={availableSizesForColor}
               currentStock={currentStock}

@@ -353,11 +353,16 @@ export const cartService = {
     const existingItem = cart.items.find((i: CartItem) => i.stockId === item.stockId);
 
     if (existingItem) {
-      // If item already in cart, increase quantity (but respect max)
-      existingItem.quantity = Math.min(
-        existingItem.quantity + item.quantity,
-        existingItem.maxQuantity
-      );
+      // If item already in cart, increase quantity. Respect max only when it's a positive number.
+      const existingMax = Number(existingItem.maxQuantity || 0);
+      if (!Number.isFinite(existingMax) || existingMax <= 0) {
+        existingItem.quantity = Number(existingItem.quantity || 0) + Number(item.quantity || 0);
+      } else {
+        existingItem.quantity = Math.min(
+          Number(existingItem.quantity || 0) + Number(item.quantity || 0),
+          existingMax
+        );
+      }
     } else {
       // Add new item to cart
       cart.items.push(item);
@@ -385,8 +390,14 @@ export const cartService = {
     const item = cart.items.find((i: CartItem) => i.stockId === stockId);
 
     if (item) {
-      // Validate quantity against max available
-      item.quantity = Math.max(1, Math.min(quantity, item.maxQuantity));
+      // Validate quantity against max available.
+      // Treat non-positive or missing maxQuantity as "unlimited".
+      const maxQ = Number(item.maxQuantity || 0);
+      if (!Number.isFinite(maxQ) || maxQ <= 0) {
+        item.quantity = Math.max(1, Number(quantity));
+      } else {
+        item.quantity = Math.max(1, Math.min(Number(quantity), maxQ));
+      }
       localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
     }
   },

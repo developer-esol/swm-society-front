@@ -7,15 +7,13 @@ import type { CartItem } from '../../types/cart';
 
 interface CartItemsProps {
   cartItems: CartItem[];
-  quantities: Record<string, number>;
   onRemove: (stockId: string) => void;
   onDecreaseQuantity: (stockId: string) => void;
-  onIncreaseQuantity: (stockId: string, maxQuantity: number) => void;
+  onIncreaseQuantity: (stockId: string, maxQuantity?: number) => void;
 }
 
 export const CartItems: React.FC<CartItemsProps> = ({
   cartItems,
-  quantities,
   onRemove,
   onDecreaseQuantity,
   onIncreaseQuantity,
@@ -138,7 +136,7 @@ export const CartItems: React.FC<CartItemsProps> = ({
             <IconButton
               size="small"
               onClick={() => onDecreaseQuantity(item.stockId)}
-              disabled={(quantities[item.stockId] || item.quantity) <= 1}
+              disabled={Number(item.quantity) <= 1}
               sx={{
                 border: `1px solid ${colors.border.light}`,
                 borderRadius: '4px',
@@ -151,12 +149,17 @@ export const CartItems: React.FC<CartItemsProps> = ({
               <RemoveIcon sx={{ fontSize: 14 }} />
             </IconButton>
             <Typography sx={{ minWidth: '25px', textAlign: 'center', fontWeight: 600, fontSize: '0.9rem', color: colors.text.primary }}>
-              {quantities[item.stockId] || item.quantity}
+              {Number(item.quantity)}
             </Typography>
             <IconButton
               size="small"
               onClick={() => onIncreaseQuantity(item.stockId, item.maxQuantity)}
-              disabled={(quantities[item.stockId] || item.quantity) >= (item.maxQuantity || 0)}
+              disabled={
+                // Only disable when maxQuantity is a positive number and current >= max
+                typeof item.maxQuantity === 'number' && Number(item.maxQuantity) > 0
+                  ? Number(item.quantity) >= Number(item.maxQuantity)
+                  : false
+              }
               sx={{
                 border: `1px solid ${colors.border.light}`,
                 borderRadius: '4px',
@@ -173,7 +176,7 @@ export const CartItems: React.FC<CartItemsProps> = ({
           {/* Total */}
           <Box sx={{ textAlign: 'right' }}>
             <Typography sx={{ fontWeight: 700, color: colors.button.primary, fontSize: '0.95rem' }}>
-              £{(Number(item.price) * (quantities[item.stockId] || item.quantity)).toFixed(2)}
+              £{(Number(item.price) * Number(item.quantity)).toFixed(2)}
             </Typography>
           </Box>
         </Box>
