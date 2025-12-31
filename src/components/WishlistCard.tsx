@@ -6,7 +6,10 @@ import {
   Button as MuiButton,
   IconButton,
 } from '@mui/material';
-import { Delete as TrashIcon, Add as AddIcon, Remove as RemoveIcon } from '@mui/icons-material';
+import { Add as AddIcon, Remove as RemoveIcon } from '@mui/icons-material';
+import { Trash2 as DeleteIcon } from 'lucide-react';
+import { authService } from '../api/services/authService';
+import { ConfirmDeleteDialog } from './ConfirmDeleteDialog';
 import { Link } from 'react-router-dom';
 import { colors } from '../theme';
 import type { WishlistItem } from '../types/wishlist';
@@ -36,11 +39,29 @@ const WishlistCard: React.FC<WishlistCardProps> = ({
   const initialQuantity = Math.min(item.quantity, effectiveMaxQuantity);
   const [localQuantity, setLocalQuantity] = useState(initialQuantity);
 
+  const [confirmOpen, setConfirmOpen] = useState(false);
+
   const handleDelete = () => {
+    // open confirmation dialog
+    setConfirmOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
     setIsDeleting(true);
     if (onRemove) {
-      onRemove(item.stockId);
+      const idToRemove = (authService && authService.isAuthenticated && authService.isAuthenticated() && item.productId)
+        ? item.productId
+        : (item.stockId || item.id || item.productId || '');
+      try {
+        onRemove(idToRemove);
+      } catch {}
     }
+    setConfirmOpen(false);
+    // isDeleting will be reset if parent re-renders item removed; keep until unmount
+  };
+
+  const handleCancelDelete = () => {
+    setConfirmOpen(false);
   };
 
   const handleAddToCart = () => {
@@ -56,6 +77,15 @@ const WishlistCard: React.FC<WishlistCardProps> = ({
         onUpdateQuantity(item.stockId, newQuantity);
       }
     }
+  };
+
+  // Build product link with optional size/color query params so Product Details can preselect
+  const buildProductLink = () => {
+    const parts: string[] = [];
+    if (item.size) parts.push(`size=${encodeURIComponent(item.size)}`);
+    if (item.color) parts.push(`color=${encodeURIComponent(item.color)}`);
+    const query = parts.length > 0 ? `?${parts.join('&')}` : '';
+    return `/product/${item.productId}${query}`;
   };
 
   const decreaseQuantity = () => {
@@ -87,7 +117,7 @@ const WishlistCard: React.FC<WishlistCardProps> = ({
       }}
     >
       {/* Product Image - Clickable Link */}
-      <Link to={`/product/${item.productId}`} style={{ textDecoration: 'none' }}>
+      <Link to={buildProductLink()} style={{ textDecoration: 'none' }}>
         <CardMedia
           component="img"
           image={item.productImage}
@@ -110,7 +140,7 @@ const WishlistCard: React.FC<WishlistCardProps> = ({
       {/* Product Info */}
       <Box>
         {/* Product Name - Clickable Link */}
-        <Link to={`/product/${item.productId}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+        <Link to={buildProductLink()} style={{ textDecoration: 'none', color: 'inherit' }}>
           <Typography
             sx={{
               fontWeight: 600,
@@ -143,26 +173,45 @@ const WishlistCard: React.FC<WishlistCardProps> = ({
         )}
 
         {/* Color and Size in one row */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
           {/* Color */}
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-            <Box
-              sx={{
-                width: 16,
-                height: 16,
-                borderRadius: '50%',
-                backgroundColor: item.color.toLowerCase(),
-                border: `2px solid ${colors.border.default}`,
-              }}
-            />
-            <Typography sx={{ color: 'black', fontSize: '0.85rem', fontWeight: 500 }}>
-              {item.color}
-            </Typography>
+                  {/* color swatch - be resilient to missing/invalid color values */}
+                  {(() => {
+                    const raw = item.color || '';
+                    let swatchColor = '#ddd';
+                    try {
+                      if (typeof (CSS as any) !== 'undefined' && (CSS as any).supports && raw.trim() !== '') {
+                        // CSS.supports('color', raw) returns true for valid color keywords and values
+                        if ((CSS as any).supports('color', raw)) swatchColor = raw;
+                      } else if (raw.trim() !== '') {
+                        swatchColor = raw;
+                      }
+                    } catch {
+                      // ignore - keep fallback
+                    }
+
+                    return (
+                      <Box
+                        sx={{
+                          width: 16,
+                          height: 16,
+                          borderRadius: '50%',
+                          backgroundColor: swatchColor,
+                          border: `2px solid ${colors.border.default}`,
+                        }}
+                      />
+                    );
+                  })()}
+
+                  <Typography sx={{ color: 'black', fontSize: '0.85rem', fontWeight: 500 }}>
+                    {item.color || '—'}
+                  </Typography>
           </Box>
 
           {/* Size */}
           <Typography sx={{ color: 'black', fontSize: '0.85rem', fontWeight: 500 }}>
-            Size: {item.size}
+            Size: {item.size || '—'}
           </Typography>
         </Box>
 
@@ -243,16 +292,33 @@ const WishlistCard: React.FC<WishlistCardProps> = ({
           onClick={handleDelete}
           disabled={isDeleting}
           sx={{
-            color: colors.button.primary,
-            padding: '6px',
+            minWidth: '40px',
+            width: '40px',
+            height: '40px',
+            p: 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            border: `1px solid ${colors.border.default}`,
+            borderRadius: '6px',
+            color: '#dc2626',
+            bgcolor: 'transparent',
             alignSelf: 'flex-end',
             '&:hover': {
-              backgroundColor: `rgba(${parseInt(colors.button.primary.slice(1,3), 16)}, ${parseInt(colors.button.primary.slice(3,5), 16)}, ${parseInt(colors.button.primary.slice(5,7), 16)}, 0.1)`,
+              bgcolor: '#fee2e2',
             },
           }}
+          aria-label="remove wishlist item"
         >
-          <TrashIcon sx={{ fontSize: 20 }} />
+          <DeleteIcon size={18} />
         </IconButton>
+        <ConfirmDeleteDialog
+          open={confirmOpen}
+          title="Remove from Wishlist"
+          message={`Are you sure you want to remove "${item.productName || 'this item'}" from your wishlist?`}
+          onConfirm={handleConfirmDelete}
+          onCancel={handleCancelDelete}
+        />
 
         {/* Add to Cart Button - Aligned with Item Total */}
         <MuiButton

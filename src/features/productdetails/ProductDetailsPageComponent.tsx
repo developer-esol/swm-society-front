@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Box, Container, Typography } from '@mui/material';
 import { colors } from '../../theme';
 
@@ -16,6 +16,7 @@ import {
 // Import hooks and services
 import { useStocks, useProduct } from '../../hooks/useStock';
 import { useWishlist } from '../../hooks/useWishlist';
+import { wishlistService } from '../../api/services/wishlistService';
 import { cartService } from '../../api/services/cartService';
 import { authService } from '../../api/services/authService';
 import { productsService } from '../../api/services/products';
@@ -42,6 +43,23 @@ export const ProductDetailsPageComponent: React.FC<ProductDetailsPageComponentPr
   const [productData, setProductData] = useState<Product | null>(null);
   const [displayImage, setDisplayImage] = useState<string>('');
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  const location = useLocation();
+
+  // If the product link contained size/color query params (from wishlist), use them as initial selection
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(location.search);
+      const preSize = params.get('size');
+      const preColor = params.get('color');
+      if (preSize) setSelectedSize(preSize);
+      if (preColor) setSelectedColor(preColor);
+    } catch (err) {
+      // ignore
+    }
+  }, [location.search]);
+
+  
 
   // State for reviews
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -150,9 +168,9 @@ export const ProductDetailsPageComponent: React.FC<ProductDetailsPageComponentPr
 
   const aggregatedStocks: AggStock[] = Object.values(aggregatedMap);
 
-  // Set initial selections when stocks are loaded
+  // Set initial selections when stocks are loaded — only fill missing values so we don't overwrite query params
   useEffect(() => {
-    if (stocks.length > 0 && !selectedSize && !selectedColor) {
+    if (stocks.length > 0) {
       // Use aggregated stocks to pick initial size/color when multiple rows exist
       const aggAvailableSizes = [
         ...new Set(aggregatedStocks.filter((a) => a.totalQuantity > 0).map((a) => a.size)),
@@ -161,26 +179,46 @@ export const ProductDetailsPageComponent: React.FC<ProductDetailsPageComponentPr
         ...new Set(aggregatedStocks.filter((a) => a.totalQuantity > 0).map((a) => a.color)),
       ];
 
-      if (aggAvailableSizes.length > 0) setSelectedSize(aggAvailableSizes[0]);
-      if (aggAvailableColors.length > 0) setSelectedColor(aggAvailableColors[0]);
+      if (!selectedSize && aggAvailableSizes.length > 0) setSelectedSize(aggAvailableSizes[0]);
+      if (!selectedColor && aggAvailableColors.length > 0) setSelectedColor(aggAvailableColors[0]);
     }
-  }, [stocks, selectedSize, selectedColor]);
+  }, [stocks]);
 
   // Get available options from stock
 
   const availableSizes: string[] = [
-    ...new Set(aggregatedStocks.filter((a) => a.totalQuantity > 0).map((a) => a.size)),
+    ...new Set(aggregatedStocks.map((a) => a.size)),
   ];
   const availableColors: string[] = [
-    ...new Set(aggregatedStocks.filter((a) => a.totalQuantity > 0).map((a) => a.color)),
+    ...new Set(aggregatedStocks.map((a) => a.color)),
   ];
+
+  // When stocks load, normalize any preselected size/color from the URL to the canonical
+  // available values (case-insensitive). This prevents needing a refresh for query-param selections.
+  useEffect(() => {
+    if (!stocks || stocks.length === 0) return;
+
+    // Normalize size
+    if (selectedSize) {
+      const match = availableSizes.find(
+        (s) => String(s).toLowerCase() === String(selectedSize).toLowerCase()
+      );
+      if (match && match !== selectedSize) setSelectedSize(match);
+    }
+
+    // Normalize color
+    if (selectedColor) {
+      const match = availableColors.find(
+        (c) => String(c).toLowerCase() === String(selectedColor).toLowerCase()
+      );
+      if (match && match !== selectedColor) setSelectedColor(match);
+    }
+  }, [stocks, availableSizes, availableColors, selectedColor, selectedSize]);
 
   const availableColorsForSize: string[] = selectedSize
     ? [
         ...new Set(
-          aggregatedStocks
-            .filter((a) => a.totalQuantity > 0 && a.size === selectedSize)
-            .map((a) => a.color)
+          aggregatedStocks.filter((a) => a.size === selectedSize).map((a) => a.color)
         ),
       ]
     : availableColors;
@@ -188,9 +226,7 @@ export const ProductDetailsPageComponent: React.FC<ProductDetailsPageComponentPr
   const availableSizesForColor: string[] = selectedColor
     ? [
         ...new Set(
-          aggregatedStocks
-            .filter((a) => a.totalQuantity > 0 && a.color === selectedColor)
-            .map((a) => a.size)
+          aggregatedStocks.filter((a) => a.color === selectedColor).map((a) => a.size)
         ),
       ]
     : availableSizes;
@@ -226,14 +262,45 @@ export const ProductDetailsPageComponent: React.FC<ProductDetailsPageComponentPr
     return undefined;
   })();
 
+  // Helper: robustly check wishlist membership by stockId OR by productId + variant
+  const checkWishlistContains = () => {
+    const stored = wishlistService.getWishlist();
+    const items = stored.items || [];
+
+    if (currentStock) {
+      // match by exact stock id
+      if (items.some(it => it.stockId === currentStock.id)) return true;
+      // match only when productId AND selected variant (both color and size) are exactly equal
+      if (items.some(it => it.productId === productId && (it.size || '') === selectedSize && (it.color || '') === selectedColor)) return true;
+      return false;
+    }
+
+    // When no specific stock selected (e.g. out-of-stock), match any wishlist entry for this product
+    // that either saved the exact variant (size+color) or saved a product-level entry (stockId === productId)
+    return items.some(it =>
+      it.productId === productId && (
+        ((it.size || '') === selectedSize && (it.color || '') === selectedColor) ||
+        (it.stockId === productId)
+      )
+    );
+  };
+
   // Check if product is in wishlist
   useEffect(() => {
-    if (currentStock) {
-      setInWishlist(isInWishlist(currentStock.id));
-    } else if (product) {
-      setInWishlist(isInWishlist(product.id));
-    }
-  }, [currentStock, product, isInWishlist]);
+    setInWishlist(checkWishlistContains());
+  }, [currentStock, product, selectedColor, selectedSize]);
+
+  // Listen for external wishlist updates so this page stays in-sync
+  useEffect(() => {
+    const handler = () => {
+      setInWishlist(checkWishlistContains());
+    };
+    window.addEventListener('wishlist-updated', handler);
+    return () => window.removeEventListener('wishlist-updated', handler);
+  }, [currentStock, product, selectedColor, selectedSize]);
+
+  // Flag while an add/remove wishlist request is in-flight to prevent double clicks
+  const [wishlistProcessing, setWishlistProcessing] = useState(false);
 
   const handleAddToCart = () => {
     if (!currentStock) {
@@ -292,20 +359,35 @@ export const ProductDetailsPageComponent: React.FC<ProductDetailsPageComponentPr
   };
 
   const handleWishlistToggle = async () => {
-    if (inWishlist) {
-      if (currentStock) {
-        removeItem(currentStock.id);
-        cartService.removeItem(currentStock.id);
-      } else {
-        removeItem(product!.id);
-        cartService.removeItem(product!.id);
-      }
-      setInWishlist(false);
-      return;
-    }
+    if (wishlistProcessing) return;
+    setWishlistProcessing(true);
 
-    // Build wishlist item
-    let wishlistItem: WishlistItem;
+    try {
+      if (inWishlist) {
+        try {
+          if (currentStock) {
+            // Server API removes by userId+productId; pass product id so server-side
+            // delete endpoint is called. Still remove cart item by stock id locally.
+            await wishlistService.removeItemAsync(product!.id);
+            cartService.removeItem(currentStock.id);
+          } else {
+            await wishlistService.removeItemAsync(product!.id);
+            cartService.removeItem(product!.id);
+          }
+        } catch (err) {
+          console.error('Failed to remove wishlist item:', err);
+          throw err;
+        }
+
+        // Refresh server/local wishlist cache and recompute membership
+        try { await wishlistService.getWishlistAsync(); } catch {}
+        setInWishlist(checkWishlistContains());
+        try { window.dispatchEvent(new Event('wishlist-updated')); } catch {}
+        return;
+      }
+
+      // Build wishlist item
+      let wishlistItem: WishlistItem;
     if (currentStock) {
       const wishlistResolvedImage =
         currentStock?.imageUrl ||
@@ -329,23 +411,48 @@ export const ProductDetailsPageComponent: React.FC<ProductDetailsPageComponentPr
         expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
       };
     } else {
+      // No representative currentStock (likely out of stock) — try to find a matching stock row
+      let foundStock = stocks.find(s => s.size === selectedSize && s.color === selectedColor) as Stock | undefined;
+      if (!foundStock && (selectedSize || selectedColor)) {
+        // Try looser match (match size or color) if exact variant not present
+        foundStock = stocks.find(s => (selectedSize && s.size === selectedSize) || (selectedColor && s.color === selectedColor));
+      }
+
       const wishlistResolvedImage =
         (product as any)?.imageUrl || (product as any)?.image || (product as any)?.imageurl || displayImage || '';
 
-      wishlistItem = {
-        stockId: product!.id,
-        productId: product!.id,
-        productName: product!.name,
-        productImage: wishlistResolvedImage,
-        price: product!.price,
-        color: '',
-        size: '',
-        quantity: 1,
-        maxQuantity: 0,
-        isOutOfStock: true,
-        addedAt: new Date().toISOString(),
-        expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-      };
+      if (foundStock) {
+        wishlistItem = {
+          stockId: foundStock.id,
+          productId: product!.id,
+          productName: product!.name,
+          productImage: foundStock.imageUrl || wishlistResolvedImage,
+          price: foundStock.price ?? product!.price,
+          color: selectedColor || foundStock.color || '',
+          size: selectedSize || foundStock.size || '',
+          quantity: quantity,
+          maxQuantity: foundStock.quantity ?? 0,
+          isOutOfStock: (foundStock.quantity ?? 0) === 0,
+          addedAt: new Date().toISOString(),
+          expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+        } as WishlistItem;
+      } else {
+        // No specific stock found — still preserve the user's selected variant if any
+        wishlistItem = {
+          stockId: product!.id,
+          productId: product!.id,
+          productName: product!.name,
+          productImage: wishlistResolvedImage,
+          price: product!.price,
+          color: selectedColor || '',
+          size: selectedSize || '',
+          quantity: 1,
+          maxQuantity: 0,
+          isOutOfStock: true,
+          addedAt: new Date().toISOString(),
+          expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+        };
+      }
     }
 
     try {
@@ -360,7 +467,15 @@ export const ProductDetailsPageComponent: React.FC<ProductDetailsPageComponentPr
       const err = error as unknown as { body?: { message?: string }; message?: string };
       const serverMessage = err?.body?.message || err?.message || 'Failed to add item to wishlist. Please try again.';
       alert(serverMessage);
+    } finally {
+      setWishlistProcessing(false);
     }
+  } catch (err) {
+    console.error('Wishlist toggle failed:', err);
+    alert('Failed to update wishlist. Please try again.');
+  } finally {
+    setWishlistProcessing(false);
+  }
   };
 
   const handleSubmitReview = async () => {
@@ -454,6 +569,7 @@ export const ProductDetailsPageComponent: React.FC<ProductDetailsPageComponentPr
               inWishlist={inWishlist}
               onAddToCart={handleAddToCart}
               onToggleWishlist={handleWishlistToggle}
+              wishlistProcessing={wishlistProcessing}
             />
 
             {/* Stock Information - After Add to Cart */}

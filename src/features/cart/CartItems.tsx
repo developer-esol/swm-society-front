@@ -1,6 +1,9 @@
 import React from 'react';
 import { Box, Typography, IconButton } from '@mui/material';
-import { Delete as TrashIcon, Add as AddIcon, Remove as RemoveIcon } from '@mui/icons-material';
+import { Add as AddIcon, Remove as RemoveIcon } from '@mui/icons-material';
+import { Trash2 as DeleteIcon } from 'lucide-react';
+import { ConfirmDeleteDialog } from '../../components/ConfirmDeleteDialog';
+import { authService } from '../../api/services/authService';
 import { useNavigate } from 'react-router-dom';
 import { colors } from '../../theme';
 import type { CartItem } from '../../types/cart';
@@ -19,6 +22,8 @@ export const CartItems: React.FC<CartItemsProps> = ({
   onIncreaseQuantity,
 }) => {
   const navigate = useNavigate();
+  const [confirmOpen, setConfirmOpen] = React.useState(false);
+  const [selected, setSelected] = React.useState<CartItem | null>(null);
 
   return (
     <Box>
@@ -102,24 +107,31 @@ export const CartItems: React.FC<CartItemsProps> = ({
                 />
                 {item.color}
               </Typography>
-              {/* Remove Button */}
+              {/* Remove Button (bordered trash like admin) */}
               <Box sx={{ mt: 1 }}>
-                <Typography
-                  onClick={() => onRemove(item.stockId)}
+                <IconButton
+                  size="small"
+                  onClick={() => { setSelected(item); setConfirmOpen(true); }}
                   sx={{
-                    fontSize: '0.8rem',
-                    color: colors.button.primary,
-                    cursor: 'pointer',
+                    minWidth: '40px',
+                    width: '40px',
+                    height: '40px',
+                    p: 0,
                     display: 'flex',
                     alignItems: 'center',
-                    gap: 0.5,
+                    justifyContent: 'center',
+                    border: `1px solid ${colors.border.default}`,
+                    borderRadius: '6px',
+                    color: '#dc2626',
+                    bgcolor: 'transparent',
                     '&:hover': {
-                      textDecoration: 'underline',
+                      bgcolor: '#fee2e2',
                     },
                   }}
+                  aria-label="remove cart item"
                 >
-                  <TrashIcon sx={{ fontSize: 14 }} /> Remove
-                </Typography>
+                  <DeleteIcon size={18} />
+                </IconButton>
               </Box>
             </Box>
           </Box>
@@ -181,6 +193,26 @@ export const CartItems: React.FC<CartItemsProps> = ({
           </Box>
         </Box>
       ))}
+      <ConfirmDeleteDialog
+        open={confirmOpen}
+        title="Remove from Cart"
+        message={
+          selected
+            ? `Are you sure you want to remove "${selected.productName || 'this item'}" from your cart?`
+            : 'Are you sure you want to remove this item from your cart?'
+        }
+        onConfirm={() => {
+          if (!selected) return setConfirmOpen(false);
+          // If authenticated prefer to delete by productId so server endpoint /carts/user/{userId}/product/{productId} is used
+          const idToRemove = (authService && authService.isAuthenticated && authService.isAuthenticated() && selected.productId)
+            ? selected.productId
+            : selected.stockId;
+          onRemove(idToRemove);
+          setConfirmOpen(false);
+          setSelected(null);
+        }}
+        onCancel={() => { setConfirmOpen(false); setSelected(null); }}
+      />
     </Box>
   );
 };

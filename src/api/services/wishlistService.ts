@@ -105,15 +105,20 @@ export const wishlistService = {
 
         // Map/normalize server response to WishlistItem[] if necessary
         const serverArray = Array.isArray(serverItems) ? serverItems : serverItems ? [serverItems] : [];
-        const items = serverArray.map((si) => ({
+        // Filter out inactive records (server may return items with isActive=false)
+        const activeServerArray = serverArray.filter((si: any) => {
+          const active = si.isActive ?? si.active ?? si.is_active;
+          return active === undefined || !!active;
+        });
+          const items = activeServerArray.map((si) => ({
               id: si.id || si._id || si.wishlistId || '',
               stockId: si.stockId || si.stock_id || '',
               productId: si.productId || si.product_id || si.productId || '',
               productName: si.productName || si.product_name || si.name || '',
               productImage: si.imageUrl || si.productImage || si.image || '',
               price: serverPriceToUnit(si.price, si.quantity),
-              color: si.color || '',
-              size: si.size || '',
+                color: si.color ?? si.variantColor ?? si.optionColor ?? si.variant_color ?? si.option_color ?? (si.variant && (si.variant.color || si.variant.colour)) ?? '',
+                size: si.size ?? si.variantSize ?? si.optionSize ?? si.variant_size ?? si.option_size ?? (si.variant && (si.variant.size || si.variant.sizeLabel)) ?? '',
               quantity: Number(si.quantity) || 1,
               maxQuantity: Number(si.maxQuantity) || 0,
               isOutOfStock: !!si.isOutOfStock,
@@ -239,8 +244,8 @@ export const wishlistService = {
               productName: serverItem.productName || serverItem.product_name || item.productName || '',
               productImage: serverItem.imageUrl || serverItem.productImage || item.productImage || '',
               price: serverPriceToUnit(serverItem.price ?? normalizedPrice ?? item.price ?? 0, serverItem.quantity ?? totalQuantity ?? item.quantity ?? 1),
-              color: serverItem.color ?? item.color ?? '',
-              size: serverItem.size ?? item.size ?? '',
+              color: serverItem.color ?? serverItem.variantColor ?? serverItem.optionColor ?? serverItem.variant_color ?? serverItem.option_color ?? (serverItem.variant && (serverItem.variant.color || serverItem.variant.colour)) ?? item.color ?? '',
+                size: serverItem.size ?? serverItem.variantSize ?? serverItem.optionSize ?? serverItem.variant_size ?? serverItem.option_size ?? (serverItem.variant && (serverItem.variant.size || serverItem.variant.sizeLabel)) ?? item.size ?? '',
               quantity: Number(serverItem.quantity ?? totalQuantity ?? item.quantity ?? 1),
               maxQuantity: Number(serverItem.maxQuantity ?? item.maxQuantity ?? 0),
               isOutOfStock: !!serverItem.isOutOfStock,
@@ -250,7 +255,8 @@ export const wishlistService = {
 
             const idx = items.findIndex((i) => (i.id && i.id === mapped.id) || (mapped.stockId && i.stockId === mapped.stockId));
             if (idx >= 0) items[idx] = mapped; else items.push(mapped);
-            saveWishlistToStorage(items);
+              saveWishlistToStorage(items);
+              try { window.dispatchEvent(new Event('wishlist-updated')); } catch {}
 
             return { items, totalItems: items.length };
           }
@@ -276,8 +282,8 @@ export const wishlistService = {
             productName: serverItem.productName || serverItem.product_name || item.productName || '',
             productImage: serverItem.imageUrl || serverItem.productImage || item.productImage || '',
             price: serverPriceToUnit(serverItem.price ?? normalizedPrice ?? item.price ?? 0, serverItem.quantity ?? createBody.quantity ?? item.quantity ?? 1),
-            color: serverItem.color ?? item.color ?? '',
-            size: serverItem.size ?? item.size ?? '',
+            color: serverItem.color ?? serverItem.variantColor ?? serverItem.optionColor ?? serverItem.variant_color ?? serverItem.option_color ?? (serverItem.variant && (serverItem.variant.color || serverItem.variant.colour)) ?? item.color ?? '',
+            size: serverItem.size ?? serverItem.variantSize ?? serverItem.optionSize ?? serverItem.variant_size ?? serverItem.option_size ?? (serverItem.variant && (serverItem.variant.size || serverItem.variant.sizeLabel)) ?? item.size ?? '',
             quantity: Number(serverItem.quantity ?? createBody.quantity ?? item.quantity ?? 1),
             maxQuantity: Number(serverItem.maxQuantity ?? item.maxQuantity ?? 0),
             isOutOfStock: !!serverItem.isOutOfStock,
@@ -288,6 +294,7 @@ export const wishlistService = {
           const existsIdx = items.findIndex((i) => (i.id && i.id === mappedCreated.id) || (mappedCreated.stockId && i.stockId === mappedCreated.stockId));
           if (existsIdx >= 0) items[existsIdx] = mappedCreated; else items.push(mappedCreated);
           saveWishlistToStorage(items);
+          try { window.dispatchEvent(new Event('wishlist-updated')); } catch {}
 
           return { items, totalItems: items.length };
       } catch (error) {
@@ -299,14 +306,92 @@ export const wishlistService = {
 
     // Local storage fallback for unauthenticated users or on server error
     const items = getWishlistFromStorage();
-    
-    // Check if item already exists
+
+    // Normalize and enrich the item before saving locally so the UI shows selected
+    // color/size/price immediately (avoids grey/placeholder after adding)
+    const normalizeLocalItem = async (raw: WishlistItem): Promise<WishlistItem> => {
+      const copy: WishlistItem = {
+        id: raw.id || '',
+        stockId: raw.stockId,
+        productId: raw.productId,
+        productName: raw.productName || '',
+        productImage: raw.productImage || '',
+        price: Number(raw.price) || 0,
+        color: raw.color || '',
+        size: raw.size || '',
+        quantity: Number(raw.quantity) || 1,
+        maxQuantity: Number(raw.maxQuantity) || 0,
+        isOutOfStock: !!raw.isOutOfStock,
+        addedAt: raw.addedAt || new Date().toISOString(),
+        expiresAt: raw.expiresAt,
+      };
+
+      // If productName or image missing, try to fetch product info (best-effort)
+      try {
+        if ((!copy.productName || copy.productName === '' || !copy.productImage) && copy.productId) {
+          const p = await productsService.getProductById(copy.productId).catch(() => null);
+          if (p) {
+            copy.productName = copy.productName || (p.name || p.productName || '');
+            copy.productImage = copy.productImage || (p.imageUrl || p.productImage || '');
+          }
+        }
+      } catch {}
+
+      // If color/size/maxQuantity missing but stockId provided, try to fetch stock
+      try {
+        if ((!copy.color || !copy.size || copy.maxQuantity === 0) && copy.stockId) {
+          // dynamic import to avoid circular deps at top-level
+          const { stockService } = await import('./stockService');
+          const s = await stockService.getStockById(copy.stockId).catch(() => null);
+          if (s) {
+            copy.color = copy.color || s.color || '';
+            copy.size = copy.size || s.size || '';
+            copy.maxQuantity = copy.maxQuantity || Number(s.quantity) || 0;
+            copy.isOutOfStock = copy.maxQuantity === 0;
+          } else if (copy.productId) {
+            // If stockId lookup failed (some older entries stored productId as stockId),
+            // try to fetch all stocks for the product and use the first as a best-effort
+            try {
+              const stocks = await stockService.getStocksByProductId(copy.productId).catch(() => []);
+              if (stocks && stocks.length > 0) {
+                const first = stocks[0];
+                copy.color = copy.color || first.color || '';
+                copy.size = copy.size || first.size || '';
+                copy.maxQuantity = copy.maxQuantity || Number(first.quantity) || 0;
+                copy.isOutOfStock = copy.maxQuantity === 0;
+              }
+            } catch {}
+          }
+        }
+      } catch {}
+
+      // Ensure price is a valid normalized number (best-effort)
+      try {
+        copy.price = normalizePriceValue(copy.price);
+      } catch {
+        copy.price = Math.round(Number(copy.price || 0) * 100) / 100;
+      }
+
+      return copy;
+    };
+
     const exists = items.find((i) => i.stockId === item.stockId);
     if (!exists) {
-      items.push(item);
-      saveWishlistToStorage(items);
+      // normalize/enrich and then save
+      try {
+        const mapped = await normalizeLocalItem(item as WishlistItem);
+        items.push(mapped);
+        saveWishlistToStorage(items);
+        // notify listeners so UI updates immediately
+        try { window.dispatchEvent(new Event('wishlist-updated')); } catch {}
+      } catch (err) {
+        // fallback: push raw item
+        items.push(item);
+        saveWishlistToStorage(items);
+        try { window.dispatchEvent(new Event('wishlist-updated')); } catch {}
+      }
     }
-    
+
     return {
       items,
       totalItems: items.length,
@@ -327,6 +412,143 @@ export const wishlistService = {
       items: filtered,
       totalItems: filtered.length,
     };
+  },
+
+  /**
+   * Async remove that will remove from server when authenticated, or local fallback.
+   */
+  removeItemAsync: async (stockIdOrId: string): Promise<Wishlist> => {
+    const token = localStorage.getItem('authToken');
+    // Helper to remove locally
+    const removeLocal = () => {
+      const items = getWishlistFromStorage();
+      const filtered = items.filter((item) => item.stockId !== stockIdOrId && item.id !== stockIdOrId);
+      saveWishlistToStorage(filtered);
+      try { window.dispatchEvent(new Event('wishlist-updated')); } catch {}
+      return { items: filtered, totalItems: filtered.length } as Wishlist;
+    };
+
+    if (token) {
+      try {
+        const userId = localStorage.getItem('userId') || '';
+        const items = getWishlistFromStorage();
+        // Try to find local item to derive search params
+        const local = items.find(it => it.stockId === stockIdOrId || it.id === stockIdOrId);
+
+        const params = new URLSearchParams();
+        if (userId) params.set('userId', userId);
+        // Prefer searching by wishlist record id if caller passed an id-like value
+        if (local && local.id) {
+          // attempt to delete directly
+          try {
+            await apiClient.delete(`/wishlists/${encodeURIComponent(local.id)}`);
+          } catch {}
+        }
+
+        // If we have a logged-in user and a productId, there's a convenience
+        // endpoint that deletes by userId + productId. Use it when available
+        // because it exactly matches the server API for removing a user's
+        // wishlist entry for a specific product variant.
+        try {
+          const productIdForDelete = local?.productId || stockIdOrId || '';
+          if (userId && productIdForDelete) {
+            try {
+              await apiClient.delete(`/wishlists/user/${encodeURIComponent(userId)}/product/${encodeURIComponent(productIdForDelete)}`);
+              try { console.debug('[wishlistService] removed via user/product endpoint', userId, productIdForDelete); } catch {}
+              // Always remove locally afterwards
+              return removeLocal();
+            } catch (err) {
+              try { console.debug('[wishlistService] user/product delete failed', userId, productIdForDelete, err); } catch {}
+            }
+          }
+        } catch (err) {
+          // ignore
+        }
+
+        // Also try by stockId/product+variant to cover server records. Build params
+        // from local info where available, and include the passed identifier as a
+        // fallback stockId/productId value.
+        if (!params.get('productId') && local && local.productId) params.set('productId', local.productId);
+        if (stockIdOrId) params.set('stockId', stockIdOrId);
+        if (local && local.size) params.set('size', local.size);
+        if (local && local.color) params.set('color', local.color);
+
+        // First attempt: query with constructed params and delete returned ids
+        if (params.toString()) {
+          try {
+            const found = await apiClient.get<any[]>(`/wishlists?${params.toString()}`);
+            try { console.debug('[wishlistService] removeItemAsync - found (params):', params.toString(), found); } catch {}
+            const arr = Array.isArray(found) ? found : (found && found.items) || [];
+            await Promise.all(arr.map(async (f) => {
+              const id = f.id || f._id || f.wishlistId || f.id;
+              if (id) {
+                try { console.debug('[wishlistService] removing id:', id); await apiClient.delete(`/wishlists/${encodeURIComponent(id)}`); } catch (e) { try { console.debug('[wishlistService] delete failed for id:', id, e); } catch {} }
+              }
+            }));
+          } catch (err) {
+            // ignore search/delete errors
+          }
+        }
+
+        // Defensive fallback: query by productId directly (covers records saved using productId)
+        try {
+          const productQuery = stockIdOrId;
+          const foundByProduct = await apiClient.get<any[]>(`/wishlists?productId=${encodeURIComponent(String(productQuery))}`);
+          try { console.debug('[wishlistService] removeItemAsync - foundByProduct:', productQuery, foundByProduct); } catch {}
+          const arr2 = Array.isArray(foundByProduct) ? foundByProduct : (foundByProduct && foundByProduct.items) || [];
+          await Promise.all(arr2.map(async (f) => {
+            const id = f.id || f._id || f.wishlistId || f.id;
+            if (id) {
+              try { console.debug('[wishlistService] removing id (productQuery):', id); await apiClient.delete(`/wishlists/${encodeURIComponent(id)}`); } catch (e) { try { console.debug('[wishlistService] delete failed for id (productQuery):', id, e); } catch {} }
+            }
+          }));
+        } catch (err) {
+          // ignore
+        }
+
+        // Aggressive cleanup: fetch the user's entire wishlist and remove any entries
+        // that match this identifier by stockId OR by productId+size+color. This helps
+        // when the server returns unexpected payload shapes or uses different query
+        // parameters.
+        try {
+          if (userId) {
+            const serverList = await apiClient.get<any[]>(`/wishlists/user/${encodeURIComponent(userId)}`);
+            const listArr = Array.isArray(serverList) ? serverList : (serverList && serverList.items) || [];
+            const toDelete: string[] = [];
+            for (const f of listArr) {
+              const fid = f.id || f._id || f.wishlistId || f.id;
+              const fStock = f.stockId || f.stock_id || '';
+              const fProduct = f.productId || f.product_id || '';
+              const fSize = f.size ?? f.variantSize ?? f.variant?.size ?? '';
+              const fColor = f.color ?? f.variantColor ?? f.variant?.color ?? '';
+
+              const matchesStock = Boolean(stockIdOrId && (String(fStock) === String(stockIdOrId) || String(fid) === String(stockIdOrId)));
+              const matchesProductVariant = Boolean((String(fProduct) === String(stockIdOrId) || String(fProduct) === String(local?.productId || '')) && ((local && local.size && String(fSize) === String(local.size)) || (local && local.color && String(fColor) === String(local.color)) || (!local)));
+
+              if (fid && (matchesStock || matchesProductVariant)) {
+                toDelete.push(fid);
+              }
+            }
+            try { console.debug('[wishlistService] aggressive cleanup, toDelete ids:', toDelete); } catch {}
+            await Promise.all(toDelete.map(async (did) => {
+              if (!did) return;
+              try { console.debug('[wishlistService] removing id (aggressive):', did); await apiClient.delete(`/wishlists/${encodeURIComponent(did)}`); } catch (e) { try { console.debug('[wishlistService] delete failed aggressive id:', did, e); } catch {} }
+            }));
+          }
+        } catch (err) {
+          // ignore
+        }
+
+        // Always remove locally afterwards
+        return removeLocal();
+      } catch (err) {
+        console.error('Failed to remove wishlist item from server, falling back to local remove', err);
+        return removeLocal();
+      }
+    }
+
+    // Not authenticated: remove locally
+    return removeLocal();
   },
 
   /**
@@ -406,8 +628,8 @@ export const wishlistService = {
             productName: serverItem.productName || serverItem.product_name || '',
             productImage: serverItem.imageUrl || serverItem.productImage || serverItem.image || '',
             price: serverPriceToUnit(serverItem.price, serverItem.quantity),
-            color: serverItem.color || updates.color || '',
-            size: serverItem.size || updates.size || '',
+            color: serverItem.color ?? serverItem.variantColor ?? serverItem.optionColor ?? serverItem.variant_color ?? serverItem.option_color ?? (serverItem.variant && (serverItem.variant.color || serverItem.variant.colour)) ?? updates.color ?? '',
+            size: serverItem.size ?? serverItem.variantSize ?? serverItem.optionSize ?? serverItem.variant_size ?? serverItem.option_size ?? (serverItem.variant && (serverItem.variant.size || serverItem.variant.sizeLabel)) ?? updates.size ?? '',
             quantity: Number(serverItem.quantity) || updates.quantity || 1,
             maxQuantity: Number(serverItem.maxQuantity) || 0,
             isOutOfStock: !!serverItem.isOutOfStock,
@@ -487,8 +709,8 @@ export const wishlistService = {
                 productName: serverItem.productName || serverItem.product_name || localItem?.productName || '',
                 productImage: serverItem.imageUrl || serverItem.productImage || localItem?.productImage || '',
                 price: serverPriceToUnit(serverItem.price ?? body.price ?? localItem?.price ?? 0, serverItem.quantity ?? body.quantity ?? localItem?.quantity ?? 1),
-                color: serverItem.color ?? body.color ?? localItem?.color ?? '',
-                size: serverItem.size ?? body.size ?? localItem?.size ?? '',
+                color: serverItem.color ?? serverItem.variantColor ?? serverItem.optionColor ?? serverItem.variant_color ?? serverItem.option_color ?? body.color ?? localItem?.color ?? '',
+                size: serverItem.size ?? serverItem.variantSize ?? serverItem.optionSize ?? serverItem.variant_size ?? serverItem.option_size ?? body.size ?? localItem?.size ?? '',
                 quantity: Number(serverItem.quantity ?? body.quantity ?? localItem?.quantity ?? 1),
                 maxQuantity: Number(serverItem.maxQuantity ?? localItem?.maxQuantity ?? 0),
                 isOutOfStock: !!serverItem.isOutOfStock,
@@ -525,8 +747,8 @@ export const wishlistService = {
               productName: serverItem.productName || serverItem.product_name || localItem?.productName || '',
               productImage: serverItem.imageUrl || serverItem.productImage || createBody.imageUrl || localItem?.productImage || '',
               price: serverPriceToUnit(serverItem.price ?? createBody.price ?? localItem?.price ?? 0, serverItem.quantity ?? createBody.quantity ?? localItem?.quantity ?? 1),
-              color: serverItem.color ?? createBody.color ?? localItem?.color ?? '',
-              size: serverItem.size ?? createBody.size ?? localItem?.size ?? '',
+              color: serverItem.color ?? serverItem.variantColor ?? serverItem.optionColor ?? serverItem.variant_color ?? serverItem.option_color ?? createBody.color ?? localItem?.color ?? '',
+              size: serverItem.size ?? serverItem.variantSize ?? serverItem.optionSize ?? serverItem.variant_size ?? serverItem.option_size ?? createBody.size ?? localItem?.size ?? '',
               quantity: Number(serverItem.quantity ?? createBody.quantity ?? localItem?.quantity ?? 1),
               maxQuantity: Number(serverItem.maxQuantity ?? localItem?.maxQuantity ?? 0),
               isOutOfStock: !!serverItem.isOutOfStock,

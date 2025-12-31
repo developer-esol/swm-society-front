@@ -346,6 +346,24 @@ export const cartService = {
   },
 
   /**
+   * Remove a server-side cart item for a user by productId (DELETE /carts/user/{userId}/product/{productId})
+   */
+  async removeServerCartItemByUserProduct(userId: string | undefined, productId: string): Promise<unknown> {
+    try {
+      userId = userId || localStorage.getItem('userId') || undefined;
+      if (!userId) throw new Error('No user id provided for removeServerCartItemByUserProduct');
+      const url = `/carts/user/${encodeURIComponent(userId)}/product/${encodeURIComponent(productId)}`;
+      const resp = await apiClient.delete<unknown>(url);
+      // Sync local cache after delete
+      try { await this.syncServerCartToLocal(); } catch (e) { console.warn('Failed to sync local cart after server delete', e); }
+      return resp;
+    } catch (error) {
+      console.error('removeServerCartItemByUserProduct error:', error);
+      throw error;
+    }
+  },
+
+  /**
    * Add item to cart
    */
   addItem(item: CartItem): void {

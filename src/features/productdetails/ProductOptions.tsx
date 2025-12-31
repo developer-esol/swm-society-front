@@ -21,6 +21,7 @@ interface ProductOptionsProps {
   inWishlist: boolean;
   onAddToCart: () => void;
   onToggleWishlist: () => void;
+  wishlistProcessing?: boolean;
 }
 
 export const ProductOptions: React.FC<ProductOptionsProps> = ({
@@ -37,6 +38,7 @@ export const ProductOptions: React.FC<ProductOptionsProps> = ({
   inWishlist,
   onAddToCart,
   onToggleWishlist,
+  wishlistProcessing = false,
 }) => {
   if (!product) return null;
 
@@ -159,6 +161,7 @@ export const ProductOptions: React.FC<ProductOptionsProps> = ({
           variant="outlined"
           onClick={onToggleWishlist}
           startIcon={inWishlist ? <Favorite /> : <FavoriteBorder />}
+          disabled={wishlistProcessing}
           sx={{
             borderColor: colors.button.primary,
             color: colors.button.primary,
@@ -167,7 +170,7 @@ export const ProductOptions: React.FC<ProductOptionsProps> = ({
             '&:hover': { bgcolor: 'rgba(220, 38, 38, 0.05)' },
           }}
         >
-          {inWishlist ? 'REMOVE FROM WISHLIST' : 'ADD TO WISHLIST'}
+          {inWishlist ? (wishlistProcessing ? 'REMOVING...' : 'REMOVE FROM WISHLIST') : (wishlistProcessing ? 'PROCESSING...' : 'ADD TO WISHLIST')}
         </Button>
       </Box>
     </Box>

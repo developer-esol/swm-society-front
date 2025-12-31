@@ -12,6 +12,7 @@ import {
 } from '@mui/material';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import FavoriteIcon from '@mui/icons-material/Favorite';
+import { Trash2 as DeleteIcon } from 'lucide-react';
 import { communityService } from '../api/services/communityService';
 import { useAuthStore } from '../store/useAuthStore';
 import { ConfirmDeleteDialog } from '../components';
@@ -253,23 +254,26 @@ const YourPostsPage: React.FC = () => {
 
                     {/* Remove Button */}
                     <MuiButton
-                      variant="contained"
-                      size="small"
                       onClick={() => handleRemovePost(post)}
                       sx={{
-                        bgcolor: colors.text.primary,
-                        color: colors.text.secondary,
-                        textTransform: 'none',
-                        fontSize: '0.875rem',
-                        fontWeight: '500',
-                        py: 0.75,
-                        px: 2,
+                        minWidth: '40px',
+                        width: '40px',
+                        height: '40px',
+                        p: 0,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        border: `1px solid ${colors.border.default}`,
+                        borderRadius: '6px',
+                        color: '#dc2626',
+                        bgcolor: 'transparent',
                         '&:hover': {
-                          bgcolor: colors.text.dark,
+                          bgcolor: '#fee2e2',
                         },
                       }}
+                      aria-label="delete post"
                     >
-                      Remove
+                      <DeleteIcon size={18} />
                     </MuiButton>
                   </Box>
                 </CardContent>

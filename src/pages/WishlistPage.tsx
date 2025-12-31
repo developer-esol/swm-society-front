@@ -3,6 +3,7 @@ import { Box, Typography, Container, Button as MuiButton } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import WishlistCard from '../components/WishlistCard';
 import { wishlistService } from '../api/services/wishlistService';
+import { authService } from '../api/services/authService';
 import { cartService } from '../api/services/cartService';
 import { stockService } from '../api/services/stockService';
 import { colors } from '../theme';
@@ -22,31 +23,96 @@ const WishlistPage: React.FC = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // Update wishlist items with latest stock information
+  // Load wishlist (used on mount and when external parts of the app dispatch 'wishlist-updated')
+  const loadWishlist = async () => {
+    try {
+      if (authService.isAuthenticated()) {
+        // Authenticated users: show only server-backed wishlist items
+        const wishlist = await wishlistService.getWishlistAsync();
+        setWishlistItems(wishlist.items);
+        const quantitiesMap: Record<string, number> = {};
+        wishlist.items.forEach(item => { quantitiesMap[item.stockId] = item.quantity || 1; });
+        setQuantities(quantitiesMap);
+      } else {
+        // Not authenticated: use local storage wishlist
+        const wishlist = wishlistService.getWishlist();
+        setWishlistItems(wishlist.items);
+        const quantitiesMap: Record<string, number> = {};
+        wishlist.items.forEach(item => { quantitiesMap[item.stockId] = item.quantity || 1; });
+        setQuantities(quantitiesMap);
+      }
+    } catch (err) {
+      // On unexpected error, fall back to local cache but prefer server for logged users
+      const wishlist = wishlistService.getWishlist();
+      setWishlistItems(wishlist.items);
+      const quantitiesMap: Record<string, number> = {};
+      wishlist.items.forEach(item => { quantitiesMap[item.stockId] = item.quantity || 1; });
+      setQuantities(quantitiesMap);
+    }
+  };
+
+  // Update wishlist items with latest stock information (uses server-backed wishlist when possible)
   useEffect(() => {
     const updateWishlistWithLatestStock = async () => {
+      // get async wishlist (will prefer server for authenticated users)
       const wishlist = await wishlistService.getWishlistAsync();
       const updatedItems: WishlistItem[] = [];
 
       for (const item of wishlist.items) {
         try {
-          // Fetch latest stock info
+          // If item lacks variant info, try to enrich from stock by id
+          if ((!(item.color && item.size)) && item.stockId) {
+            try {
+              const stockById = await stockService.getStockById(item.stockId);
+              if (stockById) {
+                item.color = item.color || stockById.color || item.color;
+                item.size = item.size || stockById.size || item.size;
+                item.maxQuantity = item.maxQuantity || Number(stockById.quantity) || item.maxQuantity;
+                item.isOutOfStock = item.maxQuantity === 0;
+              } else if (item.productId) {
+                // Best-effort fallback: if stock lookup by id failed, try fetching stocks for the product
+                try {
+                  const stocks = await stockService.getStocksByProductId(item.productId);
+                  if (stocks && stocks.length > 0) {
+                    const first = stocks[0];
+                    item.color = item.color || first.color || item.color;
+                    item.size = item.size || first.size || item.size;
+                    item.maxQuantity = item.maxQuantity || Number(first.quantity) || item.maxQuantity;
+                    item.isOutOfStock = item.maxQuantity === 0;
+                  }
+                } catch {}
+              }
+            } catch {}
+          }
+          // Fetch latest stock info for the product
           const stocks = await stockService.getStocksByProductId(item.productId);
           const matchingStock = stocks.find(
             (s) => s.size === item.size && s.color === item.color
           );
 
           if (matchingStock && matchingStock.quantity > 0) {
-            // Stock is now available - update maxQuantity
             updatedItems.push({
               ...item,
               maxQuantity: matchingStock.quantity,
             });
           } else {
-            // Still out of stock
-            updatedItems.push(item);
+            // If we couldn't find an exact matching stock, but stocks exist for this product,
+            // try a best-effort enrichment so the wishlist shows a color/size instead of placeholders.
+            if ((!item.color || !item.size) && stocks && stocks.length > 0) {
+              const first = stocks[0];
+              updatedItems.push({
+                ...item,
+                color: item.color || first.color || item.color,
+                size: item.size || first.size || item.size,
+                maxQuantity: item.maxQuantity || Number(first.quantity) || item.maxQuantity,
+                isOutOfStock: (item.maxQuantity || Number(first.quantity) || 0) === 0,
+              });
+            } else {
+              // keep the item as-is (preserves selected color/size even when out of stock)
+              updatedItems.push(item);
+            }
           }
-        } catch {
+        } catch (err) {
           // Keep original item if fetch fails
           updatedItems.push(item);
         }
@@ -59,27 +125,32 @@ const WishlistPage: React.FC = () => {
   }, [refreshTrigger]);
 
   useEffect(() => {
-    // Load wishlist items on component mount
-    const loadWishlist = async () => {
-      const wishlist = await wishlistService.getWishlistAsync();
-      setWishlistItems(wishlist.items);
-
-      // Initialize quantities from wishlist items
-      const quantitiesMap: Record<string, number> = {};
-      wishlist.items.forEach(item => {
-        quantitiesMap[item.stockId] = item.quantity; // Use the quantity from wishlist item
-      });
-      setQuantities(quantitiesMap);
-    };
-
-    void loadWishlist();
+    // Load on mount and listen for external wishlist updates
+    loadWishlist();
+    const handler = () => { loadWishlist(); };
+    window.addEventListener('wishlist-updated', handler);
+    return () => window.removeEventListener('wishlist-updated', handler);
   }, []);
 
-  const handleRemove = async (stockId: string) => {
-    wishlistService.removeItem(stockId);
-    const updatedWishlist = await wishlistService.getWishlistAsync();
-    setWishlistItems(updatedWishlist.items);
-
+  const handleRemove = (stockId: string) => {
+    // remove server-side when possible, then refresh wishlist state
+    (async () => {
+      try {
+        await wishlistService.removeItemAsync(stockId);
+        if (authService.isAuthenticated()) {
+          const wl = await wishlistService.getWishlistAsync();
+          setWishlistItems(wl.items);
+        } else {
+          const updatedWishlist = wishlistService.getWishlist();
+          setWishlistItems(updatedWishlist.items);
+        }
+      } catch (err) {
+        // fallback to local removal
+        const updatedWishlist = wishlistService.getWishlist();
+        setWishlistItems(updatedWishlist.items);
+      }
+    })();
+    
     // Remove quantity entry
     const newQuantities = { ...quantities };
     delete newQuantities[stockId];
@@ -92,36 +163,11 @@ const WishlistPage: React.FC = () => {
     window.dispatchEvent(new Event('wishlist-updated'));
   };
 
-  const handleUpdateQuantity = async (stockId: string, quantity: number) => {
-    // Optimistically update UI: update quantities map and wishlistItems locally
-    const prevQuantities = { ...quantities };
-    const prevItems = wishlistItems.slice();
-
-    setQuantities(prev => ({ ...prev, [stockId]: quantity }));
-    setWishlistItems(items => items.map(it => (it.stockId === stockId ? { ...it, quantity } : it)));
-
-    // Find the wishlist item to obtain id if available
-    const item = prevItems.find(i => i.stockId === stockId);
-    if (!item) return;
-
-    try {
-      // Use server id if present; otherwise pass stockId so local update path can work
-      const id = item.id || stockId;
-      await wishlistService.updateItem(id, { quantity });
-
-      // After successful server update, refresh server-backed cache in background
-      // but do not block UI: sync local storage to latest server state
-      void wishlistService.getWishlistAsync().then(updated => setWishlistItems(updated.items)).catch(() => {});
-    } catch (error) {
-      // Revert optimistic changes on error
-      setQuantities(prevQuantities);
-      setWishlistItems(prevItems);
-
-      console.error('Failed to update wishlist quantity:', error);
-      const err = error as unknown as { body?: { message?: string }; message?: string };
-      const serverMessage = err?.body?.message || err?.message || 'Failed to update wishlist. Please try again.';
-      alert(serverMessage);
-    }
+  const handleUpdateQuantity = (stockId: string, quantity: number) => {
+    setQuantities(prev => ({
+      ...prev,
+      [stockId]: quantity
+    }));
   };
 
   const handleAddToCart = (item: WishlistItem) => {
@@ -254,7 +300,7 @@ const WishlistPage: React.FC = () => {
           {/* Items List */}
           {wishlistItems.map((item) => (
             <WishlistCard
-              key={item.stockId}
+              key={item.id || item.stockId || item.productId}
               item={item}
               onRemove={handleRemove}
               onAddToCart={handleAddToCart}
