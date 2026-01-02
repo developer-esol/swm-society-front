@@ -81,43 +81,8 @@ const LoginPage: React.FC = () => {
   };
 
   const handleGoogleLogin = () => {
-    // Google OAuth login implementation
-    const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
-    
-    // Check if Client ID is configured
-    if (!GOOGLE_CLIENT_ID || GOOGLE_CLIENT_ID === 'YOUR_GOOGLE_CLIENT_ID_HERE') {
-      // Show helpful message for testing
-      setLoginError(
-        'Google OAuth not configured yet. To set up:\n' +
-        '1. Visit https://console.cloud.google.com/\n' +
-        '2. Create OAuth 2.0 Client ID\n' +
-        '3. Add Client ID to .env.local as VITE_GOOGLE_CLIENT_ID\n' +
-        '4. Add redirect URI: ' + window.location.origin + '/auth/google/callback\n\n' +
-        'For now, use email/password to test login.'
-      );
-      return;
-    }
-    
-    // Build Google OAuth URL
-    const REDIRECT_URI = `${window.location.origin}/auth/google/callback`;
-    const scope = 'openid profile email';
-    const responseType = 'code';
-    const accessType = 'offline';
-    
-    const googleOAuthUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth');
-    googleOAuthUrl.searchParams.append('client_id', GOOGLE_CLIENT_ID);
-    googleOAuthUrl.searchParams.append('redirect_uri', REDIRECT_URI);
-    googleOAuthUrl.searchParams.append('response_type', responseType);
-    googleOAuthUrl.searchParams.append('scope', scope);
-    googleOAuthUrl.searchParams.append('access_type', accessType);
-    
-    // Generate state parameter for security (CSRF protection)
-    const state = Math.random().toString(36).substring(7);
-    localStorage.setItem('google_oauth_state', state);
-    googleOAuthUrl.searchParams.append('state', state);
-    
-    // Redirect to Google login
-    window.location.href = googleOAuthUrl.toString();
+    const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8080';
+    window.location.href = `${BACKEND_URL.replace(/\/$/, '')}/oauth2/authorization/google`;
   };
 
   return (

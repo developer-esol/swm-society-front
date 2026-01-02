@@ -15,7 +15,9 @@ class ApiClient {
     endpoint: string,
     options: RequestInit = {}
   ): Promise<T> {
-    const url = `${this.baseURL}${endpoint}`;
+    // If endpoint is an absolute URL (starts with http), use it directly;
+    // otherwise build with the configured base URL.
+    const url = endpoint.startsWith('http') ? endpoint : `${this.baseURL}${endpoint}`;
     
     // Get auth token if available
     const token = this.getAuthToken();
@@ -40,7 +42,10 @@ class ApiClient {
         body = { message: text };
       }
 
-      const err: any = new Error(body.message || `API Error: ${response.status} ${response.statusText}`);
+      const errorMsg = body.message || body.error || `API Error: ${response.status} ${response.statusText}`;
+      console.error('API Error:', { status: response.status, url, body });
+      
+      const err: any = new Error(errorMsg);
       err.status = response.status;
       err.statusText = response.statusText;
       err.body = body;

@@ -38,13 +38,14 @@ export const useAuthStore = create<AuthState>((set) => ({
       // Store credentials
       authService.storeUserCredentials(response);
 
-      // Update state
+      // Update state from backend response (response.data.user)
+      const user = response.data?.user;
       set({
         user: {
-          id: response.user.id,
-          email: response.user.email,
-          name: response.user.name,
-          role: response.user.roleId,
+          id: user?.id ? user.id.toString() : '',
+          email: user?.email || '',
+          name: user?.fullName || '',
+          role: user?.role?.id ? user.role.id.toString() : '1',
         },
         isAuthenticated: true,
         isLoading: false,
