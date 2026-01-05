@@ -77,6 +77,7 @@ export const authService = {
   logout: () => {
     // Clear all stored authentication data
     localStorage.removeItem('authToken');
+    localStorage.removeItem('refreshToken');
     localStorage.removeItem('userEmail');
     localStorage.removeItem('userName');
     localStorage.removeItem('userId');
@@ -118,6 +119,7 @@ export const authService = {
 
     // Store authentication token and user data for API operations
     const token = response.data?.accessToken || response.data?.token || '';
+    const refreshToken = response.data?.refreshToken || '';
     const userId = response.data?.user?.id ? response.data.user.id.toString() : '';
     const email = response.data?.user?.email || '';
     const fullName = response.data?.user?.fullName || '';
@@ -125,12 +127,14 @@ export const authService = {
 
     console.log('[AuthService] Extracted values:');
     console.log('  - Token:', token ? `${token.substring(0, 30)}... (${token.length} chars)` : 'MISSING!');
+    console.log('  - RefreshToken:', refreshToken ? `${refreshToken.substring(0, 20)}...` : 'MISSING!');
     console.log('  - UserId:', userId, '(Type:', typeof userId, ')');
     console.log('  - Email:', email);
     console.log('  - Name:', fullName);
     console.log('  - RoleId:', roleId);
 
     localStorage.setItem('authToken', token);
+    localStorage.setItem('refreshToken', refreshToken);
     localStorage.setItem('userId', userId);
     localStorage.setItem('userEmail', email);
     localStorage.setItem('userName', fullName);

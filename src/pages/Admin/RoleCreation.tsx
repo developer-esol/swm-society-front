@@ -12,13 +12,15 @@ import {
   Select,
   MenuItem,
   Alert,
+  CircularProgress,
 } from '@mui/material'
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useFormik } from 'formik'
 import * as Yup from 'yup'
 import type { SelectChangeEvent } from '@mui/material'
-import { rolesService, mockPermissions } from '../../api/services/admin/rolesService'
+import type { Permission } from '../../types/Admin/roles'
+import { rolesService } from '../../api/services/admin/rolesService'
 import { colors } from '../../theme'
 
 const roleCreationValidationSchema = Yup.object().shape({
@@ -67,13 +69,30 @@ const selectSx = {
 const RoleCreation = () => {
   const navigate = useNavigate()
   const [submitError, setSubmitError] = useState<string | null>(null)
-  const [selectedPermissions, setSelectedPermissions] = useState<string[]>([])
+  const [selectedPermissions, setSelectedPermissions] = useState<number[]>([])
+  const [allPermissions, setAllPermissions] = useState<Permission[]>([])
+  const [isLoadingPermissions, setIsLoadingPermissions] = useState(true)
 
-  // Use mock permissions data from service
-  const allPermissions = mockPermissions
+  // Fetch permissions on mount
+  useEffect(() => {
+    const fetchPermissions = async () => {
+      try {
+        setIsLoadingPermissions(true)
+        const permissions = await rolesService.getAllPermissions()
+        setAllPermissions(permissions)
+      } catch (error) {
+        console.error('Failed to fetch permissions:', error)
+        setSubmitError('Failed to load permissions. Please refresh the page.')
+      } finally {
+        setIsLoadingPermissions(false)
+      }
+    }
+    fetchPermissions()
+  }, [])
 
+  // Group permissions by resource for display
   const categories = useMemo(() => {
-    const cats = new Set(allPermissions.map((p) => p.category))
+    const cats = new Set(allPermissions.map((p) => p.resource))
     return Array.from(cats)
   }, [allPermissions])
 
@@ -85,7 +104,7 @@ const RoleCreation = () => {
     formik.setFieldValue(field, e.target.value)
   }
 
-  const handlePermissionChange = (permissionId: string) => {
+  const handlePermissionChange = (permissionId: number) => {
     setSelectedPermissions((prev) =>
       prev.includes(permissionId) ? prev.filter((id) => id !== permissionId) : [...prev, permissionId]
     )
@@ -93,7 +112,7 @@ const RoleCreation = () => {
 
   const handleSelectAll = (category: string) => {
     const categoryPermissions = allPermissions
-      .filter((p) => p.category === category)
+      .filter((p) => p.resource === category)
       .map((p) => p.id)
     const allSelected = categoryPermissions.every((id) => selectedPermissions.includes(id))
 
@@ -119,26 +138,27 @@ const RoleCreation = () => {
         return
       }
 
-      const newRole = {
-        name: values.name,
-        description: values.description,
-        icon: '🔘',
-        usersCount: 0,
-        permissionsCount: selectedPermissions.length,
-        status: values.status,
-        permissions: allPermissions.filter((p) => selectedPermissions.includes(p.id)),
-      }
-
       try {
-        await rolesService.create(newRole)
+        await rolesService.create({
+          name: values.name,
+          description: values.description,
+          permissionIds: selectedPermissions,
+        })
         navigate('/admin/roles')
       } catch (error) {
-        setSubmitError('Failed to create role. Please try again.')
-        console.error('Failed to create role:', error)
+        console.error('Error creating role:', error)
+        setSubmitError(error instanceof Error ? error.message : 'Failed to create role')
       }
     },
   })
 
+  if (isLoadingPermissions) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
+        <CircularProgress />
+      </Box>
+    )
+  }
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', bgcolor: colors.background.default }}>
       <Container maxWidth="lg" sx={{ py: 4, flex: 1, px: { xs: 2, sm: 3, md: 4 } }}>
@@ -288,8 +308,8 @@ const RoleCreation = () => {
                 }}
               >
                 {categories.map((category) => {
-                  const categoryPermissions = allPermissions.filter((p) => p.category === category)
-                  const allSelected = categoryPermissions.every((id) => selectedPermissions.includes(id.id))
+                  const categoryPermissions = allPermissions.filter((p) => p.resource === category)
+                  const allSelected = categoryPermissions.every((perm) => selectedPermissions.includes(perm.id))
 
                   return (
                     <Box

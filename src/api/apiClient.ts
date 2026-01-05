@@ -4,6 +4,8 @@ const AUTH_BASE_URL = import.meta.env.VITE_AUTH_BASE || 'http://localhost:8080';
 class ApiClient {
   private baseURL: string;
   private defaultHeaders: HeadersInit;
+  private isRefreshing: boolean = false;
+  private refreshPromise: Promise<string> | null = null;
 
   constructor(baseURL: string) {
     this.baseURL = baseURL;
@@ -12,9 +14,58 @@ class ApiClient {
     };
   }
 
+  private async refreshAccessToken(): Promise<string> {
+    const refreshToken = localStorage.getItem('refreshToken');
+    
+    if (!refreshToken) {
+      throw new Error('No refresh token available');
+    }
+
+    try {
+      console.log('[ApiClient] Refreshing access token...');
+      
+      const response = await fetch(`${AUTH_BASE_URL}/api/auth/refresh`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ refreshToken }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to refresh token');
+      }
+
+      const data = await response.json();
+      
+      // Store new tokens
+      if (data.data?.accessToken) {
+        localStorage.setItem('authToken', data.data.accessToken);
+      }
+      if (data.data?.refreshToken) {
+        localStorage.setItem('refreshToken', data.data.refreshToken);
+      }
+
+      console.log('[ApiClient] ✅ Token refreshed successfully');
+      return data.data.accessToken;
+    } catch (error) {
+      console.error('[ApiClient] ❌ Token refresh failed:', error);
+      // Clear tokens and redirect to login
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('refreshToken');
+      localStorage.removeItem('userId');
+      localStorage.removeItem('userEmail');
+      localStorage.removeItem('userName');
+      localStorage.removeItem('userRole');
+      window.location.href = '/login';
+      throw error;
+    }
+  }
+
   private async request<T>(
     endpoint: string,
-    options: RequestInit = {}
+    options: RequestInit = {},
+    isRetry: boolean = false
   ): Promise<T> {
     // If endpoint is an absolute URL (starts with http), use it directly;
     // otherwise build with the configured base URL.
@@ -39,6 +90,30 @@ class ApiClient {
     };
 
     const response = await fetch(url, config);
+
+    // Handle 401 Unauthorized - token expired
+    if (response.status === 401 && !isRetry && !endpoint.includes('/auth/')) {
+      console.log('[ApiClient] 401 Unauthorized - attempting token refresh');
+      
+      try {
+        // Use shared refresh promise to prevent multiple simultaneous refresh requests
+        if (this.isRefreshing && this.refreshPromise) {
+          await this.refreshPromise;
+        } else {
+          this.isRefreshing = true;
+          this.refreshPromise = this.refreshAccessToken();
+          await this.refreshPromise;
+          this.isRefreshing = false;
+          this.refreshPromise = null;
+        }
+        
+        // Retry the original request with new token
+        return this.request<T>(endpoint, options, true);
+      } catch (refreshError) {
+        console.error('[ApiClient] Failed to refresh token, logging out');
+        throw refreshError;
+      }
+    }
 
     if (!response.ok) {
       const text = await response.text().catch(() => '');

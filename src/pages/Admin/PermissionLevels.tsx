@@ -1,4 +1,4 @@
-import { Box, Container, Typography, Button, Checkbox, FormControlLabel, Divider } from '@mui/material'
+import { Box, Container, Typography, Button, Checkbox, FormControlLabel, Divider, CircularProgress } from '@mui/material'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useEffect, useState, useMemo } from 'react'
 import { rolesService } from '../../api/services/admin/rolesService'
@@ -9,47 +9,24 @@ const PermissionLevels = () => {
   const { roleId } = useParams<{ roleId: string }>()
   const navigate = useNavigate()
   const [role, setRole] = useState<Role | null>(null)
-  const [selectedPermissions, setSelectedPermissions] = useState<string[]>([])
+  const [allPermissions, setAllPermissions] = useState<Permission[]>([])
+  const [selectedPermissions, setSelectedPermissions] = useState<number[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
-  // Mock permissions for all categories
-  const allPermissions: Permission[] = useMemo(
-    () => [
-      // Dashboard
-      { id: '1', name: 'View Dashboard Analytics', category: 'Dashboard', enabled: true },
-      { id: '2', name: 'User Top Selling Products', category: 'Dashboard', enabled: true },
-      // Products Management
-      { id: '3', name: 'Search Products', category: 'Products Management', enabled: true },
-      { id: '4', name: 'Create new products', category: 'Products Management', enabled: true },
-      { id: '5', name: 'Update existing products', category: 'Products Management', enabled: true },
-      { id: '6', name: 'Remove existing products', category: 'Products Management', enabled: true },
-      // Stock Management
-      { id: '7', name: 'View available stock', category: 'Stock Management', enabled: true },
-      { id: '8', name: 'Change stock price', category: 'Stock Management', enabled: true },
-      { id: '9', name: 'Remove existing stock', category: 'Stock Management', enabled: true },
-      { id: '10', name: 'Change stock quantity', category: 'Stock Management', enabled: true },
-      { id: '11', name: 'Add new stock', category: 'Stock Management', enabled: true },
-      // Loyalty Points Management
-      { id: '12', name: 'Adjust loyalty points of customers', category: 'Loyalty Points Management', enabled: true },
-      // Sales
-      { id: '13', name: 'View Sales Information', category: 'Sales', enabled: true },
-      { id: '14', name: 'Update delivery status', category: 'Sales', enabled: true },
-      // Users
-      { id: '15', name: 'View existing customers', category: 'Users', enabled: true },
-      { id: '16', name: 'Deactivate Accounts', category: 'Users', enabled: true },
-    ],
-    []
-  )
-
   const categories = useMemo(() => {
-    const cats = new Set(allPermissions.map((p) => p.category))
+    const cats = new Set(allPermissions.map((p) => p.resource))
     return Array.from(cats)
   }, [allPermissions])
 
   useEffect(() => {
-    const loadRole = async () => {
+    const loadData = async () => {
       setIsLoading(true)
       try {
+        // Load permissions
+        const permissions = await rolesService.getAllPermissions()
+        setAllPermissions(permissions)
+
+        // Load role if roleId exists
         if (roleId) {
           const foundRole = await rolesService.getById(roleId)
           if (foundRole) {
@@ -58,35 +35,55 @@ const PermissionLevels = () => {
           }
         }
       } catch (error) {
-        console.error('Failed to load role:', error)
+        console.error('Failed to load data:', error)
       } finally {
         setIsLoading(false)
       }
     }
 
-    loadRole()
+    loadData()
   }, [roleId])
 
-  const handlePermissionChange = (permissionId: string) => {
+  const handlePermissionChange = (permissionId: number) => {
     setSelectedPermissions((prev) =>
       prev.includes(permissionId) ? prev.filter((id) => id !== permissionId) : [...prev, permissionId]
     )
   }
 
+  const handleSelectAll = (category: string) => {
+    const categoryPermissions = allPermissions
+      .filter((p) => p.resource === category)
+      .map((p) => p.id)
+    const allSelected = categoryPermissions.every((id) => selectedPermissions.includes(id))
+
+    if (allSelected) {
+      setSelectedPermissions((prev) => prev.filter((id) => !categoryPermissions.includes(id)))
+    } else {
+      setSelectedPermissions((prev) => [...new Set([...prev, ...categoryPermissions])])
+    }
+  }
+
   const handleSave = async () => {
     if (role && roleId) {
-      const updatedPermissions = allPermissions.filter((p) => selectedPermissions.includes(p.id))
-      await rolesService.update(roleId, {
-        ...role,
-        permissions: updatedPermissions,
-        permissionsCount: updatedPermissions.length,
-      })
-      navigate('/admin/roles')
+      try {
+        await rolesService.update(roleId, {
+          name: role.name,
+          description: role.description,
+          permissionIds: selectedPermissions,
+        })
+        navigate('/admin/roles')
+      } catch (error) {
+        console.error('Failed to update role:', error)
+      }
     }
   }
 
   if (isLoading) {
-    return <Typography sx={{ textAlign: 'center', py: 4 }}>Loading...</Typography>
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
+        <CircularProgress />
+      </Box>
+    )
   }
 
   if (!role) {
@@ -130,7 +127,7 @@ const PermissionLevels = () => {
           }}
         >
           {categories.map((category) => {
-            const categoryPermissions = allPermissions.filter((p) => p.category === category)
+            const categoryPermissions = allPermissions.filter((p) => p.resource === category)
             return (
               <Box
                 key={category}
