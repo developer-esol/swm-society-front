@@ -1,6 +1,42 @@
 import { apiClient } from '../apiClient';
 import type { CommunityPost, CreateCommunityPostData, CommunityPostResponse } from '../../types/community';
 
+/**
+ * Helper function to get NestJS user UUID from Spring Boot externalId
+ * Caches the result in sessionStorage to avoid repeated API calls
+ */
+async function getNestJsUserUuid(externalId: string): Promise<string> {
+  // Check cache first
+  const cacheKey = 'nestjs_user_uuid';
+  const cached = sessionStorage.getItem(cacheKey);
+  if (cached) {
+    try {
+      const parsed = JSON.parse(cached);
+      if (parsed.externalId === externalId && parsed.uuid) {
+        console.log('[CommunityService] Using cached UUID:', parsed.uuid);
+        return parsed.uuid;
+      }
+    } catch (e) {
+      // Invalid cache, continue to fetch
+    }
+  }
+
+  // Fetch from API
+  console.log('[CommunityService] Fetching UUID for externalId:', externalId);
+  const response = await apiClient.get<any[]>(`/users?externalId=${externalId}`);
+  if (!response || response.length === 0) {
+    throw new Error(`No user found with externalId: ${externalId}`);
+  }
+  
+  const uuid = response[0].id;
+  console.log('[CommunityService] Mapped externalId', externalId, '→ UUID:', uuid);
+  
+  // Cache the result
+  sessionStorage.setItem(cacheKey, JSON.stringify({ externalId, uuid }));
+  
+  return uuid;
+}
+
 export const communityService = {
   /**
    * Get all community posts
@@ -67,14 +103,14 @@ export const communityService = {
   create: async (postData: CreateCommunityPostData): Promise<CommunityPost> => {
     try {
       const token = localStorage.getItem('authToken');
-      const userId = postData.userId || localStorage.getItem('userId');
+      const externalId = postData.userId || localStorage.getItem('userId');
       
       console.log('[CommunityService] Creating community post...');
-      console.log('[CommunityService] UserId:', userId);
-      console.log('[CommunityService] Token:', token ? 'Present' : 'MISSING');
+      console.log('[CommunityService] Spring Boot externalId:', externalId);
+      console.log('[CommunityService] Token:', token ? '✅ Present' : '❌ MISSING');
       console.log('[CommunityService] PostData:', postData);
       
-      if (!userId) {
+      if (!externalId) {
         throw new Error('User ID is required to create a post. Please log in again.');
       }
       
@@ -82,9 +118,13 @@ export const communityService = {
         throw new Error('Authentication token is missing. Please log in again.');
       }
       
-      // Send userId as string (backend should accept numeric string or UUID)
+      // Convert Spring Boot numeric ID to NestJS UUID
+      const nestJsUserId = await getNestJsUserUuid(externalId);
+      console.log('[CommunityService] Using NestJS UUID:', nestJsUserId);
+      
+      // Send UUID to backend
       const response = await apiClient.post<CommunityPostResponse>('/community-posts', {
-        userId: String(userId),
+        userId: nestJsUserId,
         description: postData.description,
         imageUrl: postData.imageUrl,
       });

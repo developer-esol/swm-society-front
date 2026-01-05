@@ -128,23 +128,56 @@ const ReviewCard: React.FC<ReviewCardProps> = ({
                 {userName ? userName : `User: ${review.userId}`}
               </Typography>
             </Box>
-            <Typography variant="caption" sx={{ color: colors.text.disabled, fontSize: '0.75rem' }}>
-              {formatDate(review.createdAt)}
-            </Typography>
+            <Box sx={{ textAlign: 'right' }}>
+              <Typography 
+                variant="caption" 
+                sx={{ 
+                  color: colors.text.secondary, 
+                  fontSize: '0.85rem',
+                  fontWeight: 500,
+                  display: 'block'
+                }}
+              >
+                {formatDate(review.createdAt)}
+              </Typography>
+              {review.updatedAt && review.updatedAt !== review.createdAt && (
+                <Typography 
+                  variant="caption" 
+                  sx={{ 
+                    color: colors.text.disabled, 
+                    fontSize: '0.75rem',
+                    fontStyle: 'italic',
+                    display: 'block',
+                    mt: 0.3
+                  }}
+                >
+                  Updated: {formatDate(review.updatedAt)}
+                </Typography>
+              )}
+            </Box>
           </Box>
 
           {/* Rating */}
-          <Box sx={{ mb: 0.8 }}>
+          <Box sx={{ mb: 1 }}>
             <Rating value={review.rating} readOnly size="small" />
           </Box>
 
-          {/* Title */}
-          {/* Title removed from review model; show comment only */}
-
-          {/* Comment */}
-          <Typography variant="body2" sx={{ color: colors.text.lightGray, mb: 1.5, fontSize: '0.85rem', lineHeight: 1.4 }}>
-            {review.comment}
-          </Typography>
+          {/* Comment/Description */}
+          {review.comment && (
+            <Typography 
+              variant="body2" 
+              sx={{ 
+                color: colors.text.primary, 
+                mb: 1.5, 
+                fontSize: '0.95rem', 
+                lineHeight: 1.6,
+                whiteSpace: 'pre-wrap',
+                wordBreak: 'break-word'
+              }}
+            >
+              {review.comment}
+            </Typography>
+          )}
 
           {/* Delete Button - Only for own reviews */}
           {isOwnReview && onDelete && (

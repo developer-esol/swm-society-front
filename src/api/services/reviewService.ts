@@ -2,6 +2,42 @@ import type { Review } from '../../types/review';
 import { apiClient } from '../apiClient';
 import { authService } from './authService';
 
+/**
+ * Helper function to get NestJS user UUID from Spring Boot externalId
+ * Caches the result in sessionStorage to avoid repeated API calls
+ */
+async function getNestJsUserUuid(externalId: string): Promise<string> {
+  // Check cache first
+  const cacheKey = 'nestjs_user_uuid';
+  const cached = sessionStorage.getItem(cacheKey);
+  if (cached) {
+    try {
+      const parsed = JSON.parse(cached);
+      if (parsed.externalId === externalId && parsed.uuid) {
+        console.log('[ReviewService] Using cached UUID:', parsed.uuid);
+        return parsed.uuid;
+      }
+    } catch (e) {
+      // Invalid cache, continue to fetch
+    }
+  }
+
+  // Fetch from API
+  console.log('[ReviewService] Fetching UUID for externalId:', externalId);
+  const response = await apiClient.get<any[]>(`/users?externalId=${externalId}`);
+  if (!response || response.length === 0) {
+    throw new Error(`No user found with externalId: ${externalId}`);
+  }
+  
+  const uuid = response[0].id;
+  console.log('[ReviewService] Mapped externalId', externalId, '→ UUID:', uuid);
+  
+  // Cache the result
+  sessionStorage.setItem(cacheKey, JSON.stringify({ externalId, uuid }));
+  
+  return uuid;
+}
+
 // Start with no dummy review data. If backend is unavailable,
 // behavior will fall back to the runtime mock list (initially empty).
 const mockReviews: Review[] = [];
@@ -74,14 +110,22 @@ export const reviewService = {
   ): Promise<Review> => {
     // Build payload mapping to backend contract and call API.
     const currentUser = authService.getCurrentUser();
+    const externalId = review.userId || currentUser.id;
+    
+    // Convert Spring Boot numeric ID to NestJS UUID
+    const nestJsUserId = await getNestJsUserUuid(externalId);
+    console.log('[ReviewService] createReview - externalId:', externalId, '→ UUID:', nestJsUserId);
+    
     const payload: Record<string, unknown> = {
       productId: review.productId,
-      userId: review.userId || currentUser.id,
+      userId: nestJsUserId,
       rating: review.rating,
       // backend expects `description` for the comment text
       description: review.comment || '',
       imageUrl: (review as unknown as { imageUrl?: string }).imageUrl,
     };
+
+    console.log('[ReviewService] Creating review with payload:', payload);
 
     // Let apiClient.post throw on errors so callers can handle/display them.
     const created = await apiClient.post<Review>('/reviews', payload);
