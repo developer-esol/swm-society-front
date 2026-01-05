@@ -76,21 +76,29 @@ export const communityService = {
 
   /**
    * Get community posts by user ID
-   * @param userId - User ID
+   * @param userId - User ID (Spring Boot numeric ID or NestJS UUID)
    * @returns Array of community posts for the user
    */
   getByUserId: async (userId: string): Promise<CommunityPost[]> => {
     try {
-      console.log('Fetching community posts for user:', userId);
+      console.log('[CommunityService] Fetching community posts for user:', userId);
       
-      // Get all posts and filter by userId
+      // Convert Spring Boot numeric ID to NestJS UUID if needed
+      let nestJsUserId = userId;
+      if (!userId.includes('-')) {
+        // This is a Spring Boot numeric ID, convert to UUID
+        nestJsUserId = await getNestJsUserUuid(userId);
+        console.log('[CommunityService] Converted externalId', userId, '→ UUID:', nestJsUserId);
+      }
+      
+      // Get all posts and filter by nestJsUserId
       const allPosts = await communityService.getAll();
-      const userPosts = allPosts.filter(post => post.userId === userId);
+      const userPosts = allPosts.filter(post => String(post.userId) === String(nestJsUserId));
       
-      console.log(`Found ${userPosts.length} posts for user ${userId}`);
+      console.log(`[CommunityService] Found ${userPosts.length} posts for user ${nestJsUserId}`);
       return userPosts;
     } catch (error) {
-      console.error('Failed to fetch user community posts:', error);
+      console.error('[CommunityService] Failed to fetch user community posts:', error);
       throw new Error('Failed to load your posts');
     }
   },

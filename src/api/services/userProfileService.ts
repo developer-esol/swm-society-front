@@ -1,48 +1,37 @@
-import type { AdminProfile, UpdateProfileData } from '../../../types/Admin/profile'
+import type { UserProfile, UpdateUserProfileData } from '../../types/profile'
 
-class AdminProfileService {
+class UserProfileService {
   /**
-   * Get admin profile from current user data
-   * @returns Promise with admin profile
+   * Get user profile from current user data
+   * @returns Promise with user profile
    */
-  async getProfile(): Promise<AdminProfile> {
+  async getProfile(): Promise<UserProfile> {
     return new Promise((resolve) => {
       setTimeout(() => {
         // Get current user data from localStorage
         const userId = localStorage.getItem('userId') || 'unknown';
-        const userName = localStorage.getItem('userName') || 'Admin User';
-        const userEmail = localStorage.getItem('userEmail') || 'admin@company.com';
-        const userRole = localStorage.getItem('userRole') || '1';
-        
-        // Map role ID to role name
-        const roleNames: { [key: string]: string } = {
-          '1': 'Super Admin',
-          '2': 'Admin',
-          '3': 'Manager',
-          '4': 'Support',
-        };
+        const userName = localStorage.getItem('userName') || 'User';
+        const userEmail = localStorage.getItem('userEmail') || 'user@example.com';
         
         // Split full name into first and last name
         const nameParts = userName.split(' ');
-        const firstName = nameParts[0] || 'Admin';
-        const lastName = nameParts.slice(1).join(' ') || 'User';
+        const firstName = nameParts[0] || 'User';
+        const lastName = nameParts.slice(1).join(' ') || '';
         
-        const profile: AdminProfile = {
+        const profile: UserProfile = {
           id: userId,
           firstName: firstName,
           lastName: lastName,
           email: userEmail,
           phone: localStorage.getItem('userPhone') || '',
-          department: 'Administration',
-          role: roleNames[userRole] || 'User',
           avatar: localStorage.getItem('userAvatar') || '',
           joinDate: localStorage.getItem('userJoinDate') || new Date().toISOString().split('T')[0],
           lastLogin: new Date().toISOString(),
-          status: 'active',
           bio: localStorage.getItem('userBio') || '',
           address: localStorage.getItem('userAddress') || '',
           city: localStorage.getItem('userCity') || '',
           country: localStorage.getItem('userCountry') || '',
+          postalCode: localStorage.getItem('userPostalCode') || '',
         };
         
         resolve(profile);
@@ -51,11 +40,11 @@ class AdminProfileService {
   }
 
   /**
-   * Update admin profile
+   * Update user profile
    * @param data - Updated profile data
    * @returns Promise with updated profile
    */
-  async updateProfile(data: UpdateProfileData): Promise<AdminProfile> {
+  async updateProfile(data: UpdateUserProfileData): Promise<UserProfile> {
     return new Promise((resolve) => {
       setTimeout(() => {
         // Store updated data in localStorage
@@ -68,6 +57,7 @@ class AdminProfileService {
         if (data.address) localStorage.setItem('userAddress', data.address);
         if (data.city) localStorage.setItem('userCity', data.city);
         if (data.country) localStorage.setItem('userCountry', data.country);
+        if (data.postalCode) localStorage.setItem('userPostalCode', data.postalCode);
         
         // Return updated profile
         this.getProfile().then(resolve);
@@ -80,7 +70,7 @@ class AdminProfileService {
    * @param file - Image file
    * @returns Promise with updated profile
    */
-  async updateProfilePicture(file: File): Promise<AdminProfile> {
+  async updateProfilePicture(file: File): Promise<UserProfile> {
     return new Promise((resolve) => {
       const reader = new FileReader();
       reader.onload = () => {
@@ -114,4 +104,4 @@ class AdminProfileService {
   }
 }
 
-export const adminProfileService = new AdminProfileService();
+export const userProfileService = new UserProfileService();

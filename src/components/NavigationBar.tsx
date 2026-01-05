@@ -7,6 +7,7 @@ import {
     Badge,
     Menu,
     MenuItem,
+    Button,
 } from '@mui/material';
 import { Menu as MenuIcon, ShoppingCart, Favorite, AccountCircle } from '@mui/icons-material';
 import { Link, useNavigate } from 'react-router-dom';
@@ -29,6 +30,12 @@ export const NavigationBar: React.FC = () => {
     // tanstack query to fetch brands
     const { data: brands } = useBrands();
     const activeBrands = brands ? brands.filter(b => b.isActive) : [];
+
+    // Check if user is admin (only Super Admin: 1, Admin: 2)
+    const isAdmin = user?.role === '3';
+    
+    // Debug logging
+    console.log('[NavigationBar] User role:', user?.role, '| isAdmin:', isAdmin);
 
     const handleLogout = () => {
         console.log('NavigationBar: Logging out user');
@@ -116,6 +123,44 @@ export const NavigationBar: React.FC = () => {
                                         }
                                     }}
                                 >
+                                    {isAdmin && (
+                                        <MenuItem
+                                            component={Link}
+                                            to="/admin"
+                                            onClick={handleProfileClose}
+                                            sx={{
+                                                color: colors.text.disabled,
+                                                fontSize: '0.95rem',
+                                                py: 1.5,
+                                                px: 2.5,
+                                                '&:hover': {
+                                                    bgcolor: colors.background.lighter,
+                                                    color: colors.text.gray,
+                                                },
+                                                fontWeight: 500,
+                                            }}
+                                        >
+                                            Admin Dashboard
+                                        </MenuItem>
+                                    )}
+                                    <MenuItem
+                                        component={Link}
+                                        to="/profile"
+                                        onClick={handleProfileClose}
+                                        sx={{
+                                            color: colors.text.disabled,
+                                            fontSize: '0.95rem',
+                                            py: 1.5,
+                                            px: 2.5,
+                                            '&:hover': {
+                                                bgcolor: colors.background.lighter,
+                                                color: colors.text.gray,
+                                            },
+                                            fontWeight: 500,
+                                        }}
+                                    >
+                                        My Profile
+                                    </MenuItem>
                                     <MenuItem
                                         component={Link}
                                         to="/orders"
@@ -191,38 +236,26 @@ export const NavigationBar: React.FC = () => {
                                 </Menu>
                             </>
                         ) : (
-                            <>
-                                <IconButton
-                                    onClick={handleProfileClick}
-                                    color="inherit"
-                                    sx={{ fontSize: '1.75rem' }}
-                                >
-                                    <AccountCircle fontSize="inherit" />
-                                </IconButton>
-                                <Menu
-                                    anchorEl={profileAnchor}
-                                    open={Boolean(profileAnchor)}
-                                    onClose={handleProfileClose}
-                                    disableScrollLock={true}
-                                    PaperProps={{
-                                        sx: {
-                                            bgcolor: 'white',
-                                            color: 'black',
-                                            mt: 1,
-                                            minWidth: '150px',
-                                        }
-                                    }}
-                                >
-                                    <MenuItem
-                                        component={Link}
-                                        to="/login"
-                                        onClick={handleProfileClose}
-                                        sx={{ color: 'black', fontWeight: 500 }}
-                                    >
-                                        Login
-                                    </MenuItem>
-                                </Menu>
-                            </>
+                            <Button
+                                component={Link}
+                                to="/login"
+                                variant="contained"
+                                sx={{
+                                    fontSize: '0.95rem',
+                                    fontWeight: 600,
+                                    textTransform: 'none',
+                                    px: 3,
+                                    py: 1,
+                                    bgcolor: colors.button.primary,
+                                    color: colors.text.secondary,
+                                    borderRadius: '8px',
+                                    '&:hover': {
+                                        bgcolor: colors.button.primaryHover,
+                                    },
+                                }}
+                            >
+                                Login
+                            </Button>
                         )}
 
                         <IconButton component={Link} to="/wishlist" color="inherit" sx={{ fontSize: '1.75rem' }}>

@@ -36,6 +36,7 @@ import AdminRoles from '../pages/Admin/AdminRoles'
 import PermissionLevels from '../pages/Admin/PermissionLevels'
 import RoleCreation from '../pages/Admin/RoleCreation'
 import AdminProfilePage from '../pages/Admin/AdminProfilePage'
+import ProfilePage from '../pages/ProfilePage'
 import NotFoundPage from '../pages/NotFoundPage';
 
 
@@ -53,7 +54,7 @@ export const routes: RouteObject[] = [
         element: <Shop />,
       },
       {
-        path: 'product/:productId',
+        path: 'product',
         element: <ProductDetailsPage />,
       },
       {
@@ -130,6 +131,10 @@ export const routes: RouteObject[] = [
       {
         path: 'posts',
         element: <YourPostsPage />,
+      },
+      {
+        path: 'profile',
+        element: <ProfilePage />,
       },
       {
         path: '*',

@@ -11,7 +11,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   return (
     <Card
       component={Link}
-      to={`/product/${product.id}`}
+      to="/product"
+      state={{ product }}
       sx={{
         textDecoration: 'none',
         height: '100%',

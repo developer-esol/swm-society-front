@@ -1,15 +1,17 @@
 import React from 'react';
-import { useParams } from 'react-router-dom';
+import { useLocation, Navigate } from 'react-router-dom';
 import { ProductDetailsPageComponent } from '../features/productdetails';
+import type { Product } from '../types';
 
 const ProductDetails: React.FC = () => {
-  const { productId } = useParams<{ productId: string }>();
+  const location = useLocation();
+  const product = location.state?.product as Product | undefined;
 
-  if (!productId) {
-    return <div>No product ID provided</div>;
+  if (!product) {
+    return <Navigate to="/shop" replace />;
   }
 
-  return <ProductDetailsPageComponent productId={productId} />;
+  return <ProductDetailsPageComponent productId={product.id} />;
 };
 
 export default ProductDetails;
