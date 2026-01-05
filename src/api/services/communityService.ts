@@ -66,13 +66,30 @@ export const communityService = {
    */
   create: async (postData: CreateCommunityPostData): Promise<CommunityPost> => {
     try {
-      console.log('Creating community post:', postData);
+      const token = localStorage.getItem('authToken');
+      const userId = postData.userId || localStorage.getItem('userId');
       
+      console.log('[CommunityService] Creating community post...');
+      console.log('[CommunityService] UserId:', userId);
+      console.log('[CommunityService] Token:', token ? 'Present' : 'MISSING');
+      console.log('[CommunityService] PostData:', postData);
+      
+      if (!userId) {
+        throw new Error('User ID is required to create a post. Please log in again.');
+      }
+      
+      if (!token) {
+        throw new Error('Authentication token is missing. Please log in again.');
+      }
+      
+      // Send userId as string (backend should accept numeric string or UUID)
       const response = await apiClient.post<CommunityPostResponse>('/community-posts', {
-        userId: postData.userId,
+        userId: String(userId),
         description: postData.description,
         imageUrl: postData.imageUrl,
       });
+      
+      console.log('[CommunityService] ✅ Post created successfully:', response);
       
       // Transform response to frontend type
       const post: CommunityPost = {
@@ -92,10 +109,9 @@ export const communityService = {
         hashtags: [],
       };
       
-      console.log('Community post created successfully:', post.id);
       return post;
     } catch (error) {
-      console.error('Failed to create community post:', error);
+      console.error('[CommunityService] ❌ Failed to create community post:', error);
       
       // Provide more specific error messages
       if (error instanceof Error) {

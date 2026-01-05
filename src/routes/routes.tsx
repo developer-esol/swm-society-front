@@ -92,6 +92,10 @@ export const routes: RouteObject[] = [
         element: <GoogleAuthCallback />,
       },
       {
+        path: 'oauth2/redirect',
+        element: <GoogleAuthCallback />,
+      },
+      {
         path: 'register',
         element: <RegisterPage />,
       },

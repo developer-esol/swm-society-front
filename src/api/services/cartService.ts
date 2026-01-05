@@ -5,6 +5,39 @@ import { productsService } from './products';
 // Server types are defined in `src/types/cart.ts`
 
 const CART_STORAGE_KEY = 'swm_cart';
+const USER_UUID_CACHE_KEY = 'nestjs_user_uuid';
+
+// Helper: Get NestJS user UUID by Spring Boot externalId
+async function getNestJsUserUuid(externalId: string): Promise<string> {
+  try {
+    // Check cache first
+    const cached = sessionStorage.getItem(USER_UUID_CACHE_KEY);
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      if (parsed.externalId === externalId && parsed.uuid) {
+        console.log('[CartService] Using cached UUID:', parsed.uuid);
+        return parsed.uuid;
+      }
+    }
+
+    // Fetch user from NestJS by externalId
+    console.log('[CartService] Fetching NestJS user UUID for externalId:', externalId);
+    const users = await apiClient.get<any[]>(`/users?externalId=${externalId}`);
+    
+    if (users && users.length > 0 && users[0].id) {
+      const uuid = users[0].id;
+      // Cache it
+      sessionStorage.setItem(USER_UUID_CACHE_KEY, JSON.stringify({ externalId, uuid }));
+      console.log('[CartService] ✅ Mapped externalId', externalId, '→ UUID:', uuid);
+      return uuid;
+    }
+
+    throw new Error(`No NestJS user found with externalId: ${externalId}`);
+  } catch (error) {
+    console.error('[CartService] ❌ Failed to get NestJS user UUID:', error);
+    throw error;
+  }
+}
 
 // Helper: aggregate cart rows by productId + size + color
 const aggregateCartItems = (items: CartItem[]): CartItem[] => {
@@ -45,14 +78,22 @@ export const cartService = {
    */
   getCart(): Cart {
     try {
+      const currentUserId = localStorage.getItem('userId');
       const storedCart = localStorage.getItem(CART_STORAGE_KEY);
       if (!storedCart) {
         return { items: [], totalItems: 0 };
       }
       const parsed = JSON.parse(storedCart) as Cart;
+      
+      // Filter items to only show current user's items
+      const items = parsed.items || [];
+      const filteredItems = currentUserId 
+        ? items.filter(item => !item.userId || item.userId === currentUserId)
+        : items.filter(item => !item.userId); // Anonymous users only see items without userId
+      
       return {
-        items: parsed.items || [],
-        totalItems: parsed.items?.length || 0,
+        items: filteredItems,
+        totalItems: filteredItems.length,
       };
     } catch {
       return { items: [], totalItems: 0 };
@@ -67,12 +108,15 @@ export const cartService = {
       userId = userId || localStorage.getItem('userId') || undefined;
       if (!userId) throw new Error('No user id provided for updateServerCartItemByUserProduct');
 
+      // Convert Spring Boot numeric ID to NestJS UUID if not already UUID format
+      const nestJsUserId = userId.includes('-') ? userId : await getNestJsUserUuid(userId);
+
       // Ensure numeric price if present
       if (payload.price !== undefined) {
         payload.price = Number(payload.price as number | string);
       }
 
-      const url = `/carts/user/${userId}/product/${productId}`;
+      const url = `/carts/user/${nestJsUserId}/product/${productId}`;
       const response = await apiClient.put<unknown>(url, payload);
 
       // Optionally, sync local cache
@@ -97,11 +141,26 @@ export const cartService = {
    */
   async addToServerCart(item: CartItem): Promise<unknown> {
     try {
-      const userId = localStorage.getItem('userId');
+      const externalId = localStorage.getItem('userId'); // Spring Boot numeric ID
+      const token = localStorage.getItem('authToken');
 
-      if (!userId) {
+      console.log('[CartService] ========================================');
+      console.log('[CartService] Adding item to cart...');
+      console.log('[CartService] Spring Boot externalId:', externalId);
+      console.log('[CartService] Token:', token ? '✅ Present' : '❌ Missing');
+      console.log('[CartService] Item:', item);
+
+      if (!externalId) {
         throw new Error('User not authenticated. Cannot add to server cart.');
       }
+      
+      if (!token) {
+        throw new Error('Authentication token is missing. Please log in again.');
+      }
+
+      // Get NestJS user UUID from Spring Boot externalId
+      const nestJsUserId = await getNestJsUserUuid(externalId);
+      console.log('[CartService] Using NestJS UUID:', nestJsUserId);
 
       // Ensure price is sent in a numeric form the API expects
       const numericPrice = Number(item.price);
@@ -110,7 +169,7 @@ export const cartService = {
       }
 
       const payload = {
-        userId,
+        userId: nestJsUserId, // Use NestJS UUID
         productId: item.productId,
         quantity: item.quantity,
         price: numericPrice,
@@ -119,20 +178,22 @@ export const cartService = {
         imageUrl: item.productImage,
       } as Record<string, unknown>;
 
-      console.log('addToServerCart payload:', payload);
+      console.log('[CartService] Payload:', payload);
+      console.log('[CartService] Checking if item exists in cart...');
 
       // Check if this exact variant (productId + size + color) already exists in the user's server cart.
       // Use the raw server response (not aggregated) so we can target an existing DB row to update.
       try {
-        const rawServerItems = await apiClient.get<ServerCartRow[]>(`/carts/user/${userId}`);
+        const rawServerItems = await apiClient.get<ServerCartRow[]>(`/carts/user/${nestJsUserId}`);
         const existingRaw = (rawServerItems || []).find((s: ServerCartRow) =>
           String(s.productId) === String(item.productId) &&
           String(s.size || '') === String(item.size || '') &&
           String(s.color || '') === String(item.color || '') &&
-          String(s.userId || '') === String(userId)
+          String(s.userId || '') === String(nestJsUserId)
         );
 
         if (existingRaw) {
+          console.log('[CartService] Item exists, updating quantity...');
           // Compute new quantity based on the existing DB row
           const newQuantity = Math.min(Number(existingRaw.maxQuantity || Infinity), Number(existingRaw.quantity || 0) + Number(item.quantity || 0));
 
@@ -146,40 +207,46 @@ export const cartService = {
           } as Record<string, unknown>;
 
           // Call the route-based update (server should update the matching row)
-          const resp = await this.updateServerCartItemByUserProduct(userId, String(item.productId), updatePayload);
+          const resp = await this.updateServerCartItemByUserProduct(nestJsUserId, String(item.productId), updatePayload);
 
           // Sync local cache from server so client reflects database state
           try {
             await this.syncServerCartToLocal();
           } catch (e) {
-            console.warn('Failed to sync local cart after update in addToServerCart', e);
+            console.warn('[CartService] Failed to sync local cart after update', e);
           }
+          console.log('[CartService] ✅ Item updated successfully');
+          console.log('[CartService] ========================================');
           return resp;
         }
       } catch (e) {
         // If raw fetch failed, fall back to attempting POST (will let API decide)
-        console.warn('Failed to check existing server cart during addToServerCart (raw fetch), will POST:', e);
+        console.warn('[CartService] Failed to check existing cart, will POST new item:', e);
       }
 
+      console.log('[CartService] Creating new cart item...');
+      console.log('[CartService] POST to:', '/carts');
       const response = await apiClient.post<unknown>('/carts', payload);
-      console.log('addToServerCart response:', response);
+      console.log('[CartService] ✅ Item added successfully:', response);
 
       // If server call succeeded, sync local cart cache from server
       try {
         await this.syncServerCartToLocal();
       } catch (e) {
         // non-fatal: local cache update failed
-        console.warn('Failed to sync local cart after server add:', e);
+        console.warn('[CartService] Failed to sync local cart after add:', e);
       }
 
+      console.log('[CartService] ========================================');
       return response;
     } catch (error) {
       // Provide more detailed logging for easier debugging
-      console.error('addToServerCart error:', error);
+      console.error('[CartService] ❌ Failed to add to cart:', error);
+      console.error('[CartService] ========================================');
       const apiErr = error as ApiError;
       if (apiErr?.status) {
-        console.error('API status:', apiErr.status, 'statusText:', apiErr.statusText);
-        console.error('API body:', apiErr.body);
+        console.error('[CartService] API status:', apiErr.status, 'statusText:', apiErr.statusText);
+        console.error('[CartService] API body:', apiErr.body);
         throw new Error(apiErr.body?.message || `API Error: ${apiErr.status} ${apiErr.statusText}`);
       }
 
@@ -191,37 +258,53 @@ export const cartService = {
    * Fetch cart items from server for the logged-in user.
    * Returns an array of client `CartItem` objects mapped from server response.
    */
-  async getServerCart(userId?: string): Promise<CartItem[]> {
+  async getServerCart(externalId?: string): Promise<CartItem[]> {
     try {
-      userId = userId || localStorage.getItem('userId') || undefined;
+      externalId = externalId || localStorage.getItem('userId') || undefined;
 
-      if (!userId) {
-        // Do not fetch global cart list for unauthenticated access.
+      if (!externalId) {
         throw new Error('User not authenticated. getServerCart requires a userId');
       }
 
-      // Prefer the route-based endpoint which returns items for a specific user.
-      // The backend rejects `userId` as a query param, so call `/carts/user/:userId`.
-      const serverItems = await apiClient.get<ServerCartRow[]>(`/carts/user/${userId}`);
-
-      // Persist raw server response for debugging (helps identify missing userId fields)
-      try {
-        // Save a copy so the UI can surface it if necessary
-        localStorage.setItem('lastServerCartRaw', JSON.stringify(serverItems || []));
-      } catch {
-        // ignore storage errors
+      // Get NestJS user UUID from Spring Boot externalId
+      console.log('[CartService] Getting NestJS UUID for externalId:', externalId);
+      const nestJsUserId = await getNestJsUserUuid(externalId);
+      console.log('[CartService] Fetching cart for NestJS UUID:', nestJsUserId);
+      
+      const serverItems = await apiClient.get<ServerCartRow[]>(`/carts/user/${nestJsUserId}`);
+      console.log('[CartService] Server returned', serverItems?.length || 0, 'cart items');
+      
+      // Log each item's userId to verify backend filtering
+      if (serverItems && serverItems.length > 0) {
+        const userIds = serverItems.map(item => item.userId);
+        console.log('[CartService] Cart items userIds:', userIds);
+        const wrongUserItems = serverItems.filter(item => String(item.userId) !== String(nestJsUserId));
+        if (wrongUserItems.length > 0) {
+          console.error('[CartService] ⚠️ BACKEND RETURNED WRONG USER DATA! Expected userId:', nestJsUserId, 'but got items for:', wrongUserItems.map(i => i.userId));
+        }
       }
 
-      // Also log to console for quick inspection
-      console.debug('getServerCart raw serverItems:', serverItems);
+      // Persist raw server response for debugging
+      try {
+        localStorage.setItem('lastServerCartRaw', JSON.stringify(serverItems || []));
+      } catch {}
 
       // Filter server items to ensure they belong to this user (safety net)
       const itemsArr = (serverItems || []) as ServerCartRow[];
       const before = itemsArr.length;
-      const filtered = itemsArr.filter((s: ServerCartRow) => String(s.userId) === String(userId));
+      const filtered = itemsArr.filter((s: ServerCartRow) => {
+        const matches = String(s.userId) === String(nestJsUserId);
+        if (!matches) {
+          console.warn('[CartService] Filtering out item with userId:', s.userId, 'expected:', nestJsUserId);
+        }
+        return matches;
+      });
       const after = filtered.length;
+      
       if (before !== after) {
-        console.warn(`Filtered server cart items: removed ${before - after} items not belonging to user ${userId}`);
+        console.error(`[CartService] ⚠️ Filtered out ${before - after} items! Backend should only return current user's data!`);
+      } else {
+        console.log('[CartService] ✓ All', after, 'items belong to current user');
       }
 
       // Map server response to client CartItem, fetching product name when missing
@@ -274,29 +357,41 @@ export const cartService = {
         throw new Error('No user id provided for getUserCart');
       }
 
+      // Convert Spring Boot numeric ID to NestJS UUID
+      const externalId = userId; // This is Spring Boot numeric ID
+      const nestJsUserId = await getNestJsUserUuid(externalId);
+      console.log('[CartService] getUserCart - externalId:', externalId, '→ NestJS UUID:', nestJsUserId);
+
       // Try route-based endpoint first
       try {
-        const serverItems = await apiClient.get<unknown[]>(`/carts/user/${userId}`);
+        const serverItems = await apiClient.get<unknown[]>(`/carts/user/${nestJsUserId}`);
         try {
           localStorage.setItem('lastServerCartRaw', JSON.stringify(serverItems || []));
         } catch {
           // ignore
         }
         console.debug('getUserCart raw serverItems (route):', serverItems);
+        console.log('[CartService] getUserCart - received', (serverItems || []).length, 'items from server');
         // Map same as getServerCart but fetch product names when missing
         const serverArr = (serverItems || []) as ServerCartRow[];
+        console.log('[CartService] getUserCart - mapping', serverArr.length, 'items...');
         const mappedPromises: Promise<CartItem>[] = serverArr.map(async (s: ServerCartRow) => {
+          console.log('[CartService] getUserCart - mapping item:', { id: s.id, productId: s.productId, productName: s.productName });
           let productName = s.productName || '';
           if (!productName && s.productId) {
+            console.log('[CartService] getUserCart - fetching product name for productId:', s.productId);
             try {
               const prod = await productsService.getProductById(String(s.productId));
-              if (prod && prod.name) productName = prod.name;
+              if (prod && prod.name) {
+                productName = prod.name;
+                console.log('[CartService] getUserCart - fetched product name:', productName);
+              }
             } catch (e) {
               console.warn('Failed to fetch product name for cart item', s.productId, e);
             }
           }
 
-          return {
+          const cartItem = {
             stockId: s.stockId || s.id || String(s.productId || ''),
             productId: String(s.productId || ''),
             productName: productName || '',
@@ -309,17 +404,23 @@ export const cartService = {
             maxQuantity: Number(s.maxQuantity || s.availableQuantity || 0),
             addedAt: s.createAt || s.createdAt || new Date().toISOString(),
           } as CartItem;
+          console.log('[CartService] getUserCart - created cart item:', cartItem);
+          return cartItem;
         });
 
         const mapped = await Promise.all(mappedPromises);
+        console.log('[CartService] getUserCart - mapped items:', mapped.length);
         const aggregated = aggregateCartItems(mapped);
+        console.log('[CartService] getUserCart - aggregated items:', aggregated.length);
+        console.log('[CartService] getUserCart - returning items:', aggregated);
         return aggregated;
       } catch (err) {
         console.warn('Route /carts/user/:userId not available or failed, falling back to query param', err);
       }
 
       // Fallback to existing getServerCart (which also filters by userId)
-      return this.getServerCart(userId);
+      console.log('[CartService] getUserCart - falling back to getServerCart with externalId:', externalId);
+      return this.getServerCart(externalId);
     } catch (error) {
       console.error('getUserCart error:', error);
       throw error;
@@ -352,7 +453,11 @@ export const cartService = {
     try {
       userId = userId || localStorage.getItem('userId') || undefined;
       if (!userId) throw new Error('No user id provided for removeServerCartItemByUserProduct');
-      const url = `/carts/user/${encodeURIComponent(userId)}/product/${encodeURIComponent(productId)}`;
+      
+      // Convert Spring Boot numeric ID to NestJS UUID if not already UUID format
+      const nestJsUserId = userId.includes('-') ? userId : await getNestJsUserUuid(userId);
+      
+      const url = `/carts/user/${encodeURIComponent(nestJsUserId)}/product/${encodeURIComponent(productId)}`;
       const resp = await apiClient.delete<unknown>(url);
       // Sync local cache after delete
       try { await this.syncServerCartToLocal(); } catch (e) { console.warn('Failed to sync local cart after server delete', e); }
@@ -367,23 +472,32 @@ export const cartService = {
    * Add item to cart
    */
   addItem(item: CartItem): void {
+    const currentUserId = localStorage.getItem('userId');
     const cart = this.getCart();
-    const existingItem = cart.items.find((i: CartItem) => i.stockId === item.stockId);
+    
+    // Tag item with current userId if user is logged in
+    const itemToAdd = currentUserId ? { ...item, userId: currentUserId } : item;
+    
+    const existingItem = cart.items.find((i: CartItem) => i.stockId === itemToAdd.stockId);
 
     if (existingItem) {
       // If item already in cart, increase quantity. Respect max only when it's a positive number.
       const existingMax = Number(existingItem.maxQuantity || 0);
       if (!Number.isFinite(existingMax) || existingMax <= 0) {
-        existingItem.quantity = Number(existingItem.quantity || 0) + Number(item.quantity || 0);
+        existingItem.quantity = Number(existingItem.quantity || 0) + Number(itemToAdd.quantity || 0);
       } else {
         existingItem.quantity = Math.min(
-          Number(existingItem.quantity || 0) + Number(item.quantity || 0),
+          Number(existingItem.quantity || 0) + Number(itemToAdd.quantity || 0),
           existingMax
         );
       }
+      // Update userId if logged in
+      if (currentUserId) {
+        existingItem.userId = currentUserId;
+      }
     } else {
       // Add new item to cart
-      cart.items.push(item);
+      cart.items.push(itemToAdd);
     }
 
     cart.totalItems = cart.items.length;

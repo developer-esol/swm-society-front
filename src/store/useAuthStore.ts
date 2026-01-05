@@ -31,32 +31,35 @@ export const useAuthStore = create<AuthState>((set) => ({
     try {
       set({ isLoading: true, error: null });
 
-      console.log('AuthStore: Attempting login for:', email);
+      console.log('[AuthStore] Attempting login for:', email);
 
       const response = await authService.login({ email, password });
       
-      // Store credentials
+      // Store credentials (this also clears old cache)
       authService.storeUserCredentials(response);
 
       // Update state from backend response (response.data.user)
       const user = response.data?.user;
+      const newUser = {
+        id: user?.id ? user.id.toString() : '',
+        email: user?.email || '',
+        name: user?.fullName || '',
+        role: user?.role?.id ? user.role.id.toString() : '1',
+      };
+      
       set({
-        user: {
-          id: user?.id ? user.id.toString() : '',
-          email: user?.email || '',
-          name: user?.fullName || '',
-          role: user?.role?.id ? user.role.id.toString() : '1',
-        },
+        user: newUser,
         isAuthenticated: true,
         isLoading: false,
         error: null,
       });
 
-      console.log('AuthStore: Login successful');
+      console.log('[AuthStore] ✅ Login successful! Current user:', newUser);
+      console.log('[AuthStore] User will now see ONLY their cart/wishlist data');
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Login failed';
       
-      console.error('AuthStore: Login failed:', errorMessage);
+      console.error('[AuthStore] ❌ Login failed:', errorMessage);
       
       set({
         user: null,
@@ -87,12 +90,20 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   initializeAuth: () => {
-    console.log('AuthStore: Initializing authentication state');
+    console.log('[AuthStore] ========================================');
+    console.log('[AuthStore] Checking user session...');
     
     const isAuth = authService.isAuthenticated();
     
     if (isAuth) {
       const currentUser = authService.getCurrentUser();
+      
+      console.log('[AuthStore] ✅ USER IS LOGGED IN:');
+      console.log('  → User ID:', currentUser.id);
+      console.log('  → User Name:', currentUser.name);
+      console.log('  → User Email:', currentUser.email);
+      console.log('  → User Role:', currentUser.role);
+      console.log('[AuthStore] ========================================');
       
       if (currentUser.id && currentUser.email) {
         set({
@@ -105,18 +116,19 @@ export const useAuthStore = create<AuthState>((set) => ({
           isAuthenticated: true,
         });
         
-        console.log('AuthStore: User restored from storage:', currentUser.email);
+        console.log('[AuthStore] Auth state updated with user data');
       } else {
         // Token exists but user data is missing, clear everything
+        console.log('[AuthStore] ⚠️ Invalid stored credentials, clearing session');
         authService.logout();
         set({
           user: null,
           isAuthenticated: false,
         });
-        
-        console.log('AuthStore: Invalid stored credentials, cleared');
       }
     } else {
+      console.log('[AuthStore] ❌ No active session found');
+      console.log('[AuthStore] ========================================');
       set({
         user: null,
         isAuthenticated: false,

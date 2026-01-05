@@ -55,8 +55,19 @@ const serverPriceToUnit = (priceValue: any, quantityValue: any): number => {
 // Get wishlist from localStorage
 const getWishlistFromStorage = (): WishlistItem[] => {
   try {
+    const currentUserId = localStorage.getItem('userId');
     const stored = localStorage.getItem(WISHLIST_STORAGE_KEY);
-    return stored ? JSON.parse(stored) : [];
+    if (!stored) return [];
+    
+    const items = JSON.parse(stored) as WishlistItem[];
+    
+    // Filter to only show current user's items
+    if (currentUserId) {
+      return items.filter(item => !item.userId || item.userId === currentUserId);
+    }
+    
+    // Anonymous users only see items without userId
+    return items.filter(item => !item.userId);
   } catch (error) {
     console.error('Failed to parse wishlist from localStorage:', error);
     return [];
@@ -65,7 +76,12 @@ const getWishlistFromStorage = (): WishlistItem[] => {
 
 const saveWishlistToStorage = (items: WishlistItem[]): void => {
   try {
-    localStorage.setItem(WISHLIST_STORAGE_KEY, JSON.stringify(items));
+    const currentUserId = localStorage.getItem('userId');
+    // Tag all items with current userId if user is logged in
+    const taggedItems = currentUserId 
+      ? items.map(item => ({ ...item, userId: currentUserId }))
+      : items;
+    localStorage.setItem(WISHLIST_STORAGE_KEY, JSON.stringify(taggedItems));
   } catch (error) {
     console.error('Failed to save wishlist to localStorage:', error);
   }
@@ -97,25 +113,44 @@ export const wishlistService = {
     if (token) {
       const userId = localStorage.getItem('userId') || '';
       try {
-        // Prefer the user-specific endpoint. If wishlistId provided, request the specific item.
+        console.log('[WishlistService] Fetching wishlist for userId:', userId);
         const endpoint = wishlistId
           ? `/wishlists/user/${encodeURIComponent(userId)}/${encodeURIComponent(wishlistId)}`
           : `/wishlists/user/${encodeURIComponent(userId)}`;
         const serverItems = await apiClient.get<any[]>(endpoint);
+        
+        console.log('[WishlistService] Server returned', serverItems?.length || 0, 'wishlist items');
 
-        // Map/normalize server response to WishlistItem[] if necessary
         const serverArray = Array.isArray(serverItems) ? serverItems : serverItems ? [serverItems] : [];
+        
+        // Log userIds to verify backend filtering
+        if (serverArray.length > 0) {
+          const userIds = serverArray.map(item => item.userId);
+          console.log('[WishlistService] Wishlist items userIds:', userIds);
+          const wrongUserItems = serverArray.filter(item => item.userId && String(item.userId) !== String(userId));
+          if (wrongUserItems.length > 0) {
+            console.error('[WishlistService] ⚠️ BACKEND RETURNED WRONG USER DATA! Expected userId:', userId, 'but got items for:', wrongUserItems.map(i => i.userId));
+          }
+        }
+        
         // Filter out inactive records (server may return items with isActive=false)
         const activeServerArray = serverArray.filter((si: any) => {
           const active = si.isActive ?? si.active ?? si.is_active;
-          return active === undefined || !!active;
+          const belongsToUser = !si.userId || String(si.userId) === String(userId);
+          if (!belongsToUser) {
+            console.warn('[WishlistService] Filtering out item with userId:', si.userId, 'expected:', userId);
+          }
+          return (active === undefined || !!active) && belongsToUser;
         });
+        
+        console.log('[WishlistService] After filtering:', activeServerArray.length, 'active items for current user');
           const items = activeServerArray.map((si) => ({
               id: si.id || si._id || si.wishlistId || '',
               stockId: si.stockId || si.stock_id || '',
               productId: si.productId || si.product_id || si.productId || '',
               productName: si.productName || si.product_name || si.name || '',
               productImage: si.imageUrl || si.productImage || si.image || '',
+              userId: si.userId || userId || '',
               price: serverPriceToUnit(si.price, si.quantity),
                 color: si.color ?? si.variantColor ?? si.optionColor ?? si.variant_color ?? si.option_color ?? (si.variant && (si.variant.color || si.variant.colour)) ?? '',
                 size: si.size ?? si.variantSize ?? si.optionSize ?? si.variant_size ?? si.option_size ?? (si.variant && (si.variant.size || si.variant.sizeLabel)) ?? '',

@@ -10,14 +10,25 @@ export function useCartQuery() {
   const { user, isAuthenticated } = useAuthStore();
   const userId = user?.id || localStorage.getItem('userId') || undefined;
 
+  console.log('[useCartQuery] ========================================');
+  console.log('[useCartQuery] Initializing cart for user:', userId);
+  console.log('[useCartQuery] Authenticated:', isAuthenticated);
+  console.log('[useCartQuery] Token:', localStorage.getItem('authToken') ? '✅ Present' : '❌ Missing');
+  console.log('[useCartQuery] ========================================');
+
   const cartQueryKey = ['cart', userId || 'anonymous'];
 
   const { data: cartItems = [], isLoading, isError } = useQuery<CartItem[]>({
     queryKey: cartQueryKey,
     queryFn: async () => {
+      console.log('[useCartQuery] Fetching cart data...');
       if (isAuthenticated && userId) {
-        return await cartService.getUserCart(userId);
+        console.log('[useCartQuery] → Fetching server cart for user:', userId);
+        const items = await cartService.getUserCart(userId);
+        console.log('[useCartQuery] ✅ Received', items.length, 'cart items from server');
+        return items;
       }
+      console.log('[useCartQuery] → Using local cart (not authenticated)');
       const local = cartService.getCart();
       return local.items;
     },

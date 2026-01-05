@@ -25,16 +25,26 @@ const WishlistPage: React.FC = () => {
 
   // Load wishlist (used on mount and when external parts of the app dispatch 'wishlist-updated')
   const loadWishlist = async () => {
+    const currentUserId = localStorage.getItem('userId');
+    const token = localStorage.getItem('authToken');
+    
+    console.log('[WishlistPage] ========================================');
+    console.log('[WishlistPage] Loading wishlist for user:', currentUserId);
+    console.log('[WishlistPage] Authenticated:', authService.isAuthenticated());
+    console.log('[WishlistPage] Token:', token ? '✅ Present' : '❌ Missing');
+    console.log('[WishlistPage] ========================================');
+    
     try {
       if (authService.isAuthenticated()) {
-        // Authenticated users: show only server-backed wishlist items
+        console.log('[WishlistPage] → Fetching wishlist from server...');
         const wishlist = await wishlistService.getWishlistAsync();
+        console.log('[WishlistPage] ✅ Loaded', wishlist.items.length, 'wishlist items from server');
         setWishlistItems(wishlist.items);
         const quantitiesMap: Record<string, number> = {};
         wishlist.items.forEach(item => { quantitiesMap[item.stockId] = item.quantity || 1; });
         setQuantities(quantitiesMap);
       } else {
-        // Not authenticated: use local storage wishlist
+        console.log('[WishlistPage] → User not authenticated, using localStorage');
         const wishlist = wishlistService.getWishlist();
         setWishlistItems(wishlist.items);
         const quantitiesMap: Record<string, number> = {};
@@ -42,13 +52,14 @@ const WishlistPage: React.FC = () => {
         setQuantities(quantitiesMap);
       }
     } catch (err) {
-      // On unexpected error, fall back to local cache but prefer server for logged users
+      console.error('[WishlistPage] ❌ Error loading wishlist:', err);
       const wishlist = wishlistService.getWishlist();
       setWishlistItems(wishlist.items);
       const quantitiesMap: Record<string, number> = {};
       wishlist.items.forEach(item => { quantitiesMap[item.stockId] = item.quantity || 1; });
       setQuantities(quantitiesMap);
     }
+    console.log('[WishlistPage] ===========================================');
   };
 
   // Update wishlist items with latest stock information (uses server-backed wishlist when possible)

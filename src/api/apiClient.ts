@@ -1,4 +1,5 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE || 'http://localhost:3000';
+const AUTH_BASE_URL = import.meta.env.VITE_AUTH_BASE || 'http://localhost:8080';
 
 class ApiClient {
   private baseURL: string;
@@ -21,6 +22,12 @@ class ApiClient {
     
     // Get auth token if available
     const token = this.getAuthToken();
+    
+    if (token) {
+      console.log('[ApiClient] Request to', endpoint, 'with Authorization token');
+    } else {
+      console.log('[ApiClient] Request to', endpoint, 'WITHOUT token');
+    }
     
     const config: RequestInit = {
       headers: {
@@ -86,3 +93,4 @@ class ApiClient {
 }
 
 export const apiClient = new ApiClient(API_BASE_URL);
+export const authApiClient = new ApiClient(AUTH_BASE_URL);

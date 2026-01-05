@@ -45,23 +45,43 @@ export const ShareYourStyle: React.FC<ShareYourStyleProps> = ({ onPostSuccess })
     },
     validationSchema,
     onSubmit: async (values: ShareYourStyleFormValues) => {
-      if (!isAuthenticated || !user?.id) {
-        console.error('User must be authenticated to create posts');
+      const userId = user?.id || localStorage.getItem('userId');
+      const token = localStorage.getItem('authToken');
+      
+      console.log('[ShareYourStyle] Submitting post...');
+      console.log('[ShareYourStyle] UserId:', userId);
+      console.log('[ShareYourStyle] Authenticated:', isAuthenticated);
+      console.log('[ShareYourStyle] Token:', token ? 'Present' : 'MISSING');
+      
+      if (!isAuthenticated || !userId) {
+        console.error('[ShareYourStyle] User not authenticated');
         alert('Please log in to create a post');
+        return;
+      }
+      
+      if (!token) {
+        console.error('[ShareYourStyle] Token missing');
+        alert('Authentication token is missing. Please log in again.');
         return;
       }
 
       try {
         setIsSubmitting(true);
         
-        // Create the post using the real API with user-provided image URL
-        const newPost = await communityService.create({
-          userId: user.id,
+        console.log('[ShareYourStyle] Creating post with data:', {
+          userId,
           description: values.description || values.caption,
           imageUrl: values.imageUrl,
         });
         
-        console.log('Post created successfully:', newPost);
+        // Create the post using the real API with user-provided image URL
+        const newPost = await communityService.create({
+          userId: userId,
+          description: values.description || values.caption,
+          imageUrl: values.imageUrl,
+        });
+        
+        console.log('[ShareYourStyle] ✅ Post created successfully:', newPost);
         alert('Post created successfully!');
         
         // Reset form after successful submission
@@ -73,7 +93,7 @@ export const ShareYourStyle: React.FC<ShareYourStyleProps> = ({ onPostSuccess })
           onPostSuccess();
         }
       } catch (error) {
-        console.error('Failed to create post:', error);
+        console.error('[ShareYourStyle] ❌ Failed to create post:', error);
         
         // Show more detailed error message
         const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
