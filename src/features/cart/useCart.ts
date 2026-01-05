@@ -1,3 +1,4 @@
+import React from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { cartService } from '../../api/services/cartService';
 import { useAuthStore } from '../../store/useAuthStore';
@@ -18,6 +19,17 @@ export function useCartQuery() {
 
   const cartQueryKey = ['cart', userId || 'anonymous'];
 
+  // Listen for cart updates from external components
+  React.useEffect(() => {
+    const handleCartUpdate = () => {
+      console.log('[useCartQuery] Cart update event received, invalidating query');
+      queryClient.invalidateQueries({ queryKey: cartQueryKey });
+    };
+    
+    window.addEventListener('cart-updated', handleCartUpdate);
+    return () => window.removeEventListener('cart-updated', handleCartUpdate);
+  }, [queryClient, cartQueryKey]);
+
   const { data: cartItems = [], isLoading, isError } = useQuery<CartItem[]>({
     queryKey: cartQueryKey,
     queryFn: async () => {
@@ -33,6 +45,9 @@ export function useCartQuery() {
       return local.items;
     },
     staleTime: 1000 * 30,
+    refetchOnMount: true,
+    refetchOnWindowFocus: false,
+    enabled: true,
   });
 
   const updateQuantityMutation = useMutation({

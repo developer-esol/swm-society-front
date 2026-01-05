@@ -212,6 +212,8 @@ export const cartService = {
           // Sync local cache from server so client reflects database state
           try {
             await this.syncServerCartToLocal();
+            // Dispatch event to notify components that cart has been updated
+            window.dispatchEvent(new Event('cart-updated'));
           } catch (e) {
             console.warn('[CartService] Failed to sync local cart after update', e);
           }
@@ -232,6 +234,8 @@ export const cartService = {
       // If server call succeeded, sync local cart cache from server
       try {
         await this.syncServerCartToLocal();
+        // Dispatch event to notify components that cart has been updated
+        window.dispatchEvent(new Event('cart-updated'));
       } catch (e) {
         // non-fatal: local cache update failed
         console.warn('[CartService] Failed to sync local cart after add:', e);

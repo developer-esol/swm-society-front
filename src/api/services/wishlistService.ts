@@ -5,6 +5,42 @@ import { productsService } from './products';
 const WISHLIST_STORAGE_KEY = 'swm_wishlist';
 
 /**
+ * Helper function to get NestJS user UUID from Spring Boot externalId
+ * Caches the result in sessionStorage to avoid repeated API calls
+ */
+async function getNestJsUserUuid(externalId: string): Promise<string> {
+  // Check cache first
+  const cacheKey = 'nestjs_user_uuid';
+  const cached = sessionStorage.getItem(cacheKey);
+  if (cached) {
+    try {
+      const parsed = JSON.parse(cached);
+      if (parsed.externalId === externalId && parsed.uuid) {
+        console.log('[WishlistService] Using cached UUID:', parsed.uuid);
+        return parsed.uuid;
+      }
+    } catch (e) {
+      // Invalid cache, continue to fetch
+    }
+  }
+
+  // Fetch from API
+  console.log('[WishlistService] Fetching UUID for externalId:', externalId);
+  const response = await apiClient.get<any[]>(`/users?externalId=${externalId}`);
+  if (!response || response.length === 0) {
+    throw new Error(`No user found with externalId: ${externalId}`);
+  }
+  
+  const uuid = response[0].id;
+  console.log('[WishlistService] Mapped externalId', externalId, '→ UUID:', uuid);
+  
+  // Cache the result
+  sessionStorage.setItem(cacheKey, JSON.stringify({ externalId, uuid }));
+  
+  return uuid;
+}
+
+/**
  * Normalize and validate price according to API constraints.
  * - must be numeric
  * - must be >= 0.01
@@ -111,12 +147,14 @@ export const wishlistService = {
   getWishlistAsync: async (wishlistId?: string): Promise<Wishlist> => {
     const token = localStorage.getItem('authToken');
     if (token) {
-      const userId = localStorage.getItem('userId') || '';
+      const externalId = localStorage.getItem('userId') || '';
       try {
-        console.log('[WishlistService] Fetching wishlist for userId:', userId);
+        // Convert Spring Boot numeric ID to NestJS UUID
+        const nestJsUserId = await getNestJsUserUuid(externalId);
+        console.log('[WishlistService] Fetching wishlist - externalId:', externalId, '→ UUID:', nestJsUserId);
         const endpoint = wishlistId
-          ? `/wishlists/user/${encodeURIComponent(userId)}/${encodeURIComponent(wishlistId)}`
-          : `/wishlists/user/${encodeURIComponent(userId)}`;
+          ? `/wishlists/user/${encodeURIComponent(nestJsUserId)}/${encodeURIComponent(wishlistId)}`
+          : `/wishlists/user/${encodeURIComponent(nestJsUserId)}`;
         const serverItems = await apiClient.get<any[]>(endpoint);
         
         console.log('[WishlistService] Server returned', serverItems?.length || 0, 'wishlist items');
@@ -127,18 +165,18 @@ export const wishlistService = {
         if (serverArray.length > 0) {
           const userIds = serverArray.map(item => item.userId);
           console.log('[WishlistService] Wishlist items userIds:', userIds);
-          const wrongUserItems = serverArray.filter(item => item.userId && String(item.userId) !== String(userId));
+          const wrongUserItems = serverArray.filter(item => item.userId && String(item.userId) !== String(nestJsUserId));
           if (wrongUserItems.length > 0) {
-            console.error('[WishlistService] ⚠️ BACKEND RETURNED WRONG USER DATA! Expected userId:', userId, 'but got items for:', wrongUserItems.map(i => i.userId));
+            console.error('[WishlistService] ⚠️ BACKEND RETURNED WRONG USER DATA! Expected userId:', nestJsUserId, 'but got items for:', wrongUserItems.map(i => i.userId));
           }
         }
         
         // Filter out inactive records (server may return items with isActive=false)
         const activeServerArray = serverArray.filter((si: any) => {
           const active = si.isActive ?? si.active ?? si.is_active;
-          const belongsToUser = !si.userId || String(si.userId) === String(userId);
+          const belongsToUser = !si.userId || String(si.userId) === String(nestJsUserId);
           if (!belongsToUser) {
-            console.warn('[WishlistService] Filtering out item with userId:', si.userId, 'expected:', userId);
+            console.warn('[WishlistService] Filtering out item with userId:', si.userId, 'expected:', nestJsUserId);
           }
           return (active === undefined || !!active) && belongsToUser;
         });
@@ -208,14 +246,18 @@ export const wishlistService = {
     // If user is authenticated, try to persist to server
     const token = localStorage.getItem('authToken');
     if (token) {
-      const userId = localStorage.getItem('userId') || '';
+      const externalId = localStorage.getItem('userId') || ''; // Spring Boot numeric ID
       try {
+          // Convert Spring Boot numeric ID to NestJS UUID
+          const nestJsUserId = await getNestJsUserUuid(externalId);
+          console.log('[WishlistService] addItem - externalId:', externalId, '→ UUID:', nestJsUserId);
+
           // Validate and normalize price according to API constraints
           const normalizedPrice = normalizePriceValue(item.price);
 
           // Build search params to detect existing wishlist entries for this user+product+variant
           const params = new URLSearchParams();
-          if (userId) params.set('userId', userId);
+          if (nestJsUserId) params.set('userId', nestJsUserId);
           if (item.productId) params.set('productId', item.productId);
           if (item.size) params.set('size', item.size);
           if (item.color) params.set('color', item.color);
@@ -298,7 +340,7 @@ export const wishlistService = {
 
           // No existing server record found - create new one
           const createBody: any = {
-            userId,
+            userId: nestJsUserId,
             productId: item.productId,
             quantity: item.quantity || 1,
             price: normalizedPrice,
@@ -306,6 +348,9 @@ export const wishlistService = {
             color: item.color,
             imageUrl: item.productImage,
           };
+
+          console.log('[WishlistService] Creating wishlist item with body:', createBody);
+          console.log('[WishlistService] userId type:', typeof createBody.userId, 'value:', createBody.userId);
 
           const created = await apiClient.post('/wishlists', createBody);
 
@@ -488,8 +533,10 @@ export const wishlistService = {
           const productIdForDelete = local?.productId || stockIdOrId || '';
           if (userId && productIdForDelete) {
             try {
-              await apiClient.delete(`/wishlists/user/${encodeURIComponent(userId)}/product/${encodeURIComponent(productIdForDelete)}`);
-              try { console.debug('[wishlistService] removed via user/product endpoint', userId, productIdForDelete); } catch {}
+              // Convert Spring Boot numeric ID to NestJS UUID
+              const nestJsUserId = userId.includes('-') ? userId : await getNestJsUserUuid(userId);
+              await apiClient.delete(`/wishlists/user/${encodeURIComponent(nestJsUserId)}/product/${encodeURIComponent(productIdForDelete)}`);
+              try { console.debug('[wishlistService] removed via user/product endpoint', nestJsUserId, productIdForDelete); } catch {}
               // Always remove locally afterwards
               return removeLocal();
             } catch (err) {
@@ -547,7 +594,9 @@ export const wishlistService = {
         // parameters.
         try {
           if (userId) {
-            const serverList = await apiClient.get<any[]>(`/wishlists/user/${encodeURIComponent(userId)}`);
+            // Convert Spring Boot numeric ID to NestJS UUID
+            const nestJsUserId = userId.includes('-') ? userId : await getNestJsUserUuid(userId);
+            const serverList = await apiClient.get<any[]>(`/wishlists/user/${encodeURIComponent(nestJsUserId)}`);
             const listArr = Array.isArray(serverList) ? serverList : (serverList && serverList.items) || [];
             const toDelete: string[] = [];
             for (const f of listArr) {
