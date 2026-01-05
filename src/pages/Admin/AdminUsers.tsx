@@ -3,6 +3,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { Search as SearchIcon } from '@mui/icons-material'
 import AdminBreadcrumbs from '../../components/Admin/AdminBreadcrumbs'
 import { UsersTable } from '../../features/Admin/users'
+import UserRoleEditModal from '../../features/Admin/users/UserRoleEditModal'
 import { useAdminUsers } from '../../hooks/useUsers'
 import { useRolesList } from '../../hooks/useRoles'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
@@ -21,6 +22,8 @@ const AdminUsers = () => {
   const [currentPage, setCurrentPage] = useState(1)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [userToDelete, setUserToDelete] = useState<AdminUser | null>(null)
+  const [editModalOpen, setEditModalOpen] = useState(false)
+  const [userToEdit, setUserToEdit] = useState<AdminUser | null>(null)
 
   // Use React Query to fetch users and roles
   const { data: users = [], isLoading: usersLoading } = useAdminUsers()
@@ -32,9 +35,28 @@ const AdminUsers = () => {
 
   // Map users to include role name
   const usersWithRoleNames = useMemo(() => {
-    const roleMap = new Map<string, string>()
-    rolesList.forEach((r) => roleMap.set(r.id, r.name))
-    return (users || []).map((u) => ({ ...u, role: roleMap.get((u.role as string) || '') || (u.role as string) || '—' }))
+    const roleMap = new Map<number | string, string>()
+    rolesList.forEach((r) => {
+      roleMap.set(r.id, r.name)
+      roleMap.set(String(r.id), r.name)
+    })
+    
+    console.log('[AdminUsers] Role Map:', Object.fromEntries(roleMap))
+    
+    return (users || []).map((u) => {
+      // Get role name from roleId or role field
+      const roleKey = u.roleId !== undefined ? u.roleId : u.role
+      let roleName = roleMap.get(roleKey) || roleMap.get(String(roleKey))
+      
+      // If role not found in map, show "Unknown Role (ID)"
+      if (!roleName) {
+        roleName = roleKey ? `Unknown Role (${roleKey})` : '—'
+      }
+      
+      console.log('[AdminUsers] User:', u.email, 'roleKey:', roleKey, 'roleName:', roleName)
+      
+      return { ...u, role: roleName }
+    })
   }, [users, rolesList])
 
   // Initialize filtered users when source users change
@@ -46,6 +68,14 @@ const AdminUsers = () => {
 
   const deleteUserMutation = useMutation({
     mutationFn: (id: string) => userService.removeUser(id),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: QUERY_KEYS.users.admin })
+    },
+  })
+
+  const updateUserRoleMutation = useMutation({
+    mutationFn: ({ userId, roleId, numericId }: { userId: string; roleId: number; numericId?: number }) => 
+      userService.updateUserRole(userId, roleId, numericId),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: QUERY_KEYS.users.admin })
     },
@@ -112,8 +142,24 @@ const AdminUsers = () => {
 
   // Handle edit user
   const handleEditUser = (user: AdminUser) => {
-    // TODO: Implement user edit functionality
-    console.log('Edit user:', user)
+    setUserToEdit(user)
+    setEditModalOpen(true)
+  }
+
+  // Handle save user role
+  const handleSaveUserRole = async (userId: string, roleId: number, numericId?: number) => {
+    try {
+      await updateUserRoleMutation.mutateAsync({ userId, roleId, numericId })
+    } catch (error) {
+      console.error('Error updating user role:', error)
+      throw error
+    }
+  }
+
+  // Handle close edit modal
+  const handleCloseEditModal = () => {
+    setEditModalOpen(false)
+    setUserToEdit(null)
   }
 
   // Calculate pagination
@@ -252,6 +298,13 @@ const AdminUsers = () => {
         onCancel={handleCancelDelete}
         confirmText="Delete"
         cancelText="Cancel"
+      />
+      <UserRoleEditModal
+        open={editModalOpen}
+        user={userToEdit}
+        roles={rolesList}
+        onClose={handleCloseEditModal}
+        onSave={handleSaveUserRole}
       />
     </Box>
   )
