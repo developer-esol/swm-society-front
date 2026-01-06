@@ -1,6 +1,8 @@
 import { Box, TextField, Button } from '@mui/material'
 import { Search as SearchIcon } from '@mui/icons-material'
 import { colors } from '../../../theme'
+import { Permission } from '../../../components/Permission'
+import { PERMISSIONS } from '../../../configs/permissions'
 
 interface ProductTableHeaderProps {
   searchQuery: string
@@ -34,21 +36,23 @@ const ProductTableHeader = ({ searchQuery, onSearch, onAddProduct }: ProductTabl
         }}
       />
 
-      <Button
-        variant="contained"
-        onClick={onAddProduct}
-        sx={{
-          bgcolor: colors.button.primary,
-          color: colors.text.secondary,
-          px: 3,
-          borderRadius: '4px',
-          '&:hover': {
-            bgcolor: colors.button.primaryHover,
-          },
-        }}
-      >
-        Add Product
-      </Button>
+      <Permission permission={PERMISSIONS.CREATE_PRODUCTS}>
+        <Button
+          variant="contained"
+          onClick={onAddProduct}
+          sx={{
+            bgcolor: colors.button.primary,
+            color: colors.text.secondary,
+            px: 3,
+            borderRadius: '4px',
+            '&:hover': {
+              bgcolor: colors.button.primaryHover,
+            },
+          }}
+        >
+          Add Product
+        </Button>
+      </Permission>
     </Box>
   )
 }

@@ -34,8 +34,11 @@ export const NavigationBar: React.FC = () => {
     // Check if user is admin (only Super Admin: 1, Admin: 2)
     const isAdmin = user?.role === '3';
     
+    // Check if user should see dashboard (any role except regular user with role ID 1)
+    const shouldShowDashboard = user?.role && user.role !== '1';
+    
     // Debug logging
-    console.log('[NavigationBar] User role:', user?.role, '| isAdmin:', isAdmin);
+    console.log('[NavigationBar] User role:', user?.role, '| isAdmin:', isAdmin, '| shouldShowDashboard:', shouldShowDashboard);
 
     const handleLogout = () => {
         console.log('NavigationBar: Logging out user');
@@ -123,7 +126,7 @@ export const NavigationBar: React.FC = () => {
                                         }
                                     }}
                                 >
-                                    {isAdmin && (
+                                    {shouldShowDashboard && (
                                         <MenuItem
                                             component={Link}
                                             to="/admin"
@@ -140,7 +143,7 @@ export const NavigationBar: React.FC = () => {
                                                 fontWeight: 500,
                                             }}
                                         >
-                                            Admin Dashboard
+                                            {isAdmin ? 'Admin Dashboard' : 'Dashboard'}
                                         </MenuItem>
                                     )}
                                     <MenuItem

@@ -14,6 +14,8 @@ import { Eye as ViewIcon, Edit as EditIcon, Trash2 as DeleteIcon } from 'lucide-
 import { colors } from '../../../theme'
 import type { AdminProduct } from '../../../types/Admin'
 import { useBrands } from '../../../hooks/useBrands'
+import { Permission } from '../../../components/Permission'
+import { PERMISSIONS } from '../../../configs/permissions'
 
 interface ProductsTableProps {
   products: AdminProduct[]
@@ -78,6 +80,7 @@ const ProductsTable = ({ products, onView, onEdit, onDelete }: ProductsTableProp
                   </TableCell>
                   <TableCell sx={{ textAlign: 'center' }}>
                     <Box sx={{ display: 'flex', gap: 1.5, justifyContent: 'center' }}>
+                      <Permission permission={PERMISSIONS.VIEW_PRODUCTS}>
                       <Button
                         onClick={() => onView(product)}
                         sx={{
@@ -99,6 +102,8 @@ const ProductsTable = ({ products, onView, onEdit, onDelete }: ProductsTableProp
                       >
                         <ViewIcon size={18} />
                       </Button>
+                      </Permission>
+                      <Permission permission={PERMISSIONS.UPDATE_PRODUCTS}>
                       <Button
                         onClick={() => onEdit(product)}
                         sx={{
@@ -120,6 +125,8 @@ const ProductsTable = ({ products, onView, onEdit, onDelete }: ProductsTableProp
                       >
                         <EditIcon size={18} />
                       </Button>
+                      </Permission>
+                      <Permission permission={PERMISSIONS.DELETE_PRODUCTS}>
                       <Button
                         onClick={() => onDelete(product.id)}
                         sx={{
@@ -141,6 +148,7 @@ const ProductsTable = ({ products, onView, onEdit, onDelete }: ProductsTableProp
                       >
                         <DeleteIcon size={18} />
                       </Button>
+                      </Permission>
                     </Box>
                   </TableCell>
                 </TableRow>

@@ -35,27 +35,33 @@ const AdminUsers = () => {
 
   // Map users to include role name
   const usersWithRoleNames = useMemo(() => {
-    const roleMap = new Map<number | string, string>()
-    rolesList.forEach((r) => {
-      roleMap.set(r.id, r.name)
-      roleMap.set(String(r.id), r.name)
-    })
+    console.log('[AdminUsers] Users from API:', users)
+    console.log('[AdminUsers] Roles from API:', rolesList)
     
-    console.log('[AdminUsers] Role Map:', Object.fromEntries(roleMap))
-    
+    // If user already has role name from backend, use it directly
     return (users || []).map((u) => {
-      // Get role name from roleId or role field
-      const roleKey = u.roleId !== undefined ? u.roleId : u.role
-      let roleName = roleMap.get(roleKey) || roleMap.get(String(roleKey))
-      
-      // If role not found in map, show "Unknown Role (ID)"
-      if (!roleName) {
-        roleName = roleKey ? `Unknown Role (${roleKey})` : '—'
+      // The backend already returns role name in u.role, so we can use it directly
+      // Only if role is empty or undefined, try to look it up from roleId
+      if (u.role && typeof u.role === 'string') {
+        console.log('[AdminUsers] User:', u.email, 'already has role name:', u.role)
+        return u
       }
       
-      console.log('[AdminUsers] User:', u.email, 'roleKey:', roleKey, 'roleName:', roleName)
+      // Fallback: If role name is missing, try to find it using roleId
+      if (u.roleId) {
+        const roleMap = new Map<number | string, string>()
+        rolesList.forEach((r) => {
+          roleMap.set(r.id, r.name)
+          roleMap.set(String(r.id), r.name)
+        })
+        
+        const roleName = roleMap.get(u.roleId) || roleMap.get(String(u.roleId)) || `Unknown Role (${u.roleId})`
+        console.log('[AdminUsers] User:', u.email, 'roleId:', u.roleId, 'mapped to:', roleName)
+        return { ...u, role: roleName }
+      }
       
-      return { ...u, role: roleName }
+      console.log('[AdminUsers] User:', u.email, 'has no role info')
+      return { ...u, role: '—' }
     })
   }, [users, rolesList])
 

@@ -14,6 +14,8 @@ import {
 import { Edit as EditIcon, Trash2 as DeleteIcon } from 'lucide-react'
 import { colors } from '../../../theme'
 import type { AdminUser } from '../../../types/Admin/users'
+import { Permission } from '../../../components/Permission'
+import { PERMISSIONS } from '../../../configs/permissions'
 
 interface UsersTableProps {
   users: AdminUser[]
@@ -85,6 +87,7 @@ const UsersTable = ({ users, onEdit, onDelete }: UsersTableProps) => {
                   </TableCell>
                   <TableCell sx={{ textAlign: 'center' }}>
                     <Box sx={{ display: 'flex', gap: 1.5, justifyContent: 'center' }}>
+                        <Permission permission={PERMISSIONS.UPDATE_USERS}>
                         <Button
                           onClick={() => onEdit(user)}
                           disabled={user.status === 'Inactive'}
@@ -110,6 +113,8 @@ const UsersTable = ({ users, onEdit, onDelete }: UsersTableProps) => {
                         >
                           <EditIcon size={18} />
                         </Button>
+                        </Permission>
+                        <Permission permission={PERMISSIONS.DELETE_USERS}>
                       <Button
                         onClick={() => onDelete(user.id)}
                         disabled={user.status === 'Inactive'}
@@ -135,6 +140,7 @@ const UsersTable = ({ users, onEdit, onDelete }: UsersTableProps) => {
                       >
                         <DeleteIcon size={18} />
                       </Button>
+                      </Permission>
                     </Box>
                   </TableCell>
                 </TableRow>

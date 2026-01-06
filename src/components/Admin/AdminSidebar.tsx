@@ -30,21 +30,23 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { colors } from '../../theme';
 import type { SidebarMenuItem } from '../../types/Admin/sidebar';
+import { Permission } from '../Permission';
+import { PERMISSIONS } from '../../configs/permissions';
 
 const DRAWER_WIDTH = 230;
 const COLLAPSED_WIDTH = 72;
 
-const menuItems: SidebarMenuItem[] = [
-  { id: 'dashboard', label: 'Dashboard', icon: 'dashboard', path: '/admin', badge: 0 },
-  { id: 'products', label: 'Products', icon: 'products', path: '/admin/products', badge: 0 },
-  { id: 'stock', label: 'Stock', icon: 'stock', path: '/admin/stock', badge: 0 },
-  { id: 'sales', label: 'Sales', icon: 'sales', path: '/admin/sales', badge: 0 },
-  { id: 'loyalty', label: 'Loyalty', icon: 'loyalty', path: '/admin/loyalty', badge: 0 },
-  { id: 'users', label: 'Users', icon: 'users', path: '/admin/users', badge: 0 },
-  { id: 'posts', label: 'Posts', icon: 'posts', path: '/admin/posts', badge: 0 },
-  { id: 'reviews', label: 'Reviews', icon: 'reviews', path: '/admin/reviews', badge: 0 },
-  { id: 'roles', label: 'Roles', icon: 'roles', path: '/admin/roles', badge: 0 },
-  // { id: 'access', label: 'Access Control', icon: 'access', path: '/admin/access-control', badge: 0 },
+const menuItems: Array<SidebarMenuItem & { permission: string }> = [
+  { id: 'dashboard', label: 'Dashboard', icon: 'dashboard', path: '/admin', badge: 0, permission: PERMISSIONS.VIEW_DASHBOARD_MENU },
+  { id: 'products', label: 'Products', icon: 'products', path: '/admin/products', badge: 0, permission: PERMISSIONS.VIEW_PRODUCTS_MENU },
+  { id: 'stock', label: 'Stock', icon: 'stock', path: '/admin/stock', badge: 0, permission: PERMISSIONS.VIEW_STOCK_MENU },
+  { id: 'sales', label: 'Sales', icon: 'sales', path: '/admin/sales', badge: 0, permission: PERMISSIONS.VIEW_SALES_MENU },
+  { id: 'loyalty', label: 'Loyalty', icon: 'loyalty', path: '/admin/loyalty', badge: 0, permission: PERMISSIONS.VIEW_LOYALTY_MENU },
+  { id: 'users', label: 'Users', icon: 'users', path: '/admin/users', badge: 0, permission: PERMISSIONS.VIEW_USERS_MENU },
+  { id: 'posts', label: 'Posts', icon: 'posts', path: '/admin/posts', badge: 0, permission: PERMISSIONS.VIEW_POSTS_MENU },
+  { id: 'reviews', label: 'Reviews', icon: 'reviews', path: '/admin/reviews', badge: 0, permission: PERMISSIONS.VIEW_REVIEWS_MENU },
+  { id: 'roles', label: 'Roles', icon: 'roles', path: '/admin/roles', badge: 0, permission: PERMISSIONS.VIEW_ROLES_MENU },
+  // { id: 'access', label: 'Access Control', icon: 'access', path: '/admin/access-control', badge: 0, permission: PERMISSIONS.VIEW_USERS_MENU },
 ];
 
 interface AdminSidebarProps {
@@ -161,6 +163,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeMenu, onCollapseChang
       {/* Navigation Menu */}
       <List sx={{ flex: 1, overflow: 'auto', py: 1, px: 0.75, '&::-webkit-scrollbar': { width: '6px' }, '&::-webkit-scrollbar-track': { bgcolor: 'transparent' }, '&::-webkit-scrollbar-thumb': { bgcolor: colors.border.default, borderRadius: '3px', '&:hover': { bgcolor: colors.text.gray } } }}>
         {menuItems.map((item) => (
+          <Permission key={item.id} permission={item.permission}>
           <Box
             key={item.id}
             onClick={() => handleMenuClick(item.path)}
@@ -226,6 +229,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeMenu, onCollapseChang
               />
             ) : null}
           </Box>
+          </Permission>
         ))}
       </List>
 

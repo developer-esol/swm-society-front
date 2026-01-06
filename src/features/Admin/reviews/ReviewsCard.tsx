@@ -4,6 +4,8 @@ import { productsService } from '../../../api/services/products'
 import { Trash2 as DeleteIcon } from 'lucide-react'
 import { colors } from '../../../theme'
 import type { Review } from '../../../types/review'
+import { Permission } from '../../../components/Permission'
+import { PERMISSIONS } from '../../../configs/permissions'
 
 interface ReviewsCardProps {
   review: Review
@@ -47,6 +49,7 @@ const ReviewsCard = ({ review, userName, onDelete }: ReviewsCardProps) => {
       )}
 
       {/* Delete button positioned top-right (styled like admin community delete) */}
+      <Permission permission={PERMISSIONS.DELETE_REVIEWS}>
       <Box sx={{ position: 'absolute', top: 8, right: 8, zIndex: 3 }}>
         <Button
           onClick={() => onDelete?.(review.id)}
@@ -70,6 +73,7 @@ const ReviewsCard = ({ review, userName, onDelete }: ReviewsCardProps) => {
           <DeleteIcon size={18} />
         </Button>
       </Box>
+      </Permission>
 
       <CardContent sx={{ p: 2, flex: 1 }}>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>

@@ -13,6 +13,8 @@ import {
 import { Edit2 as EditIcon } from 'lucide-react'
 import { colors } from '../../../theme'
 import type { LoyaltyTransaction } from '../../../types/Admin/loyalty'
+import { Permission } from '../../../components/Permission'
+import { PERMISSIONS } from '../../../configs/permissions'
 
 interface LoyaltyTableProps {
   transactions: LoyaltyTransaction[]
@@ -194,6 +196,7 @@ const LoyaltyTable: React.FC<LoyaltyTableProps> = ({ transactions, onEditBalance
                 {transaction.balance}
               </TableCell>
               <TableCell sx={{ padding: '12px 16px' }} align="center">
+                <Permission permission={PERMISSIONS.UPDATE_LOYALTY_POINTS}>
                 <Button
                   onClick={() => onEditBalance(transaction)}
                   sx={{
@@ -215,6 +218,7 @@ const LoyaltyTable: React.FC<LoyaltyTableProps> = ({ transactions, onEditBalance
                 >
                   <EditIcon size={18} />
                 </Button>
+                </Permission>
               </TableCell>
             </TableRow>
           ))}

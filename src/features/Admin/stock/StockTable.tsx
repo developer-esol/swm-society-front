@@ -11,7 +11,8 @@ import {
 } from '@mui/material'
 import { Eye as ViewIcon, Edit as EditIcon, Trash2 as DeleteIcon } from 'lucide-react'
 import { colors } from '../../../theme'
-
+import { Permission } from '../../../components/Permission'
+import { PERMISSIONS } from '../../../configs/permissions'
 import type { StockItem } from '../../../types/Admin'
 
 interface StockTableProps {
@@ -75,6 +76,7 @@ const StockTable = ({ items, onView, onEdit, onDelete }: StockTableProps) => {
                   </TableCell>
                   <TableCell sx={{ textAlign: 'center' }}>
                     <Box sx={{ display: 'flex', gap: 1.5, justifyContent: 'center' }}>
+                      <Permission permission={PERMISSIONS.VIEW_STOCK}>
                       <Button
                         onClick={() => onView(item)}
                         sx={{
@@ -96,6 +98,8 @@ const StockTable = ({ items, onView, onEdit, onDelete }: StockTableProps) => {
                       >
                         <ViewIcon size={18} />
                       </Button>
+                      </Permission>
+                      <Permission permission={PERMISSIONS.UPDATE_STOCK}>
                       <Button
                         onClick={() => onEdit(item)}
                         sx={{
@@ -117,6 +121,8 @@ const StockTable = ({ items, onView, onEdit, onDelete }: StockTableProps) => {
                       >
                         <EditIcon size={18} />
                       </Button>
+                      </Permission>
+                      <Permission permission={PERMISSIONS.DELETE_STOCK}>
                       <Button
                         onClick={() => onDelete(item.id)}
                         sx={{
@@ -138,6 +144,7 @@ const StockTable = ({ items, onView, onEdit, onDelete }: StockTableProps) => {
                       >
                         <DeleteIcon size={18} />
                       </Button>
+                      </Permission>
                     </Box>
                   </TableCell>
                 </TableRow>

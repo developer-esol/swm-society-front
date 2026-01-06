@@ -11,3 +11,4 @@ export { default as CommunityPostCard } from './CommunityPostCard';
 export { default as WishlistCard } from './WishlistCard';
 export { AdminSidebar } from './Admin';
 export { ConfirmDeleteDialog } from './ConfirmDeleteDialog';
+export { Permission } from './Permission';

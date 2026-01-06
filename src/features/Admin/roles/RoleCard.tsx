@@ -3,6 +3,8 @@ import { Box, Button, Typography } from '@mui/material'
 import { Edit as EditIcon, Trash2 as DeleteIcon } from 'lucide-react'
 import { colors } from '../../../theme'
 import type { Role } from '../../../types/Admin/roles'
+import { Permission } from '../../../components/Permission'
+import { PERMISSIONS } from '../../../configs/permissions'
 
 interface RoleCardProps {
   role: Role
@@ -94,6 +96,7 @@ const RoleCard: React.FC<RoleCardProps> = ({ role, onEdit, onDelete }) => {
       <Box sx={{ display: 'flex', gap: 1.5 }}>
         {!(role.name || '').toLowerCase().trim().includes('admin') && (
           <>
+            <Permission permission={PERMISSIONS.UPDATE_ROLES}>
             <Button
               onClick={() => onEdit(role)}
               sx={{
@@ -115,6 +118,8 @@ const RoleCard: React.FC<RoleCardProps> = ({ role, onEdit, onDelete }) => {
             >
               <EditIcon size={18} />
             </Button>
+            </Permission>
+            <Permission permission={PERMISSIONS.DELETE_ROLES}>
             <Button
               onClick={() => onDelete(role)}
               sx={{
@@ -136,6 +141,7 @@ const RoleCard: React.FC<RoleCardProps> = ({ role, onEdit, onDelete }) => {
             >
               <DeleteIcon size={18} />
             </Button>
+            </Permission>
           </>
         )}
       </Box>

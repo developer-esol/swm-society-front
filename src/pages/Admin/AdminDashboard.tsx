@@ -3,9 +3,27 @@ import AdminBreadcrumbs from '../../components/Admin/AdminBreadcrumbs'
 import { useDashboard } from '../../hooks/admin'
 import { StatBoxes, SalesRevenue, RevenueByLocation, TotalSales, TopSellingProducts } from '../../features/Admin/dashboard'
 import { colors } from '../../theme'
+import { Permission } from '../../components/Permission'
+import { PERMISSIONS } from '../../configs/permissions'
+import { usePermissionsStore } from '../../store/usePermissionsStore'
 
 const AdminDashboard = () => {
   const dashboardData = useDashboard()
+  const { hasPermission } = usePermissionsStore()
+
+  // Filter stat boxes based on permissions
+  const filteredStatBoxes = dashboardData.statBoxes.filter((statBox) => {
+    if (statBox.label === 'TOTAL PRODUCTS') {
+      return hasPermission(PERMISSIONS.VIEW_PRODUCTS)
+    }
+    if (statBox.label === 'TOTAL USERS') {
+      return hasPermission(PERMISSIONS.VIEW_USERS)
+    }
+    if (statBox.label === 'ORDERS') {
+      return hasPermission(PERMISSIONS.VIEW_SALES)
+    }
+    return true // Show other stat boxes by default
+  })
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', bgcolor: colors.background.default }}>
@@ -15,18 +33,26 @@ const AdminDashboard = () => {
           Dashboard
         </Typography>
 
-        {/* Stat Boxes Feature */}
-        <StatBoxes items={dashboardData.statBoxes} />
+        {/* Stat Boxes Feature - Filtered by permissions */}
+        {filteredStatBoxes.length > 0 && <StatBoxes items={filteredStatBoxes} />}
 
-        {/* Charts Grid */}
+        {/* Charts Grid - Wrapped with permissions */}
         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' }, gap: 3, mb: 4, mt: 4 }}>
-          <SalesRevenue />
-          <RevenueByLocation data={dashboardData.revenueByLocation} />
-          <TotalSales data={dashboardData.totalSalesChart} />
+          <Permission permission={PERMISSIONS.VIEW_SALES}>
+            <SalesRevenue />
+          </Permission>
+          <Permission permission={PERMISSIONS.VIEW_SALES}>
+            <RevenueByLocation data={dashboardData.revenueByLocation} />
+          </Permission>
+          <Permission permission={PERMISSIONS.VIEW_SALES}>
+            <TotalSales data={dashboardData.totalSalesChart} />
+          </Permission>
         </Box>
 
-        {/* Products Table Feature */}
-        <TopSellingProducts products={dashboardData.topProducts} />
+        {/* Products Table Feature - Wrapped with VIEW_PRODUCTS permission */}
+        <Permission permission={PERMISSIONS.VIEW_PRODUCTS}>
+          <TopSellingProducts products={dashboardData.topProducts} />
+        </Permission>
       </Container>
     </Box>
   )

@@ -10,6 +10,8 @@ import { useAdminRoles } from '../../hooks/admin'
 import { ConfirmDeleteDialog } from '../../components'
 import { colors } from '../../theme'
 import type { Role } from '../../types/Admin/roles'
+import { Permission } from '../../components/Permission'
+import { PERMISSIONS } from '../../configs/permissions'
 
 const AdminRoles = () => {
   const navigate = useNavigate()
@@ -90,26 +92,28 @@ const AdminRoles = () => {
             searchQuery={searchQuery}
             onSearch={handleSearch}
           />
-          <Button
-            variant="contained"
-            onClick={() => navigate('/admin/role-creation')}
-            sx={{
-              bgcolor: colors.button.primary,
-              color: 'white',
-              textTransform: 'none',
-              fontWeight: 600,
-              px: 2.5,
-              py: 1,
-              borderRadius: 1,
-              minWidth: 140,
-              boxShadow: 1,
-              '&:hover': {
-                bgcolor: colors.button.primaryHover,
-              },
-            }}
-          >
-            Create New Role
-          </Button>
+          <Permission permission={PERMISSIONS.CREATE_ROLES}>
+            <Button
+              variant="contained"
+              onClick={() => navigate('/admin/role-creation')}
+              sx={{
+                bgcolor: colors.button.primary,
+                color: 'white',
+                textTransform: 'none',
+                fontWeight: 600,
+                px: 2.5,
+                py: 1,
+                borderRadius: 1,
+                minWidth: 140,
+                boxShadow: 1,
+                '&:hover': {
+                  bgcolor: colors.button.primaryHover,
+                },
+              }}
+            >
+              Create New Role
+            </Button>
+          </Permission>
         </Box>
 
         {/* Roles List */}

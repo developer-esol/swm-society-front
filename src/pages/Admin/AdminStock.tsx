@@ -8,6 +8,8 @@ import { useAllStocks, useAllProducts, useUpdateStock, useDeleteStock } from '..
 import { colors } from '../../theme'
 import AdminBreadcrumbs from '../../components/Admin/AdminBreadcrumbs'
 import type { StockItem } from '../../types/Admin'
+import { Permission } from '../../components/Permission'
+import { PERMISSIONS } from '../../configs/permissions'
 
 const AdminStock = () => {
   const navigate = useNavigate()
@@ -208,23 +210,25 @@ const AdminStock = () => {
             </IconButton>
           </Box>
           
-          <Button
-            variant="contained"
-            onClick={handleAddStock}
-            sx={{
-              bgcolor: colors.button.primary,
-              color: 'white',
-              textTransform: 'none',
-              fontWeight: 600,
-              px: 2.5,
-              py: 1,
-              '&:hover': {
-                bgcolor: colors.button.primaryHover,
-              },
-            }}
-          >
-            Add Stock
-          </Button>
+          <Permission permission={PERMISSIONS.CREATE_STOCK}>
+            <Button
+              variant="contained"
+              onClick={handleAddStock}
+              sx={{
+                bgcolor: colors.button.primary,
+                color: 'white',
+                textTransform: 'none',
+                fontWeight: 600,
+                px: 2.5,
+                py: 1,
+                '&:hover': {
+                  bgcolor: colors.button.primaryHover,
+                },
+              }}
+            >
+              Add Stock
+            </Button>
+          </Permission>
         </Box>
         <StockTable items={paginatedItems} onView={handleView} onEdit={handleEdit} onDelete={handleDelete} />
 

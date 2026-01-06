@@ -10,6 +10,8 @@ import type { AdminProduct } from '../../types/Admin'
 import { useQueryClient } from '@tanstack/react-query'
 import { QUERY_KEYS } from '../../configs/queryKeys'
 import { deleteProduct } from '../../api/services/admin/productsService'
+import { Permission } from '../../components/Permission'
+import { PERMISSIONS } from '../../configs/permissions'
 
 const AdminProducts = () => {
   const navigate = useNavigate()
@@ -192,23 +194,25 @@ const AdminProducts = () => {
             </IconButton>
           </Box>
           
-          <Button
-            variant="contained"
-            onClick={handleAddProduct}
-            sx={{
-              bgcolor: colors.button.primary,
-              color: 'white',
-              textTransform: 'none',
-              fontWeight: 600,
-              px: 2.5,
-              py: 1,
-              '&:hover': {
-                bgcolor: colors.button.primaryHover,
-              },
-            }}
-          >
-            Add Product
-          </Button>
+          <Permission permission={PERMISSIONS.CREATE_PRODUCTS}>
+            <Button
+              variant="contained"
+              onClick={handleAddProduct}
+              sx={{
+                bgcolor: colors.button.primary,
+                color: 'white',
+                textTransform: 'none',
+                fontWeight: 600,
+                px: 2.5,
+                py: 1,
+                '&:hover': {
+                  bgcolor: colors.button.primaryHover,
+                },
+              }}
+            >
+              Add Product
+            </Button>
+          </Permission>
         </Box>
 
         <ProductsTable

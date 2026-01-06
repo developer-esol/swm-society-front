@@ -401,6 +401,9 @@ const AddStock: React.FC = () => {
                   <MenuItem value="XXL">XXL</MenuItem>
                   <MenuItem value="XXXL">XXXL</MenuItem>
                   <MenuItem value="Free Size">Free Size</MenuItem>
+                  <MenuItem value="Medium Fit">Medium Fit</MenuItem>
+                  <MenuItem value="Slim Fit">Slim Fit</MenuItem>
+                  <MenuItem value="Oversized">Oversized</MenuItem>
                 </Select>
                 {formik.touched.size && formik.errors.size && (
                   <Typography sx={{ color: colors.status.error, fontSize: '0.75rem', mt: 0.5 }}>

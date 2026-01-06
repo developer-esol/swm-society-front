@@ -7,7 +7,7 @@ import { stockService } from '../../../api/services/stockService'
 import type { CreateStockData } from '../../../types/product'
 
 // Mock data for sizes
-const SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL']
+const SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'Medium Fit', 'Slim Fit', 'Oversized']
 const HARDCODED_IMAGE_URL = 'https://example.com/stock-image.jpg'
 
 interface StockEditModalProps {
