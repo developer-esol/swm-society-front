@@ -147,7 +147,7 @@ const YourOrdersPage: React.FC = () => {
 
                   {/* Products List */}
                   {order.items.map((item, index) => (
-                    <Box key={item.id}>
+                    <Box key={`${order.id}-${index}`}>
                       <Box
                         sx={{
                           display: 'flex',
