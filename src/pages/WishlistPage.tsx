@@ -170,8 +170,10 @@ const WishlistPage: React.FC = () => {
     // Also remove from cart
     cartService.removeItem(stockId);
 
-    // Dispatch custom event to notify ProductCards to update their heart icons
+    // Dispatch custom events to update UI
     window.dispatchEvent(new Event('wishlist-updated'));
+    // Trigger stock refresh to update add to cart buttons
+    setRefreshTrigger(prev => prev + 1);
   };
 
   const handleUpdateQuantity = (stockId: string, quantity: number) => {
@@ -179,9 +181,11 @@ const WishlistPage: React.FC = () => {
       ...prev,
       [stockId]: quantity
     }));
+    // Trigger stock refresh to update add to cart buttons
+    setRefreshTrigger(prev => prev + 1);
   };
 
-  const handleAddToCart = (item: WishlistItem) => {
+  const handleAddToCart = async (item: WishlistItem) => {
     // Prevent adding out-of-stock items to cart
     if (item.maxQuantity === 0) {
       alert('This product is out of stock and cannot be added to cart');
@@ -189,10 +193,14 @@ const WishlistPage: React.FC = () => {
     }
     const cartQuantity = quantities[item.stockId] || item.quantity;
     // Add to cart with the selected quantity
-    cartService.addItem({
+    await cartService.addItem({
       ...item,
       quantity: cartQuantity,
     });
+    // Dispatch cart-updated event to update cart icon
+    window.dispatchEvent(new Event('cart-updated'));
+    // Trigger stock refresh to update add to cart buttons
+    setRefreshTrigger(prev => prev + 1);
     // Redirect to cart page
     navigate('/cart');
   };

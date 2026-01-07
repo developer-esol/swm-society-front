@@ -9,6 +9,7 @@ import {
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { useFormik } from 'formik';
+import { useQueryClient } from '@tanstack/react-query';
 import { cartService } from '../../api/services/cartService';
 import { checkoutService } from '../../api/services/checkoutService';
 import { colors } from '../../theme';
@@ -21,6 +22,7 @@ import { useCart } from '../cart/useCart';
 
 const CheckoutPageComponent: React.FC = () => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [isLoading, setIsLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -79,8 +81,15 @@ const CheckoutPageComponent: React.FC = () => {
           return;
         }
 
-        // Clear cart after successful order
+        // Clear cart from local state (backend already deleted it server-side)
         cartService.clearCart();
+        
+        // Invalidate cart queries to force refresh
+        const userId = localStorage.getItem('userId');
+        queryClient.invalidateQueries({ queryKey: ['cart', userId || 'anonymous'] });
+        
+        // Dispatch cart-updated event to update cart icon
+        window.dispatchEvent(new Event('cart-updated'));
 
         // Show success message
         setSuccessMessage(result.message);

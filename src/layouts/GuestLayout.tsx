@@ -2,12 +2,14 @@ import React from 'react';
 import { Outlet } from 'react-router-dom';
 import { Box } from '@mui/material';
 import { GuestNavigationBar, Footer } from '../components';
+import ScrollToTop from '../components/ScrollToTop';
 
 export const GuestLayout: React.FC = () => {
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       {/* Guest Navigation Bar */}
       <GuestNavigationBar />
+      <ScrollToTop />
       
       {/* Main Content */}
       <Box

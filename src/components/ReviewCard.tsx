@@ -41,10 +41,15 @@ const ReviewCard: React.FC<ReviewCardProps> = ({
     let mounted = true;
     const loadName = async () => {
       try {
-        const u = await userService.getById(review.userId);
-        if (mounted) setUserName(u?.name || null);
+        // Fetch user from NestJS (port 3000) since review.userId is a UUID
+        const response = await fetch(`http://localhost:3000/users/${review.userId}`);
+        if (response.ok) {
+          const user = await response.json();
+          if (mounted) setUserName(user?.fullName || user?.name || user?.email || null);
+        }
       } catch (e) {
-        // ignore
+        console.error('[ReviewCard] Error loading user:', e);
+        // Silently fail - just don't show the name
       }
     };
     void loadName();

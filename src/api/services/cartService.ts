@@ -313,7 +313,7 @@ export const cartService = {
         localStorage.setItem('lastServerCartRaw', JSON.stringify(serverItems || []));
       } catch {}
 
-      // Filter server items to ensure they belong to this user (safety net)
+      // Filter server items to ensure they belong to this user AND are active (not soft-deleted)
       const itemsArr = (serverItems || []) as ServerCartRow[];
       const before = itemsArr.length;
       const filtered = itemsArr.filter((s: ServerCartRow) => {
@@ -321,14 +321,20 @@ export const cartService = {
         if (!matches) {
           console.warn('[CartService] Filtering out item with userId:', s.userId, 'expected:', nestJsUserId);
         }
-        return matches;
+        // Also filter out soft-deleted items (isActive: false)
+        const isActive = (s as any).isActive;
+        const notDeleted = isActive !== false;
+        if (!notDeleted) {
+          console.log('[CartService] Filtering out soft-deleted item:', s.id);
+        }
+        return matches && notDeleted;
       });
       const after = filtered.length;
       
       if (before !== after) {
-        console.error(`[CartService] ⚠️ Filtered out ${before - after} items! Backend should only return current user's data!`);
+        console.log(`[CartService] Filtered ${before - after} items (wrong user or soft-deleted). Remaining: ${after}`);
       } else {
-        console.log('[CartService] ✓ All', after, 'items belong to current user');
+        console.log('[CartService] ✓ All', after, 'items belong to current user and are active');
       }
 
       // Map server response to client CartItem, fetching product name when missing
@@ -396,10 +402,18 @@ export const cartService = {
         }
         console.debug('getUserCart raw serverItems (route):', serverItems);
         console.log('[CartService] getUserCart - received', (serverItems || []).length, 'items from server');
-        // Map same as getServerCart but fetch product names when missing
+        
+        // Filter out soft-deleted (inactive) items
         const serverArr = (serverItems || []) as ServerCartRow[];
-        console.log('[CartService] getUserCart - mapping', serverArr.length, 'items...');
-        const mappedPromises: Promise<CartItem>[] = serverArr.map(async (s: ServerCartRow) => {
+        const activeItems = serverArr.filter((s: ServerCartRow) => {
+          // Only include items where isActive is true or undefined (not explicitly false)
+          const isActive = (s as any).isActive;
+          return isActive !== false;
+        });
+        console.log('[CartService] getUserCart - filtered to', activeItems.length, 'active items (excluded soft-deleted)');
+        
+        console.log('[CartService] getUserCart - mapping', activeItems.length, 'items...');
+        const mappedPromises: Promise<CartItem>[] = activeItems.map(async (s: ServerCartRow) => {
           console.log('[CartService] getUserCart - mapping item:', { id: s.id, productId: s.productId, productName: s.productName });
           let productName = s.productName || '';
           if (!productName && s.productId) {

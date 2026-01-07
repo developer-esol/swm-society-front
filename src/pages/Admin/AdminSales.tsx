@@ -1,9 +1,14 @@
 import { Box, Container, Typography, Pagination, Stack, TextField, IconButton } from '@mui/material'
 import { Search as SearchIcon } from '@mui/icons-material'
+import { useState } from 'react'
 import AdminBreadcrumbs from '../../components/Admin/AdminBreadcrumbs'
 import { useAdminSales } from '../../hooks/admin'
 import { SalesTable } from '../../features/Admin/sales'
+import OrderViewModal from '../../features/Admin/sales/OrderViewModal'
+import OrderEditModal from '../../features/Admin/sales/OrderEditModal'
+import { orderService } from '../../api/services/orderService'
 import { colors } from '../../theme'
+import type { Order } from '../../types/order'
 
 const AdminSales = () => {
   const {
@@ -19,12 +24,38 @@ const AdminSales = () => {
     handleDateFilterChange,
   } = useAdminSales()
 
+  const [viewModalOpen, setViewModalOpen] = useState(false)
+  const [editModalOpen, setEditModalOpen] = useState(false)
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
+
   const handlePageChange = (_event: React.ChangeEvent<unknown>, page: number) => {
     handlePageChangeHook(page)
   }
 
   const handleDateChange = (from: string, to: string) => {
     handleDateFilterChange(from, to)
+  }
+
+  const handleView = (order: Order) => {
+    setSelectedOrder(order)
+    setViewModalOpen(true)
+  }
+
+  const handleEdit = (order: Order) => {
+    setSelectedOrder(order)
+    setEditModalOpen(true)
+  }
+
+  const handleUpdateStatus = async (orderId: string, status: string) => {
+    try {
+      await orderService.updateOrderStatus(orderId, status)
+      setEditModalOpen(false)
+      // Optionally refresh the orders list here
+      window.location.reload()
+    } catch (error) {
+      console.error('Failed to update order status:', error)
+      throw error
+    }
   }
 
   return (
@@ -140,6 +171,8 @@ const AdminSales = () => {
         {/* Sales Table */}
         <SalesTable 
           transactions={transactions}
+          onView={handleView}
+          onEdit={handleEdit}
         />
 
        {/* Pagination */}
@@ -168,6 +201,23 @@ const AdminSales = () => {
                 </Box>
               )}
       </Container>
+
+      {/* Modals */}
+      {selectedOrder && (
+        <>
+          <OrderViewModal
+            open={viewModalOpen}
+            onClose={() => setViewModalOpen(false)}
+            order={selectedOrder}
+          />
+          <OrderEditModal
+            open={editModalOpen}
+            onClose={() => setEditModalOpen(false)}
+            order={selectedOrder}
+            onSave={handleUpdateStatus}
+          />
+        </>
+      )}
     </Box>
   )
 }

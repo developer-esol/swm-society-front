@@ -120,7 +120,7 @@ const YourPostsPage: React.FC = () => {
             mb: 4,
           }}
         >
-          Your Posts
+          My Posts
         </Typography>
 
         {/* Posts List */}

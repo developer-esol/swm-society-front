@@ -28,6 +28,7 @@ import {
   Menu as MenuIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
+import { useAuthStore } from '../../store/useAuthStore';
 import { colors } from '../../theme';
 import type { SidebarMenuItem } from '../../types/Admin/sidebar';
 import { Permission } from '../Permission';
@@ -56,6 +57,7 @@ interface AdminSidebarProps {
 
 const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeMenu, onCollapseChange }) => {
   const navigate = useNavigate();
+  const { logout } = useAuthStore();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -82,10 +84,9 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeMenu, onCollapseChang
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('userEmail');
-    localStorage.removeItem('userName');
-    navigate('/login');
+    console.log('AdminSidebar: Logging out user')
+    logout() // Use auth store logout to properly clear state
+    navigate('/login')
   };
 
   const drawerContent = (

@@ -14,6 +14,7 @@ export interface Order {
   id: string;
   userId: string;
   items: OrderItem[];
+  subtotal?: number;
   totalPrice: number;
   orderDate: string;
   createdAt: string;

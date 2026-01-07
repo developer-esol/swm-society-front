@@ -10,8 +10,9 @@ import { Add as AddIcon, Remove as RemoveIcon } from '@mui/icons-material';
 import { Trash2 as DeleteIcon } from 'lucide-react';
 import { authService } from '../api/services/authService';
 import { ConfirmDeleteDialog } from './ConfirmDeleteDialog';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { colors } from '../theme';
+import { productsService } from '../api/services/products';
 import type { WishlistItem } from '../types/wishlist';
 
 interface WishlistCardProps {
@@ -27,6 +28,7 @@ const WishlistCard: React.FC<WishlistCardProps> = ({
   onAddToCart,
   onUpdateQuantity,
 }) => {
+  const navigate = useNavigate();
   const [isDeleting, setIsDeleting] = useState(false);
   
   // Check if item is out of stock
@@ -70,6 +72,19 @@ const WishlistCard: React.FC<WishlistCardProps> = ({
     }
   };
 
+  // Handle product click - fetch and navigate with product data
+  const handleProductClick = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    try {
+      const product = await productsService.getProductById(item.productId);
+      if (product) {
+        navigate('/product', { state: { product } });
+      }
+    } catch (error) {
+      console.error('[WishlistCard] Error fetching product:', error);
+    }
+  };
+
   const handleQuantityChange = (newQuantity: number) => {
     if (newQuantity >= 1 && newQuantity <= effectiveMaxQuantity) {
       setLocalQuantity(newQuantity);
@@ -77,15 +92,6 @@ const WishlistCard: React.FC<WishlistCardProps> = ({
         onUpdateQuantity(item.stockId, newQuantity);
       }
     }
-  };
-
-  // Build product link with optional size/color query params so Product Details can preselect
-  const buildProductLink = () => {
-    const parts: string[] = [];
-    if (item.size) parts.push(`size=${encodeURIComponent(item.size)}`);
-    if (item.color) parts.push(`color=${encodeURIComponent(item.color)}`);
-    const query = parts.length > 0 ? `?${parts.join('&')}` : '';
-    return `/product/${item.productId}${query}`;
   };
 
   const decreaseQuantity = () => {
@@ -116,47 +122,45 @@ const WishlistCard: React.FC<WishlistCardProps> = ({
         },
       }}
     >
-      {/* Product Image - Clickable Link */}
-      <Link to={buildProductLink()} style={{ textDecoration: 'none' }}>
-        <CardMedia
-          component="img"
-          image={item.productImage}
-          alt={item.productName}
-          sx={{
-            width: 120,
-            height: 120,
-            objectFit: 'cover',
-            borderRadius: '4px',
-            backgroundColor: colors.background.light,
-            cursor: 'pointer',
-            '&:hover': {
-              opacity: 0.8,
-              transition: 'opacity 0.2s',
-            },
-          }}
-        />
-      </Link>
+      {/* Product Image - Clickable */}
+      <CardMedia
+        component="img"
+        image={item.productImage}
+        alt={item.productName}
+        onClick={handleProductClick}
+        sx={{
+          width: 120,
+          height: 120,
+          objectFit: 'cover',
+          borderRadius: '4px',
+          backgroundColor: colors.background.light,
+          cursor: 'pointer',
+          '&:hover': {
+            opacity: 0.8,
+            transition: 'opacity 0.2s',
+          },
+        }}
+      />
 
       {/* Product Info */}
       <Box>
-        {/* Product Name - Clickable Link */}
-        <Link to={buildProductLink()} style={{ textDecoration: 'none', color: 'inherit' }}>
-          <Typography
-            sx={{
-              fontWeight: 600,
-              color: 'black',
-              mb: 1,
-              fontSize: '0.95rem',
-              cursor: 'pointer',
-              '&:hover': {
-                color: '#dc2626',
-                transition: 'color 0.2s',
-              },
-            }}
-          >
-            {item.productName}
-          </Typography>
-        </Link>
+        {/* Product Name - Clickable */}
+        <Typography
+          onClick={handleProductClick}
+          sx={{
+            fontWeight: 600,
+            color: 'black',
+            mb: 1,
+            fontSize: '0.95rem',
+            cursor: 'pointer',
+            '&:hover': {
+              color: '#dc2626',
+              transition: 'color 0.2s',
+            },
+          }}
+        >
+          {item.productName}
+        </Typography>
 
         {/* Price Per Item - Only show when in stock */}
         {!isOutOfStock && (

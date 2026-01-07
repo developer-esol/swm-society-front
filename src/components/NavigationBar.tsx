@@ -180,7 +180,7 @@ export const NavigationBar: React.FC = () => {
                                             fontWeight: 500,
                                         }}
                                     >
-                                        Your Orders
+                                        My Orders
                                     </MenuItem>
                                     <MenuItem
                                         component={Link}
@@ -198,7 +198,7 @@ export const NavigationBar: React.FC = () => {
                                             fontWeight: 500,
                                         }}
                                     >
-                                        Your posts
+                                        My Posts
                                     </MenuItem>
                                     <MenuItem
                                         component={Link}

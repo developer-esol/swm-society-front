@@ -34,15 +34,17 @@ const YourOrdersPage: React.FC = () => {
   }, []);
 
   const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'Delivered':
+    switch (status?.toLowerCase()) {
+      case 'delivered':
         return '#10b981';
-      case 'Shipped':
+      case 'shipped':
         return '#f59e0b';
-      case 'Processing':
+      case 'processing':
         return '#3b82f6';
-      case 'Cancelled':
+      case 'cancelled':
         return '#ef4444';
+      case 'pending':
+        return '#6b7280';
       default:
         return '#6b7280';
     }
@@ -81,9 +83,10 @@ const YourOrdersPage: React.FC = () => {
 
   return (
     <Box sx={{ bgcolor: colors.background.default, width: '100%', minHeight: '100vh' }}>
+      {/* Add top padding to account for fixed navbar */}
       <Box sx={{ pt: { xs: 4, md: 6 } }} />
 
-      <Container maxWidth="lg" sx={{ py: 6 }}>
+      <Container maxWidth="lg" sx={{ py: 4 }}>
         {/* Page Title */}
         <Typography
           variant="h4"
@@ -93,7 +96,7 @@ const YourOrdersPage: React.FC = () => {
             mb: 4,
           }}
         >
-          Your Orders
+          My Orders
         </Typography>
 
         {/* Orders List */}
@@ -103,12 +106,46 @@ const YourOrdersPage: React.FC = () => {
               <Card
                 key={order.id}
                 sx={{
-                  border: '1px solid #e5e7eb',
                   borderRadius: 2,
                   overflow: 'hidden',
+                  border: 'none',
+                  boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
                 }}
               >
                 <CardContent sx={{ p: 0 }}>
+                  {/* Order Header */}
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      px: 2,
+                      py: 1,
+                      bgcolor: colors.background.light,
+                      borderBottom: `1px solid ${colors.border.default}`,
+                    }}
+                  >
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        color: colors.text.primary,
+                        fontSize: '1rem',
+                      }}
+                    >
+                      Order ID: {order.id.substring(0, 8)}...
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        color: colors.text.primary,
+                        fontSize: '0.8rem',
+                      }}
+                    >
+                      Date: {order.orderDate}
+                    </Typography>
+                  </Box>
+
+                  {/* Products List */}
                   {order.items.map((item, index) => (
                     <Box key={item.id}>
                       <Box
@@ -135,7 +172,7 @@ const YourOrdersPage: React.FC = () => {
                         >
                           <Box
                             component="img"
-                            src={item.image}
+                            src={item.imageUrl}
                             alt={item.productName}
                             sx={{
                               width: '100%',
@@ -166,7 +203,7 @@ const YourOrdersPage: React.FC = () => {
                               mb: 1,
                             }}
                           >
-                            £{item.price}
+                            £{Number(item.price).toFixed(2)} x {item.quantity}
                           </Typography>
 
                           <Box
@@ -178,15 +215,6 @@ const YourOrdersPage: React.FC = () => {
                               flexWrap: 'wrap',
                             }}
                           >
-                            <Typography
-                              variant="caption"
-                              sx={{
-                                color: colors.text.disabled,
-                              }}
-                            >
-                              {item.color}
-                            </Typography>
-
                             {/* Color Dot */}
                             <Box
                               sx={{
@@ -219,35 +247,6 @@ const YourOrdersPage: React.FC = () => {
                             </Typography>
                           </Box>
                         </Box>
-
-                        {/* Order Status */}
-                        <Box
-                          sx={{
-                            textAlign: 'right',
-                            minWidth: '150px',
-                            flexShrink: 0,
-                          }}
-                        >
-                          <Typography
-                            variant="caption"
-                            sx={{
-                              color: '#6b7280',
-                              display: 'block',
-                              mb: 0.5,
-                            }}
-                          >
-                            Order Status
-                          </Typography>
-                          <Chip
-                            label={item.status}
-                            sx={{
-                              bgcolor: getStatusColor(item.status),
-                              color: 'white',
-                              fontWeight: 600,
-                              height: 28,
-                            }}
-                          />
-                        </Box>
                       </Box>
 
                       {/* Divider between items */}
@@ -256,6 +255,49 @@ const YourOrdersPage: React.FC = () => {
                       )}
                     </Box>
                   ))}
+
+                  {/* Order Total */}
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      p: 2,
+                      bgcolor: colors.background.light,
+                      borderTop: `1px solid ${colors.border.default}`,
+                    }}
+                  >
+                    <Box>
+                      <Box sx={{ display: 'flex', gap: 1, mb: 0.5 }}>
+                        <Typography sx={{ color: colors.text.primary, fontSize: '0.9rem', fontWeight: 600 }}>
+                          Subtotal:
+                        </Typography>
+                        <Typography sx={{ color: colors.text.primary, fontSize: '0.9rem', fontWeight: 600 }}>
+                          £{order.subtotal ? Number(order.subtotal).toFixed(2) : '0.00'}
+                        </Typography>
+                      </Box>
+                      <Box sx={{ display: 'flex', gap: 1 }}>
+                        <Typography sx={{ color: colors.text.primary, fontSize: '1rem', fontWeight: 700 }}>
+                          Total:
+                        </Typography>
+                        <Typography sx={{ color: colors.text.primary, fontSize: '1rem', fontWeight: 700 }}>
+                          £{Number(order.totalPrice).toFixed(2)}
+                        </Typography>
+                      </Box>
+                    </Box>
+                    <Chip
+                      label={order.status || 'Processing'}
+                      sx={{
+                        bgcolor: getStatusColor(order.status || 'Processing'),
+                        color: 'white',
+                        fontWeight: 600,
+                        height: 32,
+                        textTransform: 'capitalize',
+                        fontSize: '0.875rem',
+                        px: 2,
+                      }}
+                    />
+                  </Box>
                 </CardContent>
               </Card>
             ))}
