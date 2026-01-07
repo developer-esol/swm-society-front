@@ -11,14 +11,12 @@ import type { CartItem } from '../../types/cart';
 interface OrderSummaryProps {
   cartItems: CartItem[];
   subtotal: number;
-  shipping: number;
   total: number;
 }
 
 const OrderSummary: React.FC<OrderSummaryProps> = ({
   cartItems,
   subtotal,
-  shipping,
   total,
 }) => {
   return (
@@ -31,6 +29,11 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
       <Box sx={{ mb: 3 }}>
         {cartItems.map((item, index) => (
           <Box key={index} sx={{ mb: 2 }}>
+            {item.brandName && (
+              <Typography variant="caption" sx={{ color: colors.text.disabled, display: 'block', mb: 0.3, fontWeight: 500 }}>
+                {item.brandName}
+              </Typography>
+            )}
             <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
               <Typography variant="body2">
                 {item.productName}
@@ -66,15 +69,6 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
           </Typography>
           <Typography variant="body2" sx={{ fontWeight: 500 }}>
             £{subtotal.toFixed(2)}
-          </Typography>
-        </Box>
-
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1.5 }}>
-          <Typography variant="body2" sx={{ color: 'grey.600' }}>
-            Shipping
-          </Typography>
-          <Typography variant="body2" sx={{ fontWeight: 500 }}>
-            £{shipping.toFixed(2)}
           </Typography>
         </Box>
       </Box>

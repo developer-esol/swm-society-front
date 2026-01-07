@@ -202,18 +202,31 @@ export const wishlistService = {
 
         // If some items lack productName (server didn't return it), fetch product details
         const missingNameIds = Array.from(new Set(items.filter(it => !it.productName && it.productId).map(it => it.productId)));
-        if (missingNameIds.length > 0) {
+        const allProductIds = Array.from(new Set(items.map(it => it.productId).filter(Boolean)));
+        
+        if (allProductIds.length > 0) {
           try {
-            const fetched = await Promise.all(missingNameIds.map(pid => productsService.getProductById(pid).catch(() => null)));
-            const nameMap: Record<string, string> = {};
-            fetched.forEach(p => { if (p && p.id) nameMap[p.id] = p.name || p.productName || ''; });
+            const fetched = await Promise.all(allProductIds.map(pid => productsService.getProductById(pid).catch(() => null)));
+            const productMap: Record<string, any> = {};
+            fetched.forEach(p => { 
+              if (p && p.id) {
+                productMap[p.id] = p;
+              }
+            });
+            
             for (const it of items) {
-              if ((!it.productName || it.productName === '') && it.productId && nameMap[it.productId]) {
-                it.productName = nameMap[it.productId];
+              if (it.productId && productMap[it.productId]) {
+                const product = productMap[it.productId];
+                // Update product name if missing
+                if (!it.productName || it.productName === '') {
+                  it.productName = product.name || product.productName || '';
+                }
+                // Add brand name
+                it.brandName = product.brandName || '';
               }
             }
           } catch (err) {
-            // ignore product fetch errors
+            console.warn('[WishlistService] Failed to fetch product details:', err);
           }
         }
 

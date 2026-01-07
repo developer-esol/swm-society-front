@@ -8,12 +8,13 @@ type UpdateQtyInput = { stockId: string; quantity: number };
 
 export function useCartQuery() {
   const queryClient = useQueryClient();
-  const { user, isAuthenticated } = useAuthStore();
+  const { user, isAuthenticated, isInitialized } = useAuthStore();
   const userId = user?.id || localStorage.getItem('userId') || undefined;
 
   console.log('[useCartQuery] ========================================');
   console.log('[useCartQuery] Initializing cart for user:', userId);
   console.log('[useCartQuery] Authenticated:', isAuthenticated);
+  console.log('[useCartQuery] Auth Initialized:', isInitialized);
   console.log('[useCartQuery] Token:', localStorage.getItem('authToken') ? '✅ Present' : '❌ Missing');
   console.log('[useCartQuery] ========================================');
 
@@ -34,9 +35,13 @@ export function useCartQuery() {
     queryKey: cartQueryKey,
     queryFn: async () => {
       console.log('[useCartQuery] Fetching cart data...');
-      if (isAuthenticated && userId) {
-        console.log('[useCartQuery] → Fetching server cart for user:', userId);
-        const items = await cartService.getUserCart(userId);
+      // Always check localStorage for userId even if auth store isn't ready yet
+      const currentUserId = user?.id || localStorage.getItem('userId');
+      const hasToken = !!localStorage.getItem('authToken');
+      
+      if (hasToken && currentUserId) {
+        console.log('[useCartQuery] → Fetching server cart for user:', currentUserId);
+        const items = await cartService.getUserCart(currentUserId);
         console.log('[useCartQuery] ✅ Received', items.length, 'cart items from server');
         return items;
       }
@@ -47,7 +52,7 @@ export function useCartQuery() {
     staleTime: 1000 * 30,
     refetchOnMount: true,
     refetchOnWindowFocus: false,
-    enabled: true,
+    enabled: true, // Always enabled, query will check auth internally
   });
 
   const updateQuantityMutation = useMutation({

@@ -7,6 +7,7 @@ import { authService } from '../../api/services/authService';
 import { useNavigate } from 'react-router-dom';
 import { colors } from '../../theme';
 import type { CartItem } from '../../types/cart';
+import { productsService } from '../../api/services/products';
 
 interface CartItemsProps {
   cartItems: CartItem[];
@@ -24,6 +25,17 @@ export const CartItems: React.FC<CartItemsProps> = ({
   const navigate = useNavigate();
   const [confirmOpen, setConfirmOpen] = React.useState(false);
   const [selected, setSelected] = React.useState<CartItem | null>(null);
+
+  const handleProductClick = async (productId: string) => {
+    try {
+      const product = await productsService.getProductById(productId);
+      if (product) {
+        navigate('/product', { state: { product } });
+      }
+    } catch (error) {
+      console.error('Failed to fetch product:', error);
+    }
+  };
 
   return (
     <Box>
@@ -69,7 +81,7 @@ export const CartItems: React.FC<CartItemsProps> = ({
                   opacity: 0.8,
                 },
               }}
-              onClick={() => navigate(`/product/${item.productId}`)}
+              onClick={() => handleProductClick(item.productId)}
             />
             <Box sx={{ flex: 1 }}>
               <Typography
@@ -86,7 +98,7 @@ export const CartItems: React.FC<CartItemsProps> = ({
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
                 }}
-                onClick={() => navigate(`/product/${item.productId}`)}
+                onClick={() => handleProductClick(item.productId)}
                 title={item.productName}
               >
                 {item.productName}

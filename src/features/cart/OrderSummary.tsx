@@ -44,16 +44,6 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
           </Typography>
         </Box>
 
-        {/* Shipping */}
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-          <Typography sx={{ fontSize: '0.9rem', color: colors.text.disabled }}>
-            Shipping
-          </Typography>
-          <Typography sx={{ fontSize: '0.9rem', color: colors.text.disabled }}>
-            Calculated at checkout
-          </Typography>
-        </Box>
-
         {/* Divider */}
         <Box sx={{ height: '1px', backgroundColor: colors.border.light, mb: 2 }} />
 

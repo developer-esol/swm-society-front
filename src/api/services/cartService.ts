@@ -168,17 +168,26 @@ export const cartService = {
         throw new Error('Invalid price value. Price must be a number.');
       }
 
+      // Calculate total price (quantity × unit price)
+      const totalPrice = numericPrice * item.quantity;
+      
+      console.log('[CartService] Price calculation:');
+      console.log('[CartService]   Unit price:', numericPrice);
+      console.log('[CartService]   Quantity:', item.quantity);
+      console.log('[CartService]   Total price:', totalPrice);
+
       const payload = {
         userId: nestJsUserId, // Use NestJS UUID
         productId: item.productId,
         quantity: item.quantity,
-        price: numericPrice,
+        price: totalPrice, // Send total amount
         size: item.size,
         color: item.color,
         imageUrl: item.productImage,
       } as Record<string, unknown>;
 
       console.log('[CartService] Payload:', payload);
+      console.log('[CartService] Payload.price type:', typeof payload.price);
       console.log('[CartService] Checking if item exists in cart...');
 
       // Check if this exact variant (productId + size + color) already exists in the user's server cart.
@@ -197,14 +206,25 @@ export const cartService = {
           // Compute new quantity based on the existing DB row
           const newQuantity = Math.min(Number(existingRaw.maxQuantity || Infinity), Number(existingRaw.quantity || 0) + Number(item.quantity || 0));
 
+          // Calculate total price for the new quantity
+          const totalPrice = numericPrice * newQuantity;
+          
+          console.log('[CartService] Update price calculation:');
+          console.log('[CartService]   Unit price:', numericPrice);
+          console.log('[CartService]   New quantity:', newQuantity);
+          console.log('[CartService]   Total price:', totalPrice);
+
           const updatePayload = {
             quantity: newQuantity,
-            price: numericPrice,
+            price: totalPrice, // Send total amount
             size: item.size,
             color: item.color,
             imageUrl: item.productImage,
             isActive: true,
           } as Record<string, unknown>;
+          
+          console.log('[CartService] Update payload:', updatePayload);
+          console.log('[CartService] Update payload.price type:', typeof updatePayload.price);
 
           // Call the route-based update (server should update the matching row)
           const resp = await this.updateServerCartItemByUserProduct(nestJsUserId, String(item.productId), updatePayload);

@@ -17,6 +17,7 @@ import CheckoutInfo from './CheckoutInfo';
 // import PaymentInfo from './PaymentInfo';
 import OrderSummary from './OrderSummary';
 import type { CheckoutFormData, FormErrors } from '../../types/checkout';
+import { useCart } from '../cart/useCart';
 
 const CheckoutPageComponent: React.FC = () => {
   const navigate = useNavigate();
@@ -24,14 +25,12 @@ const CheckoutPageComponent: React.FC = () => {
   const [successMessage, setSuccessMessage] = useState('');
   const [submitError, setSubmitError] = useState<string | null>(null);
 
-  // Get cart items for order summary
-  const cart = cartService.getCart();
-  const cartItems = cart.items;
+  // Use the same cart hook as CartPage to ensure consistency
+  const { cartItems, isLoading: cartLoading } = useCart();
 
-  // Calculate totals
+  // Calculate totals (no shipping cost)
   const subtotal = cartItems.reduce((sum, item) => sum + (Number(item.price) * item.quantity), 0);
-  const shipping = 4.99;
-  const total = subtotal + shipping;
+  const total = subtotal; // Total is same as subtotal (no shipping)
 
   const formik = useFormik<CheckoutFormData>({
     initialValues: {
@@ -44,21 +43,35 @@ const CheckoutPageComponent: React.FC = () => {
       city: '',
       postalCode: '',
       country: 'United Kingdom',
-      paymentMethod: 'credit',
+      paymentMethod: 'cash', // Default to cash - no payment processing
       cardName: '',
       cardNumber: '',
-      expiryMonth: 'MM',
-      expiryYear: 'YY',
+      expiryMonth: '',
+      expiryYear: '',
       cvv: '',
     },
     validationSchema: checkoutValidationSchema,
+    validateOnChange: true,
+    validateOnBlur: true,
     onSubmit: async (values) => {
+      console.log('[Checkout] Form submitted with values:', values);
+      console.log('[Checkout] Cart items:', cartItems.length, 'items');
+      
       setIsLoading(true);
       setSubmitError(null);
 
       try {
-        // Process payment via checkout service
-        const result = await checkoutService.processPayment(values);
+        console.log('[Checkout] Calling processPayment...');
+        // Process payment via checkout service with cart items and totals
+        const result = await checkoutService.processPayment(
+          values,
+          cartItems,
+          subtotal,
+          0, // No shipping cost
+          total
+        );
+        
+        console.log('[Checkout] Result:', result);
         
         if (!result.success) {
           setSubmitError(result.message);
@@ -116,6 +129,17 @@ const CheckoutPageComponent: React.FC = () => {
     handleInputChange('cvv', value);
   };
 
+  // Show loading state while fetching cart
+  if (cartLoading) {
+    return (
+      <Container maxWidth="lg" sx={{ py: 8 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
+          <CircularProgress />
+        </Box>
+      </Container>
+    );
+  }
+
   if (successMessage) {
     return (
       <Container maxWidth="lg" sx={{ py: 8 }}>
@@ -147,7 +171,7 @@ const CheckoutPageComponent: React.FC = () => {
         <Box>
           <CheckoutInfo
             formData={formik.values}
-            errors={formik.touched as unknown as FormErrors}
+            errors={formik.errors as FormErrors}
             onInputChange={handleInputChange}
           />
 
@@ -170,7 +194,34 @@ const CheckoutPageComponent: React.FC = () => {
           <MuiButton
             fullWidth
             variant="contained"
-            onClick={() => formik.handleSubmit()}
+            onClick={async () => {
+              console.log('[Checkout] Button clicked');
+              console.log('[Checkout] Form values:', formik.values);
+              console.log('[Checkout] Form errors:', formik.errors);
+              console.log('[Checkout] Is valid:', formik.isValid);
+              console.log('[Checkout] Cart items:', cartItems.length);
+              
+              // Manually trigger validation
+              const errors = await formik.validateForm();
+              console.log('[Checkout] Validation errors:', errors);
+              
+              if (Object.keys(errors).length > 0) {
+                console.error('[Checkout] Form has validation errors:', errors);
+                formik.setTouched({
+                  email: true,
+                  firstName: true,
+                  lastName: true,
+                  houseNumber: true,
+                  streetName: true,
+                  city: true,
+                  postalCode: true,
+                  country: true,
+                });
+                return;
+              }
+              
+              formik.handleSubmit();
+            }}
             disabled={isLoading || cartItems.length === 0}
             sx={{
               backgroundColor: colors.overlay.dark,
@@ -197,7 +248,6 @@ const CheckoutPageComponent: React.FC = () => {
           <OrderSummary
             cartItems={cartItems}
             subtotal={subtotal}
-            shipping={shipping}
             total={total}
           />
         </Box>
