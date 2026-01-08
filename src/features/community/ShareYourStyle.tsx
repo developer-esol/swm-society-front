@@ -82,16 +82,18 @@ export const ShareYourStyle: React.FC<ShareYourStyleProps> = ({ onPostSuccess })
         });
         
         console.log('[ShareYourStyle] ✅ Post created successfully:', newPost);
+        
+        // Call onPostSuccess FIRST to update UI immediately
+        if (onPostSuccess) {
+          onPostSuccess();
+        }
+        
         alert('Post created successfully!');
         
         // Reset form after successful submission
         formik.resetForm();
         setPreviewUrl(null);
         setShowPostForm(false);
-        
-        if (onPostSuccess) {
-          onPostSuccess();
-        }
       } catch (error) {
         console.error('[ShareYourStyle] ❌ Failed to create post:', error);
         

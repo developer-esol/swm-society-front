@@ -30,3 +30,32 @@ export interface RedeemRewardResponse {
   rewardId: string;
   transactionId: string;
 }
+
+export interface LoyaltyBalance {
+  availablePoints: number;
+  totalEarned: number;
+  totalRedeemed: number;
+  totalExpired: number;
+  availableValue: number; // £ discount available
+}
+
+export interface MaxRedeemableCalculation {
+  basketTotal: number;
+  maxRedeemablePoints: number;
+  maxDiscountAmount: number;
+  maxDiscountPercentage: number;
+}
+
+export interface RedeemPointsRequest {
+  userId: number | string;
+  pointsToRedeem: number;
+  basketTotal: number;
+  orderId: string;
+}
+
+export interface RedeemPointsResponse {
+  success: boolean;
+  pointsRedeemed: number;
+  discountAmount: number;
+  message: string;
+}

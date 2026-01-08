@@ -12,12 +12,14 @@ interface OrderSummaryProps {
   cartItems: CartItem[];
   subtotal: number;
   total: number;
+  loyaltyDiscount?: number;
 }
 
 const OrderSummary: React.FC<OrderSummaryProps> = ({
   cartItems,
   subtotal,
   total,
+  loyaltyDiscount = 0,
 }) => {
   return (
     <Paper sx={{ p: 3, bgcolor: colors.background.light, position: 'sticky', top: 100 }}>
@@ -71,6 +73,18 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
             £{subtotal.toFixed(2)}
           </Typography>
         </Box>
+        
+        {/* Loyalty Discount */}
+        {loyaltyDiscount > 0 && (
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1.5 }}>
+            <Typography variant="body2" sx={{ color: 'success.main', fontWeight: 500 }}>
+              Loyalty Discount
+            </Typography>
+            <Typography variant="body2" sx={{ color: 'success.main', fontWeight: 600 }}>
+              -£{loyaltyDiscount.toFixed(2)}
+            </Typography>
+          </Box>
+        )}
       </Box>
 
       <Divider sx={{ my: 2 }} />

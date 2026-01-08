@@ -9,8 +9,10 @@ import {
   Button,
   Chip,
   Paper,
+  IconButton,
+  Tooltip,
 } from '@mui/material'
-import { Edit2 as EditIcon } from 'lucide-react'
+import { Edit as EditIcon } from 'lucide-react'
 import { colors } from '../../../theme'
 import type { LoyaltyTransaction } from '../../../types/Admin/loyalty'
 import { Permission } from '../../../components/Permission'
@@ -83,6 +85,16 @@ const LoyaltyTable: React.FC<LoyaltyTableProps> = ({ transactions, onEditBalance
                 padding: '12px 16px',
               }}
             >
+              User Name
+            </TableCell>
+            <TableCell
+              sx={{
+                fontWeight: 700,
+                color: colors.text.primary,
+                fontSize: '0.9rem',
+                padding: '12px 16px',
+              }}
+            >
               Type
             </TableCell>
             <TableCell
@@ -116,29 +128,6 @@ const LoyaltyTable: React.FC<LoyaltyTableProps> = ({ transactions, onEditBalance
             >
               Description
             </TableCell>
-            <TableCell
-              sx={{
-                fontWeight: 700,
-                color: colors.text.primary,
-                fontSize: '0.9rem',
-                padding: '12px 16px',
-              }}
-              align="right"
-            >
-              Balance
-            </TableCell>
-            <TableCell
-              sx={{
-                fontWeight: 700,
-                color: colors.text.primary,
-                fontSize: '0.9rem',
-                padding: '12px 16px',
-                width: '50px',
-              }}
-              align="center"
-            >
-              Action
-            </TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -154,6 +143,9 @@ const LoyaltyTable: React.FC<LoyaltyTableProps> = ({ transactions, onEditBalance
             >
               <TableCell sx={{ padding: '12px 16px', fontSize: '0.9rem', color: colors.text.primary }}>
                 {transaction.date}
+              </TableCell>
+              <TableCell sx={{ padding: '12px 16px', fontSize: '0.9rem', color: colors.text.primary, fontWeight: 600 }}>
+                {transaction.name}
               </TableCell>
               <TableCell sx={{ padding: '12px 16px' }}>
                 <Chip
@@ -172,53 +164,17 @@ const LoyaltyTable: React.FC<LoyaltyTableProps> = ({ transactions, onEditBalance
                   padding: '12px 16px',
                   fontSize: '0.9rem',
                   fontWeight: 600,
-                  color: transaction.points > 0 ? colors.loyalty.green : colors.status.error,
+                  color: transaction.type === 'earned' ? colors.loyalty.green : colors.status.error,
                 }}
                 align="right"
               >
-                {transaction.points > 0 ? '+' : ''}{transaction.points}
+                {transaction.type === 'earned' ? '+' : '-'}{transaction.points}
               </TableCell>
               <TableCell sx={{ padding: '12px 16px', fontSize: '0.9rem', color: colors.status.error, fontWeight: 600 }}>
                 {transaction.orderId}
               </TableCell>
               <TableCell sx={{ padding: '12px 16px', fontSize: '0.9rem', color: colors.text.primary }}>
                 {transaction.description}
-              </TableCell>
-              <TableCell
-                sx={{
-                  padding: '12px 16px',
-                  fontSize: '0.9rem',
-                  fontWeight: 700,
-                  color: colors.loyalty.primary,
-                }}
-                align="right"
-              >
-                {transaction.balance}
-              </TableCell>
-              <TableCell sx={{ padding: '12px 16px' }} align="center">
-                <Permission permission={PERMISSIONS.UPDATE_LOYALTY_POINTS}>
-                <Button
-                  onClick={() => onEditBalance(transaction)}
-                  sx={{
-                    minWidth: '40px',
-                    width: '40px',
-                    height: '40px',
-                    p: 0,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    border: `1px solid ${colors.border.default}`,
-                    borderRadius: '6px',
-                    color: colors.text.primary,
-                    bgcolor: 'transparent',
-                    '&:hover': {
-                      bgcolor: colors.background.lighter,
-                    },
-                  }}
-                >
-                  <EditIcon size={18} />
-                </Button>
-                </Permission>
               </TableCell>
             </TableRow>
           ))}

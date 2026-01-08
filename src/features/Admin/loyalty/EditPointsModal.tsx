@@ -114,19 +114,28 @@ const EditPointsModal: React.FC<EditPointsModalProps> = ({ open, availablePoints
       <DialogContent sx={{ pt: 3, pb: 2 }}>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
           {/* Current Available Points */}
-          <Box>
+          <Box
+            sx={{
+              bgcolor: colors.background.lighter,
+              border: `1px solid ${colors.border.default}`,
+              borderRadius: '8px',
+              p: 2,
+              textAlign: 'center',
+            }}
+          >
             <Typography
               sx={{
-                fontSize: '0.9rem',
-                color: colors.text.secondary,
+                fontSize: '0.85rem',
+                color: colors.text.primary,
                 mb: 0.5,
+                fontWeight: 600,
               }}
             >
               Current Available Points
             </Typography>
             <Typography
               sx={{
-                fontSize: '1.75rem',
+                fontSize: '2rem',
                 fontWeight: 700,
                 color: colors.loyalty.primary,
               }}
@@ -134,34 +143,6 @@ const EditPointsModal: React.FC<EditPointsModalProps> = ({ open, availablePoints
               {availablePoints.toLocaleString()}
             </Typography>
           </Box>
-
-          {/* Error Messages */}
-          {(errors.points || errors.reason) && (
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-              {errors.points && (
-                <Typography
-                  sx={{
-                    color: colors.status.error,
-                    fontSize: '0.875rem',
-                    fontWeight: 500,
-                  }}
-                >
-                  {errors.points}
-                </Typography>
-              )}
-              {errors.reason && (
-                <Typography
-                  sx={{
-                    color: colors.status.error,
-                    fontSize: '0.875rem',
-                    fontWeight: 500,
-                  }}
-                >
-                  {errors.reason}
-                </Typography>
-              )}
-            </Box>
-          )}
 
           {/* Points Input */}
           <TextField
@@ -171,7 +152,6 @@ const EditPointsModal: React.FC<EditPointsModalProps> = ({ open, availablePoints
             value={points}
             onChange={(e) => setPoints(e.target.value)}
             variant="outlined"
-            size="small"
             error={!!errors.points}
             helperText={errors.points}
             sx={fieldSx}
@@ -187,7 +167,6 @@ const EditPointsModal: React.FC<EditPointsModalProps> = ({ open, availablePoints
             value={reason}
             onChange={(e) => setReason(e.target.value)}
             variant="outlined"
-            size="small"
             multiline
             rows={3}
             error={!!errors.reason}
@@ -195,36 +174,6 @@ const EditPointsModal: React.FC<EditPointsModalProps> = ({ open, availablePoints
             placeholder="e.g., Promotional adjustment, Customer reward, etc."
             sx={fieldSx}
           />
-
-          {/* New Balance Preview */}
-          <Box
-            sx={{
-              bgcolor: `${colors.loyalty.primary}15`,
-              border: `1.5px solid ${colors.loyalty.primary}`,
-              borderRadius: '8px',
-              p: 1.5,
-            }}
-          >
-            <Typography
-              sx={{
-                fontSize: '0.8rem',
-                color: colors.text.gray,
-                mb: 0.5,
-                fontWeight: 500,
-              }}
-            >
-              New Balance
-            </Typography>
-            <Typography
-              sx={{
-                fontSize: '1.3rem',
-                fontWeight: 700,
-                color: colors.loyalty.primary,
-              }}
-            >
-              {(availablePoints + (Number(points) || 0)).toLocaleString()} pts
-            </Typography>
-          </Box>
         </Box>
       </DialogContent>
 

@@ -71,6 +71,7 @@ export const checkoutService = {
 
       // Map cart items to order items format
       const items = cartItems.map(item => ({
+        productId: item.productId,  // ✅ Required for stock reduction
         brandName: item.brandName || 'Unknown',
         productName: item.productName,
         quantity: item.quantity,

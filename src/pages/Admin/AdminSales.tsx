@@ -177,7 +177,7 @@ const AdminSales = () => {
 
        {/* Pagination */}
               {totalPages > 1 && (
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 3 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 4 }}>
                   <Typography sx={{ color: colors.text.secondary, fontSize: '0.9rem' }}>
                     {(currentPage - 1) * 5 + 1}-{Math.min(currentPage * 5, filteredTransactions.length)} of {filteredTransactions.length} transactions
                   </Typography>

@@ -14,12 +14,13 @@ import { colors } from '../../theme';
 import type { CommunityPost } from '../../types/community';
 
 interface StyleInspirationProps {
+  posts?: CommunityPost[]; // Accept posts from parent for real-time updates
   onLike: (postId: string) => Promise<void>;
 }
 
 const INITIAL_POSTS_COUNT = 3;
 
-export const StyleInspiration: React.FC<StyleInspirationProps> = ({ onLike }) => {
+export const StyleInspiration: React.FC<StyleInspirationProps> = ({ posts: externalPosts, onLike }) => {
   const { getAll } = useCommunity();
   const [posts, setPosts] = useState<CommunityPost[]>([]);
   const [allPosts, setAllPosts] = useState<CommunityPost[]>([]);
@@ -27,22 +28,31 @@ export const StyleInspiration: React.FC<StyleInspirationProps> = ({ onLike }) =>
   const [showAll, setShowAll] = useState(false);
   const postsRef = React.useRef<HTMLDivElement>(null);
 
+  // Update posts when external posts change or load initially
   useEffect(() => {
-    const loadPosts = async () => {
-      try {
-        setIsLoading(true);
-        const loadedPosts = await getAll();
-        setAllPosts(loadedPosts);
-        setPosts(loadedPosts.slice(0, INITIAL_POSTS_COUNT));
-      } catch (error) {
-        console.error('Failed to load community posts:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+    if (externalPosts && externalPosts.length > 0) {
+      // Use posts from parent (enables real-time updates)
+      setAllPosts(externalPosts);
+      setPosts(showAll ? externalPosts : externalPosts.slice(0, INITIAL_POSTS_COUNT));
+      setIsLoading(false);
+    } else {
+      // Fetch posts if not provided by parent
+      const loadPosts = async () => {
+        try {
+          setIsLoading(true);
+          const loadedPosts = await getAll();
+          setAllPosts(loadedPosts);
+          setPosts(loadedPosts.slice(0, INITIAL_POSTS_COUNT));
+        } catch (error) {
+          console.error('Failed to load community posts:', error);
+        } finally {
+          setIsLoading(false);
+        }
+      };
 
-    loadPosts();
-  }, [getAll]);
+      loadPosts();
+    }
+  }, [getAll, externalPosts, showAll]);
 
   const handleViewMore = () => {
     setPosts(allPosts);

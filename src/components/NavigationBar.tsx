@@ -8,14 +8,18 @@ import {
     Menu,
     MenuItem,
     Button,
+    Typography,
+    Tooltip,
 } from '@mui/material';
-import { Menu as MenuIcon, ShoppingCart, Favorite, AccountCircle } from '@mui/icons-material';
+import { Menu as MenuIcon, ShoppingCart, Favorite, AccountCircle, Stars } from '@mui/icons-material';
 import { Link, useNavigate } from 'react-router-dom';
 import { DropdownMenu } from './DropdownMenu';
 import { NavLink } from './NavLink';
 import { MobileMenu } from './MobileMenu';
 import { useBrands } from '../hooks/useBrands';
 import { useAuthStore } from '../store/useAuthStore';
+import { useLoyaltyBalance } from '../hooks/useLoyalty';
+import { POINT_VALUE } from '../configs/loyalty';
 import { colors } from '../theme';
 
 export const NavigationBar: React.FC = () => {
@@ -26,6 +30,13 @@ export const NavigationBar: React.FC = () => {
     const [mobileOpen, setMobileOpen] = useState(false);
     const [profileAnchor, setProfileAnchor] = useState<null | HTMLElement>(null);
 
+    // Fetch loyalty balance if user is authenticated
+    const { data: loyaltyBalance } = useLoyaltyBalance(user?.id);
+    const displayedAvailableValue = loyaltyBalance
+        ? (typeof loyaltyBalance.availableValue === 'number' && loyaltyBalance.availableValue > 0
+            ? loyaltyBalance.availableValue
+            : loyaltyBalance.availablePoints * POINT_VALUE)
+        : 0;
 
     // tanstack query to fetch brands
     const { data: brands } = useBrands();
@@ -102,6 +113,45 @@ export const NavigationBar: React.FC = () => {
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                         {isAuthenticated ? (
                             <>
+                                {/* Loyalty Points Badge */}
+                                {loyaltyBalance && (
+                                    <Tooltip 
+                                            title={`£${displayedAvailableValue.toFixed(2)} discount available`}
+                                            arrow
+                                        >
+                                        <Box
+                                            component={Link}
+                                            to="/loyalty-wallet"
+                                            sx={{
+                                                display: { xs: 'none', sm: 'flex' },
+                                                alignItems: 'center',
+                                                gap: 0.5,
+                                                bgcolor: colors.overlay.dark,
+                                                color: colors.text.secondary,
+                                                px: 1.5,
+                                                py: 0.75,
+                                                borderRadius: '20px',
+                                                textDecoration: 'none',
+                                                transition: 'all 0.2s',
+                                                '&:hover': {
+                                                    bgcolor: colors.overlay.darkHover,
+                                                    transform: 'scale(1.05)',
+                                                },
+                                            }}
+                                        >
+                                            <Stars sx={{ fontSize: '1.1rem', color: '#FFD700' }} />
+                                            <Typography
+                                                sx={{
+                                                    fontSize: '0.875rem',
+                                                    fontWeight: 600,
+                                                }}
+                                            >
+                                                {loyaltyBalance.availablePoints.toLocaleString()}
+                                            </Typography>
+                                        </Box>
+                                    </Tooltip>
+                                )}
+                                
                                 <IconButton
                                     onClick={handleProfileClick}
                                     color="inherit"

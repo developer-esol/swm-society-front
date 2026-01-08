@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Container,
   Box,
@@ -17,22 +17,61 @@ import { checkoutValidationSchema } from './checkoutSchema';
 import CheckoutInfo from './CheckoutInfo';
 // import PaymentInfo from './PaymentInfo';
 import OrderSummary from './OrderSummary';
+import LoyaltyRedemption from './LoyaltyRedemption';
 import type { CheckoutFormData, FormErrors } from '../../types/checkout';
 import { useCart } from '../cart/useCart';
+import { useAuthStore } from '../../store/useAuthStore';
+import { useLoyaltyBalance, useMaxRedeemable, useRedeemPoints } from '../../hooks/useLoyalty';
+import { POINT_VALUE } from '../../configs/loyalty';
 
 const CheckoutPageComponent: React.FC = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { user } = useAuthStore();
   const [isLoading, setIsLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [pointsToRedeem, setPointsToRedeem] = useState(0);
+  const [loyaltyDiscount, setLoyaltyDiscount] = useState(0);
 
   // Use the same cart hook as CartPage to ensure consistency
   const { cartItems, isLoading: cartLoading } = useCart();
 
   // Calculate totals (no shipping cost)
   const subtotal = cartItems.reduce((sum, item) => sum + (Number(item.price) * item.quantity), 0);
-  const total = subtotal; // Total is same as subtotal (no shipping)
+  const total = Math.max(0, subtotal - loyaltyDiscount); // Apply loyalty discount
+
+  // Fetch loyalty balance and max redeemable
+  const { data: loyaltyBalance } = useLoyaltyBalance(user?.id);
+  const { data: maxRedeemable } = useMaxRedeemable(subtotal);
+  const redeemMutation = useRedeemPoints();
+
+  // Handle loyalty points redemption
+  const handleRedeemPoints = async (points: number) => {
+    if (points === 0) {
+      // Clear discount
+      setPointsToRedeem(0);
+      setLoyaltyDiscount(0);
+      return;
+    }
+
+    if (!user?.id) {
+      setSubmitError('User not authenticated');
+      return;
+    }
+
+    try {
+      // Calculate discount using POINT_VALUE (currency per 1 point)
+      const discount = points * POINT_VALUE;
+
+      // Update local state immediately for UI feedback
+      setPointsToRedeem(points);
+      setLoyaltyDiscount(discount);
+    } catch (error) {
+      console.error('Failed to calculate discount:', error);
+      setSubmitError('Failed to apply loyalty discount');
+    }
+  };
 
   const formik = useFormik<CheckoutFormData>({
     initialValues: {
@@ -58,11 +97,31 @@ const CheckoutPageComponent: React.FC = () => {
     onSubmit: async (values) => {
       console.log('[Checkout] Form submitted with values:', values);
       console.log('[Checkout] Cart items:', cartItems.length, 'items');
+      console.log('[Checkout] Points to redeem:', pointsToRedeem);
       
       setIsLoading(true);
       setSubmitError(null);
 
       try {
+        // First, redeem loyalty points if any
+        if (pointsToRedeem > 0 && user?.id) {
+          console.log('[Checkout] Redeeming loyalty points...');
+          const redeemResult = await redeemMutation.mutateAsync({
+            userId: user.id,
+            pointsToRedeem,
+            basketTotal: subtotal,
+            orderId: `temp-${Date.now()}`, // Temporary order ID
+          });
+          
+          console.log('[Checkout] Loyalty redemption result:', redeemResult);
+          
+          if (!redeemResult.success) {
+            setSubmitError('Failed to redeem loyalty points');
+            setIsLoading(false);
+            return;
+          }
+        }
+
         console.log('[Checkout] Calling processPayment...');
         // Process payment via checkout service with cart items and totals
         const result = await checkoutService.processPayment(
@@ -87,6 +146,11 @@ const CheckoutPageComponent: React.FC = () => {
         // Invalidate cart queries to force refresh
         const userId = localStorage.getItem('userId');
         queryClient.invalidateQueries({ queryKey: ['cart', userId || 'anonymous'] });
+        
+        // Invalidate loyalty balance query
+        if (user?.id) {
+          queryClient.invalidateQueries({ queryKey: ['loyalty', 'balance', user.id] });
+        }
         
         // Dispatch cart-updated event to update cart icon
         window.dispatchEvent(new Event('cart-updated'));
@@ -254,10 +318,24 @@ const CheckoutPageComponent: React.FC = () => {
 
         {/* Right Column - Order Summary */}
         <Box>
+          {/* Loyalty Points Redemption */}
+          {user && loyaltyBalance && maxRedeemable && (
+            <LoyaltyRedemption
+              availablePoints={loyaltyBalance.availablePoints}
+              maxRedeemablePoints={maxRedeemable.maxRedeemablePoints}
+              maxDiscountAmount={maxRedeemable.maxDiscountAmount}
+              basketTotal={subtotal}
+              onRedeem={handleRedeemPoints}
+              isLoading={redeemMutation.isPending}
+              currentDiscount={loyaltyDiscount}
+            />
+          )}
+          
           <OrderSummary
             cartItems={cartItems}
             subtotal={subtotal}
             total={total}
+            loyaltyDiscount={loyaltyDiscount}
           />
         </Box>
       </Box>

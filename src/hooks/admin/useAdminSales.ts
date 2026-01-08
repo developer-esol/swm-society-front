@@ -10,7 +10,7 @@ export const useAdminSales = () => {
   const [fromDate, setFromDate] = useState('')
   const [toDate, setToDate] = useState('')
 
-  const ITEMS_PER_PAGE = 10
+  const ITEMS_PER_PAGE = 5
 
   // Load orders on mount
   useEffect(() => {

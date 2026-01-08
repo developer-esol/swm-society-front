@@ -42,9 +42,9 @@ export const PointsHistory: React.FC<PointsHistoryProps> = ({ loyaltyData }) => 
     let filtered = loyaltyData.transactions;
     
     if (filterType === 'earned') {
-      filtered = filtered.filter(t => t.type === 'earned');
+      filtered = filtered.filter(t => t.points > 0);
     } else if (filterType === 'redeemed') {
-      filtered = filtered.filter(t => t.type === 'redeemed');
+      filtered = filtered.filter(t => t.points < 0);
     }
     
     return filtered;
@@ -129,12 +129,42 @@ export const PointsHistory: React.FC<PointsHistoryProps> = ({ loyaltyData }) => 
 
           {/* Transaction List */}
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-            {(showAllTransactions 
-              ? getFilteredTransactions()
-              : getFilteredTransactions().slice(0, 4)
-            ).map((transaction) => (
-              <TransactionItem key={transaction.id} transaction={transaction} />
-            ))}
+            {(() => {
+              const filtered = getFilteredTransactions();
+              console.log('Rendering transaction list. Total transactions:', loyaltyData.transactions.length);
+              console.log('Filtered transactions:', filtered.length);
+              console.log('Filter type:', filterType);
+              
+              if (filtered.length === 0) {
+                return (
+                  <Box sx={{ 
+                    textAlign: 'center', 
+                    py: 6,
+                    bgcolor: colors.background.lighter,
+                    borderRadius: 2,
+                    border: `1px dashed ${colors.border.default}`
+                  }}>
+                    <Typography variant="h6" sx={{ color: colors.text.disabled, mb: 1, fontWeight: 600 }}>
+                      No transactions yet
+                    </Typography>
+                    <Typography variant="body2" sx={{ color: colors.text.disabled, mb: 2 }}>
+                      {filterType === 'all' 
+                        ? 'Your points history will appear here once you earn or redeem points'
+                        : filterType === 'earned'
+                        ? 'You haven\'t earned any points yet. Make a purchase to start earning!'
+                        : 'You haven\'t redeemed any points yet. Check out available rewards!'}
+                    </Typography>
+                    <Typography variant="caption" sx={{ color: colors.text.disabled, display: 'block', mt: 1 }}>
+                      💡 Check the browser console for API response details
+                    </Typography>
+                  </Box>
+                );
+              }
+              
+              return (showAllTransactions ? filtered : filtered.slice(0, 4)).map((transaction) => (
+                <TransactionItem key={transaction.id} transaction={transaction} />
+              ));
+            })()}
           </Box>
 
           {/* View All Button */}
@@ -164,8 +194,19 @@ export const PointsHistory: React.FC<PointsHistoryProps> = ({ loyaltyData }) => 
 
 // Transaction Item Component
 const TransactionItem: React.FC<{ transaction: LoyaltyTransaction }> = ({ transaction }) => {
-  const isEarned = transaction.type === 'earned';
+  // Determine if earned based on points value: positive = earned, negative = redeemed
+  const isEarned = transaction.points > 0;
   const Icon = isEarned ? Add : Remove;
+  
+  // Debug log for each transaction
+  console.log('Transaction:', {
+    id: transaction.id,
+    type: transaction.type,
+    points: transaction.points,
+    isEarned: isEarned ? 'EARNED' : 'REDEEMED',
+    description: transaction.description,
+    orderId: transaction.orderId
+  });
 
   return (
     <Box sx={{
@@ -175,11 +216,15 @@ const TransactionItem: React.FC<{ transaction: LoyaltyTransaction }> = ({ transa
       p: 3,
       bgcolor: colors.background.light,
       borderRadius: 2,
-      border: `1px solid ${colors.border.default}`,
+      border: `2px solid ${isEarned ? colors.loyalty.lightGreen : colors.loyalty.lightRed}`,
+      borderLeftWidth: '4px',
+      borderLeftColor: isEarned ? colors.loyalty.green : colors.loyalty.orange,
       transition: 'all 0.2s',
       '&:hover': {
         bgcolor: colors.background.lighter,
-        borderColor: colors.border.light,
+        borderColor: isEarned ? colors.loyalty.green : colors.loyalty.orange,
+        transform: 'translateY(-2px)',
+        boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
       }
     }}>
       <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2.5, flex: 1 }}>
@@ -197,40 +242,91 @@ const TransactionItem: React.FC<{ transaction: LoyaltyTransaction }> = ({ transa
           <Icon sx={{ color: isEarned ? colors.loyalty.green : colors.loyalty.orange, fontSize: '24px' }} />
         </Box>
         <Box sx={{ flex: 1 }}>
-          {/* Line 1: Transaction Description */}
-          <Typography variant="body2" sx={{ fontWeight: 600, color: colors.text.primary, mb: 0.5 }}>
-            {transaction.description}
-          </Typography>
+          {/* Line 1: Transaction Type Badge + Description */}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+            <Chip 
+              label={isEarned ? 'EARNED' : 'REDEEMED'} 
+              size="small"
+              sx={{ 
+                height: 20,
+                fontSize: '0.7rem',
+                fontWeight: 700,
+                bgcolor: isEarned ? colors.loyalty.lightGreen : colors.loyalty.lightOrange,
+                color: isEarned ? colors.loyalty.green : colors.loyalty.orange,
+                border: `1px solid ${isEarned ? colors.loyalty.green : colors.loyalty.orange}`,
+              }} 
+            />
+            <Typography variant="body2" sx={{ fontWeight: 600, color: colors.text.primary }}>
+              {transaction.description}
+            </Typography>
+          </Box>
           
-          {/* Line 2: Order ID */}
-          <Typography variant="caption" sx={{ color: colors.text.disabled }}>
-            {transaction.orderId}
-          </Typography>
+          {/* Line 2: Order ID (if available) */}
+          {transaction.orderId && (
+            <Typography variant="caption" sx={{ color: colors.text.disabled, display: 'block', mb: 0.25 }}>
+              Order: {transaction.orderId}
+            </Typography>
+          )}
           
           {/* Line 3: Date and Time */}
           <Typography variant="caption" sx={{ color: colors.text.disabled, display: 'block' }}>
-            {new Date(transaction.date).toLocaleDateString('en-US', {
-              year: 'numeric',
-              month: 'short',
-              day: 'numeric',
-            })} at {new Date(transaction.date).toLocaleTimeString('en-US', {
-              hour: '2-digit',
-              minute: '2-digit',
-            })}
+            {(() => {
+              try {
+                if (!transaction.date) {
+                  console.warn('No date for transaction:', transaction.id);
+                  return 'Date not available';
+                }
+                
+                // Parse date - handle ISO strings and timestamps
+                const dateVal = transaction.date;
+                let dateObj: Date;
+                
+                if (dateVal instanceof Date) {
+                  dateObj = dateVal;
+                } else if (typeof dateVal === 'string') {
+                  // Handle ISO date strings (e.g., "2026-01-08T11:19:11.068Z")
+                  dateObj = new Date(dateVal);
+                } else if (typeof dateVal === 'number') {
+                  // Handle timestamps
+                  const ms = String(dateVal).length === 10 ? dateVal * 1000 : dateVal;
+                  dateObj = new Date(ms);
+                } else {
+                  console.warn('Unexpected date format:', typeof dateVal, dateVal);
+                  return 'Date not available';
+                }
+                
+                // Validate the date
+                if (isNaN(dateObj.getTime())) {
+                  console.error('Invalid date for transaction:', transaction.id, dateVal);
+                  return 'Date not available';
+                }
+                
+                return `${dateObj.toLocaleDateString('en-GB', { year: 'numeric', month: 'short', day: 'numeric' })} at ${dateObj.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: true })}`;
+              } catch (err) {
+                console.error('Error parsing transaction date:', err, transaction);
+                return 'Date not available';
+              }
+            })()}
           </Typography>
         </Box>
       </Box>
-      <Box sx={{ textAlign: 'right', flexShrink: 0 }}>
-        <Typography variant="body2" sx={{
+      <Box sx={{ textAlign: 'right', flexShrink: 0, minWidth: 100 }}>
+        {/* Points Display */}
+        <Typography variant="h6" sx={{
           fontWeight: 'bold',
           color: isEarned ? colors.loyalty.green : colors.button.primary,
           mb: 0.5,
-          fontSize: '1.1rem',
         }}>
-          {isEarned ? '+' : ''}{transaction.points}
+          {isEarned ? '+' : '-'}{Math.abs(transaction.points)}
         </Typography>
-        <Typography variant="caption" sx={{ color: colors.text.disabled, display: 'block' }}>
-          Balance: {transaction.balance}
+        
+        {/* Points Label */}
+        <Typography variant="caption" sx={{ 
+          color: isEarned ? colors.loyalty.greenDark : colors.loyalty.darkRed, 
+          display: 'block',
+          fontWeight: 600,
+        }}>
+          {isEarned ? 'Points Earned' : 'Discount Redeemed'}
         </Typography>
       </Box>
     </Box>
