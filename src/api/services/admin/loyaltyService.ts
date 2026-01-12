@@ -92,16 +92,20 @@ class AdminLoyaltyService {
   /**
    * Get all users
    */
-  async getCustomers(): Promise<Array<{ name: string; id: string }>> {
+  async getCustomers(): Promise<Array<{ name: string; id: string; uuid?: string }>> {
     try {
       const response = await authApiClient.get<any>('/api/users')
       const data = response?.data || response
       const users = Array.isArray(data) ? data : []
 
-      return users.map((user: any) => ({
-        name: user.fullName || user.email,
-        id: String(user.id),
-      }))
+      return users.map((user: any) => {
+        console.log('User data:', user) // Debug log to see actual structure
+        return {
+          name: user.fullName || user.email,
+          id: String(user.externalId || user.id), // externalId is the numeric ID
+          uuid: user.id, // id field contains the UUID
+        }
+      })
     } catch (error) {
       console.error('Failed to fetch customers:', error)
       return []

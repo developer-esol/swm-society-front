@@ -1,69 +1,52 @@
 import React, { useEffect, useState } from 'react';
 import { Box, Container, CircularProgress } from '@mui/material';
 import { Typography } from '@mui/material';
+import { useLoyaltyBalance, useLoyaltyHistory } from '../../hooks/useLoyalty';
 import { loyaltyService } from '../../api/services/loyaltyService';
 import { useAuthStore } from '../../store/useAuthStore';
 import { colors } from '../../theme';
-import type { LoyaltyBalance, LoyaltyTransaction } from '../../types/loyalty';
 import { LoyaltyStatsOverview } from './LoyaltyStatsOverview';
 import { PointsHistory } from './PointsHistory';
+import { Leaderboard } from './Leaderboard';
 
 export const LoyaltyWalletPageComponent: React.FC = () => {
-  const { user, isAuthenticated } = useAuthStore();
-  const [balance, setBalance] = useState<LoyaltyBalance | null>(null);
-  const [transactions, setTransactions] = useState<LoyaltyTransaction[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { user } = useAuthStore();
+  
+  // Use React Query hooks for automatic cache invalidation
+  const { data: balance, isLoading: isLoadingBalance, error: balanceError } = useLoyaltyBalance(user?.id);
+  const { data: historyData, isLoading: isLoadingHistory, error: historyError } = useLoyaltyHistory(user?.id);
+  
+  // Fetch leaderboard data
+  const [leaderboardUsers, setLeaderboardUsers] = useState<any[]>([]);
+  const [isLoadingLeaderboard, setIsLoadingLeaderboard] = useState(true);
 
   useEffect(() => {
-    const fetchLoyaltyData = async () => {
-      // If no user yet, just keep loading (auth might still be initializing)
-      if (!user?.id) {
-        return;
-      }
-
+    const fetchLeaderboard = async () => {
       try {
-        setIsLoading(true);
-        setError(null);
-        
-        // Fetch balance and transaction history in parallel
-        const [balanceData, historyData] = await Promise.all([
-          loyaltyService.getUserBalance(user.id),
-          loyaltyService.getTransactionHistory(user.id),
-        ]);
-        
-        console.log('Balance data:', balanceData);
-        console.log('History data:', historyData);
-        console.log('Transactions array:', historyData.transactions);
-        console.log('Transactions count:', historyData.transactions?.length || 0);
-        
-        setBalance(balanceData);
-        setTransactions(historyData.transactions || []);
-        
-        if (!historyData.transactions || historyData.transactions.length === 0) {
-          console.warn('No transactions found for user:', user.id);
-          console.log('This could mean:');
-          console.log('1. User has no transaction history yet');
-          console.log('2. API is not returning transactions');
-          console.log('3. Transaction mapping failed in loyaltyService');
-        } else {
-          console.log('✅ Successfully loaded', historyData.transactions.length, 'transactions');
-          console.log('Sample transaction:', historyData.transactions[0]);
-        }
-      } catch (err) {
-        setError('Failed to load loyalty wallet data');
-        console.error(err);
+        console.log('Fetching leaderboard data...');
+        const data = await loyaltyService.getLeaderboard();
+        console.log('Leaderboard data received:', data);
+        console.log('Leaderboard data length:', data?.length);
+        console.log('Is array?', Array.isArray(data));
+        console.log('First user:', data?.[0]);
+        setLeaderboardUsers(data || []);
+      } catch (error) {
+        console.error('Failed to fetch leaderboard:', error);
+        setLeaderboardUsers([]);
       } finally {
-        setIsLoading(false);
+        setIsLoadingLeaderboard(false);
       }
     };
-
-    fetchLoyaltyData();
-  }, [user?.id]);
+    
+    fetchLeaderboard();
+  }, []);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
+
+  const isLoading = isLoadingBalance || isLoadingHistory;
+  const error = balanceError || historyError;
 
   if (isLoading) {
     return (
@@ -77,11 +60,13 @@ export const LoyaltyWalletPageComponent: React.FC = () => {
     return (
       <Container maxWidth="lg" sx={{ py: 6 }}>
         <Box sx={{ textAlign: 'center' }}>
-          <Typography color="error">{error || 'Failed to load loyalty data'}</Typography>
+          <Typography color="error">{error ? String(error) : 'Failed to load loyalty data'}</Typography>
         </Box>
       </Container>
     );
   }
+
+  const transactions = historyData?.transactions || [];
 
   // Convert balance data to match the expected format
   const loyaltyData = {
@@ -97,7 +82,7 @@ export const LoyaltyWalletPageComponent: React.FC = () => {
     <Box sx={{ bgcolor: colors.background.default, width: '100%', minHeight: '100vh' }}>
       <Container maxWidth="lg" sx={{ py: 6 }}>
         {/* Stats Overview */}
-        <LoyaltyStatsOverview loyaltyData={loyaltyData} />
+        <LoyaltyStatsOverview loyaltyData={loyaltyData} leaderboardUsers={leaderboardUsers} currentUserId={user?.id} />
         
         {/* Points History Section */}
         <Box sx={{ mt: 6 }}>

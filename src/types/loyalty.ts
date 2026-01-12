@@ -59,3 +59,11 @@ export interface RedeemPointsResponse {
   discountAmount: number;
   message: string;
 }
+
+export interface LeaderboardUser {
+  userId: string;
+  userName: string;
+  totalEarned: number;
+  availablePoints: number;
+  rank: number;
+}

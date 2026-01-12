@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react'
-import { Box, Container, Typography, TextField, Select, MenuItem, FormControl, Pagination, Stack, Autocomplete, IconButton } from '@mui/material'
+import { Box, Container, Typography, TextField, Select, MenuItem, FormControl, Pagination, Stack, Autocomplete, IconButton, Button } from '@mui/material'
 import { Search as SearchIcon } from '@mui/icons-material'
 import { useAdminLoyalty } from '../../hooks/admin'
 import { adminLoyaltyService } from '../../api/services/admin/loyaltyService'
-import { EditPointsModal, LoyaltyTable, CustomerInfoBox } from '../../features/Admin/loyalty'
+import { EditPointsModal, LoyaltyTable, CustomerInfoBox, AddPointsModal } from '../../features/Admin/loyalty'
 import { colors } from '../../theme'
 import AdminBreadcrumbs from '../../components/Admin/AdminBreadcrumbs'
 import type { LoyaltyTransactionType } from '../../types/Admin/loyalty'
@@ -11,10 +11,12 @@ import type { LoyaltyTransactionType } from '../../types/Admin/loyalty'
 const AdminLoyalty = () => {
   const { customerData, transactions, currentPage, totalPages, filterType, isLoading, aggregatedStats, handlePageChange, handleFilterChange, handleAddPoints, handleSelectCustomer } = useAdminLoyalty()
   const [editModalOpen, setEditModalOpen] = useState(false)
+  const [addPointsModalOpen, setAddPointsModalOpen] = useState(false)
   const [searchResults, setSearchResults] = useState<Array<{ name: string; id: string }>>([])
   const [searchQuery, setSearchQuery] = useState('')
   const [allUsers, setAllUsers] = useState<Array<{ name: string; id: string }>>([])
   const [selectedUser, setSelectedUser] = useState<{ name: string; id: string } | null>(null)
+  const [refreshTrigger, setRefreshTrigger] = useState(0)
 
   // Load all users on mount for dropdown
   useEffect(() => {
@@ -320,6 +322,21 @@ const AdminLoyalty = () => {
 
             {/* Filter Options */}
             <Box sx={{ display: 'flex', gap: 2 }}>
+              {/* Add Points Button */}
+              <Button
+                onClick={() => setAddPointsModalOpen(true)}
+                variant="contained"
+                sx={{
+                  bgcolor: '#C62C2B',
+                  color: 'white',
+                  fontWeight: 600,
+                  '&:hover': {
+                    bgcolor: '#A82421',
+                  },
+                }}
+              >
+                Add Points
+              </Button>
               <FormControl size="small" sx={{ minWidth: 150 }}>
                 <Select
                   value={filterType}
@@ -414,6 +431,21 @@ const AdminLoyalty = () => {
         availablePoints={customerData?.availablePoints || 0}
         onClose={handleCloseEditModal}
         onSave={handleSavePoints}
+      />
+
+      {/* Add Points Modal */}
+      <AddPointsModal
+        open={addPointsModalOpen}
+        users={allUsers}
+        onClose={() => setAddPointsModalOpen(false)}
+        onSuccess={() => {
+          setAddPointsModalOpen(false)
+          setRefreshTrigger(prev => prev + 1)
+          // Reload current customer data if selected
+          if (selectedUser) {
+            handleSelectCustomer(selectedUser.id)
+          }
+        }}
       />
     </Box>
   )

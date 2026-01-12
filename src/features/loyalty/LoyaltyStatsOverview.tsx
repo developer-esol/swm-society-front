@@ -1,16 +1,22 @@
 import React from 'react';
-import { Box, Card, CardContent, Typography } from '@mui/material';
-import { TrendingUp, CardGiftcard } from '@mui/icons-material';
+import { Box, Card, CardContent, Typography, Avatar } from '@mui/material';
+import { TrendingUp, CardGiftcard, EmojiEvents } from '@mui/icons-material';
 import { colors } from '../../theme';
-import type { LoyaltyWallet } from '../../types/loyalty';
+import type { LoyaltyWallet, LeaderboardUser } from '../../types/loyalty';
 import { POINT_VALUE } from '../../configs/loyalty';
 import { useMemo } from 'react';
 
 interface LoyaltyStatsOverviewProps {
   loyaltyData: LoyaltyWallet;
+  leaderboardUsers?: LeaderboardUser[];
+  currentUserId?: string;
 }
 
-export const LoyaltyStatsOverview: React.FC<LoyaltyStatsOverviewProps> = ({ loyaltyData }) => {
+export const LoyaltyStatsOverview: React.FC<LoyaltyStatsOverviewProps> = ({ loyaltyData, leaderboardUsers, currentUserId }) => {
+  // Check if current user is in top 5
+  const currentUserRank = leaderboardUsers?.find(u => u.userId === currentUserId)?.rank;
+  const isInTop5 = currentUserRank && currentUserRank <= 5;
+  
   return (
     <Box>
       {/* Header with Expiring Soon */}
@@ -19,9 +25,39 @@ export const LoyaltyStatsOverview: React.FC<LoyaltyStatsOverviewProps> = ({ loya
           <Typography variant="h3" sx={{ fontWeight: 'bold', mb: 2 }}>
             Loyalty Rewards Program
           </Typography>
-          <Typography variant="body1" sx={{ color: 'text.secondary' }}>
-            Track your points and gain exclusive benefits
-          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Typography variant="body1" sx={{ color: 'text.secondary' }}>
+              Track your points and gain exclusive benefits
+            </Typography>
+            {isInTop5 && (
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1,
+                  background: 'linear-gradient(135deg, #FFD700 0%, #FFA500 100%)',
+                  color: 'white',
+                  px: 2.5,
+                  py: 1,
+                  borderRadius: 3,
+                  fontSize: '0.9rem',
+                  fontWeight: 'bold',
+                  boxShadow: '0 4px 12px rgba(255, 215, 0, 0.3)',
+                  border: '2px solid #FFD700',
+                }}
+              >
+                <EmojiEvents sx={{ fontSize: '22px' }} />
+                <Box>
+                  <Typography sx={{ fontSize: '0.75rem', fontWeight: 500, opacity: 0.95 }}>
+                    Top Earner
+                  </Typography>
+                  <Typography sx={{ fontSize: '1rem', fontWeight: 'bold', lineHeight: 1 }}>
+                    #{currentUserRank}
+                  </Typography>
+                </Box>
+              </Box>
+            )}
+          </Box>
         </Box>
         
         {/* Expiring Soon Box - derived from transactions if expiry info exists */}
@@ -80,7 +116,7 @@ export const LoyaltyStatsOverview: React.FC<LoyaltyStatsOverviewProps> = ({ loya
       {/* Main Stats Cards */}
       <Box sx={{
         display: 'grid',
-        gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' },
+        gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', lg: 'repeat(4, 1fr)' },
         gap: 3,
       }}>
         {/* Available Points Card */}
@@ -202,6 +238,124 @@ export const LoyaltyStatsOverview: React.FC<LoyaltyStatsOverviewProps> = ({ loya
                 }
               })()}
             </Typography>
+          </CardContent>
+        </Card>
+
+        {/* Leaderboard Card */}
+        <Card sx={{
+          bgcolor: colors.background.paper,
+          border: `1px solid ${colors.border.default}`,
+          borderRadius: 3,
+        }}>
+          <CardContent>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Typography variant="body2" sx={{ color: colors.text.disabled, fontWeight: 500 }}>
+                  Top Earners
+                </Typography>
+              </Box>
+              <EmojiEvents sx={{ color: '#FFD700', fontSize: '28px' }} />
+            </Box>
+            
+            {/* Leaderboard List */}
+            {leaderboardUsers && leaderboardUsers.length > 0 ? (
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+                {leaderboardUsers.slice(0, 5).map((user, index) => {
+                  const getRankIcon = (rank: number) => {
+                    switch (rank) {
+                      case 1: return '🥇';
+                      case 2: return '🥈';
+                      case 3: return '🥉';
+                      default: return `#${rank}`;
+                    }
+                  };
+                  
+                  const getRankColor = (rank: number) => {
+                    switch (rank) {
+                      case 1: return '#FFD700';
+                      case 2: return '#C0C0C0';
+                      case 3: return '#CD7F32';
+                      default: return colors.text.secondary;
+                    }
+                  };
+                  
+                  const isCurrentUser = currentUserId && user.userId === currentUserId;
+                  
+                  return (
+                    <Box
+                      key={user.userId}
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 1.5,
+                        p: 1,
+                        bgcolor: user.rank === 1 ? 'rgba(255, 215, 0, 0.1)' : 'transparent',
+                        borderRadius: 1,
+                        border: user.rank <= 3 ? `1px solid ${getRankColor(user.rank)}20` : 'none',
+                      }}
+                    >
+                      {/* Rank */}
+                      <Box
+                        sx={{
+                          minWidth: 32,
+                          height: 32,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: user.rank <= 3 ? '20px' : '14px',
+                          fontWeight: 'bold',
+                          color: getRankColor(user.rank),
+                          bgcolor: user.rank <= 3 ? `${getRankColor(user.rank)}15` : colors.background.lighter,
+                          borderRadius: 1,
+                        }}
+                      >
+                        {getRankIcon(user.rank)}
+                      </Box>
+                      
+                      {/* User Name */}
+                      <Box sx={{ flex: 1, minWidth: 0 }}>
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            fontWeight: 600,
+                            fontSize: '0.85rem',
+                            color: colors.text.dark,
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                          }}
+                        >
+                          {user.userName}
+                        </Typography>
+                      </Box>
+                      
+                      {/* You Badge for Current User */}
+                      {isCurrentUser && (
+                        <Box
+                          sx={{
+                            bgcolor: colors.button.primary,
+                            color: 'white',
+                            px: 1.5,
+                            py: 0.5,
+                            borderRadius: 1,
+                            fontSize: '0.7rem',
+                            fontWeight: 'bold',
+                          }}
+                        >
+                          You
+                        </Box>
+                      )}
+                    </Box>
+                  );
+                })}
+              </Box>
+            ) : (
+              <Box sx={{ textAlign: 'center', py: 2 }}>
+                <Typography variant="body2" sx={{ color: colors.text.secondary }}>
+                  No leaderboard data
+                </Typography>
+              </Box>
+            )}
           </CardContent>
         </Card>
       </Box>

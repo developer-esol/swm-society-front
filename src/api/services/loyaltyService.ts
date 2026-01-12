@@ -299,4 +299,30 @@ export const loyaltyService = {
       throw error;
     }
   },
+
+  /**
+   * Get top users by total earned points (leaderboard)
+   * GET /loyalty-points/leaderboard?limit=5
+   */
+  async getLeaderboard(limit: number = 5): Promise<any[]> {
+    try {
+      const response = await apiClient.get<any>(`/loyalty-points/leaderboard?limit=${limit}`);
+      const data = response?.data || response;
+      
+      // Map the response to include rank
+      const leaderboard = Array.isArray(data) ? data : [];
+      return leaderboard.map((user: any, index: number) => ({
+        userId: user.userId || user.id,
+        userName: user.userName || user.name || user.email || 'Unknown User',
+        email: user.email,
+        profileUrl: user.profileUrl,
+        totalEarned: Number(user.totalEarned || 0),
+        availablePoints: Number(user.availablePoints || 0),
+        rank: index + 1,
+      }));
+    } catch (error) {
+      console.error('Failed to fetch leaderboard:', error);
+      return [];
+    }
+  },
 };

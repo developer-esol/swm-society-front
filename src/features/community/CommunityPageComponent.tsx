@@ -79,7 +79,7 @@ export const CommunityPageComponent: React.FC<CommunityPageComponentProps> = ({ 
       <CommunityHero onShareYourLook={handleShareYourLook} />
 
       {/* Style Inspiration Section */}
-      <StyleInspiration onLike={handleLikePost} />
+      <StyleInspiration posts={posts} onLike={handleLikePost} />
 
       {/* Community Spotlight Section */}
       {spotlightPosts.length > 0 && (
