@@ -1,6 +1,8 @@
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Chip, Box, Typography, IconButton } from '@mui/material'
 import { Eye, Edit } from 'lucide-react'
 import { colors } from '../../../theme'
+import { Permission } from '../../../components/Permission'
+import { PERMISSIONS } from '../../../configs/permissions'
 import type { Order } from '../../../types/order'
 
 interface SalesTableProps {
@@ -84,34 +86,41 @@ const SalesTable = ({ transactions, onView, onEdit }: SalesTableProps) => {
                 </TableCell>
                 <TableCell align="center">
                   <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
-                    <IconButton
-                      onClick={() => onView(order)}
-                      sx={{
-                        width: '40px',
-                        height: '40px',
-                        border: `1px solid ${colors.border.default}`,
-                        borderRadius: '8px',
-                        '&:hover': {
-                          bgcolor: colors.background.light,
-                        },
-                      }}
-                    >
-                      <Eye size={18} color={colors.text.primary} />
-                    </IconButton>
-                    <IconButton
-                      onClick={() => onEdit(order)}
-                      sx={{
-                        width: '40px',
-                        height: '40px',
-                        border: `1px solid ${colors.border.default}`,
-                        borderRadius: '8px',
-                        '&:hover': {
-                          bgcolor: colors.background.light,
-                        },
-                      }}
-                    >
-                      <Edit size={18} color={colors.text.primary} />
-                    </IconButton>
+                    {/* View Icon - Requires VIEW_SALES permission */}
+                    <Permission permission={PERMISSIONS.VIEW_SALES}>
+                      <IconButton
+                        onClick={() => onView(order)}
+                        sx={{
+                          width: '40px',
+                          height: '40px',
+                          border: `1px solid ${colors.border.default}`,
+                          borderRadius: '8px',
+                          '&:hover': {
+                            bgcolor: colors.background.light,
+                          },
+                        }}
+                      >
+                        <Eye size={18} color={colors.text.primary} />
+                      </IconButton>
+                    </Permission>
+                    
+                    {/* Edit Icon - Requires UPDATE_SALES permission */}
+                    <Permission permission={PERMISSIONS.UPDATE_SALES}>
+                      <IconButton
+                        onClick={() => onEdit(order)}
+                        sx={{
+                          width: '40px',
+                          height: '40px',
+                          border: `1px solid ${colors.border.default}`,
+                          borderRadius: '8px',
+                          '&:hover': {
+                            bgcolor: colors.background.light,
+                          },
+                        }}
+                      >
+                        <Edit size={18} color={colors.text.primary} />
+                      </IconButton>
+                    </Permission>
                   </Box>
                 </TableCell>
               </TableRow>

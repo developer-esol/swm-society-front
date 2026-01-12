@@ -18,12 +18,14 @@ import {
 } from '@mui/material'
 import { Edit as EditIcon, Camera as CameraIcon, Lock as LockIcon, Save as SaveIcon, Cancel as CancelIcon } from '@mui/icons-material'
 import { useUserProfile } from '../hooks/useUserProfile'
+import { authService } from '../api/services/authService'
 import { colors } from '../theme'
 
 const ProfilePage: React.FC = () => {
   const { profile, isLoading, error, updateProfile, updateProfilePicture, changePassword } = useUserProfile()
   const [isEditing, setIsEditing] = useState(false)
   const [passwordDialogOpen, setPasswordDialogOpen] = useState(false)
+  const [resetEmail, setResetEmail] = useState('')
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
@@ -80,20 +82,23 @@ const ProfilePage: React.FC = () => {
   }
 
   const handleChangePassword = async () => {
-    if (newPassword !== confirmPassword) {
-      alert('Passwords do not match')
+    if (!resetEmail) {
+      alert('Please enter your email address')
       return
     }
-    const result = await changePassword(currentPassword, newPassword)
-    if (result.success) {
-      setSuccessMessage('Password changed successfully!')
+    if (resetEmail !== profile?.email) {
+      alert('The email address does not match your registered email')
+      return
+    }
+    try {
+      const result = await authService.requestPasswordReset(resetEmail)
+      setSuccessMessage('Password reset link sent to your email!')
       setPasswordDialogOpen(false)
-      setCurrentPassword('')
-      setNewPassword('')
-      setConfirmPassword('')
-      setTimeout(() => setSuccessMessage(null), 3000)
-    } else {
-      alert(result.error || 'Failed to change password')
+      setResetEmail('')
+      setTimeout(() => setSuccessMessage(null), 5000)
+    } catch (error: any) {
+      const errorMessage = error?.response?.data?.message || error?.message || 'Failed to send password reset email'
+      alert(errorMessage)
     }
   }
 
@@ -185,48 +190,6 @@ const ProfilePage: React.FC = () => {
               Member since: {new Date(profile.joinDate).toLocaleDateString()}
             </Typography>
           </Box>
-          <Box>
-            {!isEditing ? (
-              <Button
-                variant="contained"
-                startIcon={<EditIcon />}
-                onClick={() => setIsEditing(true)}
-                sx={{
-                  bgcolor: colors.button.primary,
-                  color: colors.text.secondary,
-                  '&:hover': { bgcolor: colors.button.primaryHover },
-                }}
-              >
-                Edit Profile
-              </Button>
-            ) : (
-              <Box sx={{ display: 'flex', gap: 1 }}>
-                <Button
-                  variant="contained"
-                  startIcon={<SaveIcon />}
-                  onClick={handleSaveProfile}
-                  sx={{
-                    bgcolor: colors.button.primary,
-                    color: colors.text.secondary,
-                    '&:hover': { bgcolor: colors.button.primaryHover },
-                  }}
-                >
-                  Save
-                </Button>
-                <Button
-                  variant="outlined"
-                  startIcon={<CancelIcon />}
-                  onClick={() => setIsEditing(false)}
-                  sx={{
-                    borderColor: colors.border.default,
-                    color: colors.text.primary,
-                  }}
-                >
-                  Cancel
-                </Button>
-              </Box>
-            )}
-          </Box>
         </Box>
       </Card>
 
@@ -239,91 +202,26 @@ const ProfilePage: React.FC = () => {
           <Box sx={{ display: 'flex', gap: 2, flexDirection: { xs: 'column', sm: 'row' } }}>
             <TextField
               label="First Name"
-              value={isEditing ? editData.firstName : profile.firstName}
-              onChange={handleEditChange('firstName')}
-              disabled={!isEditing}
-              fullWidth
-              size="small"
-            />
-            <TextField
-              label="Last Name"
-              value={isEditing ? editData.lastName : profile.lastName}
-              onChange={handleEditChange('lastName')}
-              disabled={!isEditing}
-              fullWidth
-              size="small"
-            />
-          </Box>
-          <Box sx={{ display: 'flex', gap: 2, flexDirection: { xs: 'column', sm: 'row' } }}>
-            <TextField
-              label="Email"
-              value={profile.email}
+              value={profile.firstName}
               disabled
               fullWidth
               size="small"
             />
             <TextField
-              label="Phone"
-              value={isEditing ? editData.phone : profile.phone}
-              onChange={handleEditChange('phone')}
-              disabled={!isEditing}
+              label="Last Name"
+              value={profile.lastName}
+              disabled
               fullWidth
               size="small"
             />
           </Box>
           <TextField
-            label="Bio"
-            value={isEditing ? editData.bio : profile.bio}
-            onChange={handleEditChange('bio')}
-            disabled={!isEditing}
-            fullWidth
-            multiline
-            rows={3}
-            size="small"
-          />
-        </Box>
-      </Card>
-
-      {/* Address Information */}
-      <Card sx={{ p: 4, mb: 3, border: `1px solid ${colors.border.default}` }}>
-        <Typography variant="h6" sx={{ mb: 3, fontWeight: 600, color: colors.text.primary }}>
-          Address Information
-        </Typography>
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-          <TextField
-            label="Address"
-            value={isEditing ? editData.address : profile.address}
-            onChange={handleEditChange('address')}
-            disabled={!isEditing}
+            label="Email"
+            value={profile.email}
+            disabled
             fullWidth
             size="small"
           />
-          <Box sx={{ display: 'flex', gap: 2, flexDirection: { xs: 'column', sm: 'row' } }}>
-            <TextField
-              label="City"
-              value={isEditing ? editData.city : profile.city}
-              onChange={handleEditChange('city')}
-              disabled={!isEditing}
-              fullWidth
-              size="small"
-            />
-            <TextField
-              label="Postal Code"
-              value={isEditing ? editData.postalCode : profile.postalCode}
-              onChange={handleEditChange('postalCode')}
-              disabled={!isEditing}
-              fullWidth
-              size="small"
-            />
-            <TextField
-              label="Country"
-              value={isEditing ? editData.country : profile.country}
-              onChange={handleEditChange('country')}
-              disabled={!isEditing}
-              fullWidth
-              size="small"
-            />
-          </Box>
         </Box>
       </Card>
 
@@ -347,33 +245,25 @@ const ProfilePage: React.FC = () => {
 
       {/* Change Password Dialog */}
       <Dialog open={passwordDialogOpen} onClose={() => setPasswordDialogOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Change Password</DialogTitle>
+        <DialogTitle>Reset Password</DialogTitle>
         <DialogContent>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}>
+          <Box sx={{ py: 2 }}>
+            <Typography variant="body1" sx={{ mb: 2 }}>
+              Enter your email address to receive a password reset link:
+            </Typography>
             <TextField
-              label="Current Password"
-              type="password"
-              value={currentPassword}
-              onChange={(e) => setCurrentPassword(e.target.value)}
+              label="Email Address"
+              type="email"
+              value={resetEmail}
+              onChange={(e) => setResetEmail(e.target.value)}
               fullWidth
               size="small"
+              placeholder="Enter your email"
+              sx={{ mb: 2 }}
             />
-            <TextField
-              label="New Password"
-              type="password"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              fullWidth
-              size="small"
-            />
-            <TextField
-              label="Confirm New Password"
-              type="password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              fullWidth
-              size="small"
-            />
+            <Typography variant="body2" sx={{ color: colors.text.secondary }}>
+              The link will expire in 24 hours. Click the link in your email to reset your password.
+            </Typography>
           </Box>
         </DialogContent>
         <DialogActions>
@@ -387,7 +277,7 @@ const ProfilePage: React.FC = () => {
               '&:hover': { bgcolor: colors.button.primaryHover },
             }}
           >
-            Change Password
+            Send Reset Link
           </Button>
         </DialogActions>
       </Dialog>

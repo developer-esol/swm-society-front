@@ -6,6 +6,8 @@ import { adminLoyaltyService } from '../../api/services/admin/loyaltyService'
 import { EditPointsModal, LoyaltyTable, CustomerInfoBox, AddPointsModal } from '../../features/Admin/loyalty'
 import { colors } from '../../theme'
 import AdminBreadcrumbs from '../../components/Admin/AdminBreadcrumbs'
+import { Permission } from '../../components/Permission'
+import { PERMISSIONS } from '../../configs/permissions'
 import type { LoyaltyTransactionType } from '../../types/Admin/loyalty'
 
 const AdminLoyalty = () => {
@@ -322,21 +324,23 @@ const AdminLoyalty = () => {
 
             {/* Filter Options */}
             <Box sx={{ display: 'flex', gap: 2 }}>
-              {/* Add Points Button */}
-              <Button
-                onClick={() => setAddPointsModalOpen(true)}
-                variant="contained"
-                sx={{
-                  bgcolor: '#C62C2B',
-                  color: 'white',
-                  fontWeight: 600,
-                  '&:hover': {
-                    bgcolor: '#A82421',
-                  },
-                }}
-              >
-                Add Points
-              </Button>
+              {/* Add Points Button - Requires CREATE_LOYALTY_POINTS permission */}
+              <Permission permission={PERMISSIONS.CREATE_LOYALTY_POINTS}>
+                <Button
+                  onClick={() => setAddPointsModalOpen(true)}
+                  variant="contained"
+                  sx={{
+                    bgcolor: '#C62C2B',
+                    color: 'white',
+                    fontWeight: 600,
+                    '&:hover': {
+                      bgcolor: '#A82421',
+                    },
+                  }}
+                >
+                  Add Points
+                </Button>
+              </Permission>
               <FormControl size="small" sx={{ minWidth: 150 }}>
                 <Select
                   value={filterType}

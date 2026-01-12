@@ -99,6 +99,24 @@ export const authService = {
     return isAuth;
   },
 
+  /**
+   * Request password reset - sends email with reset link
+   * POST /api/auth/password-reset/request
+   */
+  requestPasswordReset: async (email: string): Promise<{ success: boolean; message: string }> => {
+    try {
+      const AUTH_BASE = import.meta.env.VITE_AUTH_BASE || 'http://localhost:8080';
+      const response = await apiClient.post<{ success: boolean; message: string }>(
+        `${AUTH_BASE.replace(/\/$/, '')}/api/auth/password-reset/request`,
+        { email }
+      );
+      return response;
+    } catch (error: any) {
+      console.error('Password reset request failed:', error);
+      throw error;
+    }
+  },
+
   getCurrentUser: () => {
     return {
       id: localStorage.getItem('userId'),
