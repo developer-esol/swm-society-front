@@ -1,5 +1,32 @@
 import type { Stock, CreateStockData } from '../../types/product';
 import { apiClient } from '../apiClient';
+import { brandService } from './brandService';
+
+// Helper to map brand slug to brandId
+const getBrandIdFromSlug = async (brandSlug: string | null): Promise<string | null> => {
+  if (!brandSlug) return null
+  
+  try {
+    const brands = await brandService.getBrands()
+    
+    // Map slug to brand name variations
+    const slugToBrandMap: Record<string, string[]> = {
+      'project-zero': ['Project Zero', 'Project ZerO', 'Project ZerO\'s', 'Project Zeros'],
+      'thomas-mushet': ['Thomas Mushet', 'thomas mushet'],
+      'hear-my-voice': ['Hear My Voice', 'HMV']
+    }
+    
+    const brandNames = slugToBrandMap[brandSlug] || []
+    const matchingBrand = brands.find(brand => 
+      brandNames.some(name => brand.brandName.toLowerCase().includes(name.toLowerCase()))
+    )
+    
+    return matchingBrand?.id || null
+  } catch (error) {
+    console.error('Failed to get brandId from slug:', error)
+    return null
+  }
+}
 
 export const stockService = {
     async getStocksByProductId(productId: string): Promise<Stock[]> {
@@ -24,11 +51,19 @@ export const stockService = {
         }
     },
 
-    async getAllStocks(): Promise<Stock[]> {
-        console.log('Fetching all stocks from database');
+    async getAllStocks(brandSlug?: string | null): Promise<Stock[]> {
+        console.log('Fetching stocks from database', brandSlug ? `for brand: ${brandSlug}` : '(all brands)');
         try {
-            // Request up to 100 stocks when fetching all stocks
-            return await apiClient.get<Stock[]>('/stocks', { limit: 100 });
+            // Get brandId if brandSlug is provided
+            const brandId = brandSlug ? await getBrandIdFromSlug(brandSlug) : null
+            console.log('Brand slug:', brandSlug, 'Brand ID:', brandId)
+            
+            // Use brand-specific endpoint if brandId exists, otherwise fetch all
+            const endpoint = brandId ? `/stocks/brand/${brandId}` : '/stocks'
+            const params = brandId ? {} : { limit: 100 }
+            console.log('Fetching from endpoint:', endpoint)
+            
+            return await apiClient.get<Stock[]>(endpoint, params);
         } catch (error) {
             console.error('Failed to fetch all stocks:', error);
             return [];

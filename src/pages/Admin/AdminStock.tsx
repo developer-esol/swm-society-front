@@ -1,6 +1,6 @@
 import { Box, Container, Typography, Pagination, Stack, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Button, TextField, IconButton } from '@mui/material'
 import { useState, useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Search as SearchIcon } from '@mui/icons-material'
 import { StockTable, StockEditModal } from '../../features/Admin/stock'
 import StockViewModal from '../../features/Admin/stock/StockViewModal'
@@ -13,7 +13,9 @@ import { PERMISSIONS } from '../../configs/permissions'
 
 const AdminStock = () => {
   const navigate = useNavigate()
-  const { data: stocks = [] } = useAllStocks()
+  const [searchParams] = useSearchParams()
+  const brandFilter = searchParams.get('brand') // Get brand from query params
+  const { data: stocks = [] } = useAllStocks(brandFilter)
   const { data: products = [] } = useAllProducts()
   const updateStockMutation = useUpdateStock()
   const deleteStockMutation = useDeleteStock()
@@ -31,24 +33,60 @@ const AdminStock = () => {
 
   const ITEMS_PER_PAGE = 5
 
+  // Get display name for page title
+  const getBrandDisplayName = (slug: string | null) => {
+    if (!slug) return null
+    const displayMap: Record<string, string> = {
+      'project-zero': 'Project Zero',
+      'thomas-mushet': 'Thomas Mushet',
+      'hear-my-voice': 'Hear My Voice'
+    }
+    return displayMap[slug] || null
+  }
+
+  // Map brand slugs to brand names for filtering
+  const getBrandName = (slug: string | null) => {
+    if (!slug) return null
+    const brandMap: Record<string, string[]> = {
+      'project-zero': ['Project Zero', 'Project ZerO', "Project ZerO's", 'Project Zeros'],
+      'thomas-mushet': ['Thomas Mushet'],
+      'hear-my-voice': ['Hear My Voice', 'HMV']
+    }
+    return brandMap[slug] || null
+  }
+
   // Transform stocks data to include product names and match StockItem interface
   const stockItems = useMemo(() => {
     if (!stocks || !products) return []
     
-    return stocks.map(stock => {
+    let items = stocks.map(stock => {
       const product = products.find(p => p.id === stock.productId)
       return {
         id: stock.id,
-        itemId: stock.id, // Use same ID for itemId
+        itemId: stock.id,
         productName: product?.name || 'Unknown Product',
+        brandName: product?.brandName || product?.brand || '',
         color: stock.color,
         size: stock.size,
         quantity: stock.quantity,
         price: stock.price,
-        imageUrl: stock.imageUrl || '' // Stock type uses 'imageUrl' field
+        imageUrl: stock.imageUrl || ''
       }
     })
-  }, [stocks, products])
+
+    // Filter by brand if brand query param exists
+    const brandNames = getBrandName(brandFilter)
+    if (brandNames) {
+      items = items.filter(item => {
+        const itemBrandName = item.brandName?.toLowerCase() || ''
+        return brandNames.some(brandName => 
+          itemBrandName.includes(brandName.toLowerCase())
+        )
+      })
+    }
+
+    return items
+  }, [stocks, products, brandFilter])
 
   // Filter items based on search query
   const filteredItems = useMemo(() => {
@@ -172,7 +210,7 @@ const AdminStock = () => {
             fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' },
           }}
         >
-          Your Stock
+          {getBrandDisplayName(brandFilter) ? `${getBrandDisplayName(brandFilter)} Stock` : 'Stock Management'}
         </Typography>
 
         {/* Search Box with Add Button */}
@@ -210,7 +248,16 @@ const AdminStock = () => {
             </IconButton>
           </Box>
           
-          <Permission permission={PERMISSIONS.CREATE_STOCK}>
+          <Permission permission={(() => {
+            if (!brandFilter) return PERMISSIONS.CREATE_STOCK
+            const brandPermissionMap: Record<string, string> = {
+              'project-zero': 'CREATE_STOCK_PROJECT_ZERO',
+              'thomas-mushet': 'CREATE_STOCK_THOMAS_MUSHET',
+              'hear-my-voice': 'CREATE_STOCK_HEAR_MY_VOICE'
+            }
+            const permissionKey = brandPermissionMap[brandFilter]
+            return permissionKey ? PERMISSIONS[permissionKey as keyof typeof PERMISSIONS] : PERMISSIONS.CREATE_STOCK
+          })()}>
             <Button
               variant="contained"
               onClick={handleAddStock}
@@ -230,7 +277,7 @@ const AdminStock = () => {
             </Button>
           </Permission>
         </Box>
-        <StockTable items={paginatedItems} onView={handleView} onEdit={handleEdit} onDelete={handleDelete} />
+        <StockTable items={paginatedItems} onView={handleView} onEdit={handleEdit} onDelete={handleDelete} brandFilter={brandFilter} />
 
         <StockViewModal
           open={viewModalOpen}

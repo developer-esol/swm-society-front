@@ -22,15 +22,32 @@ interface ProductsTableProps {
   onView: (product: AdminProduct) => void
   onEdit: (product: AdminProduct) => void
   onDelete: (id: string) => void
+  brandFilter?: string | null
 }
 
-const ProductsTable = ({ products, onView, onEdit, onDelete }: ProductsTableProps) => {
+const ProductsTable = ({ products, onView, onEdit, onDelete, brandFilter }: ProductsTableProps) => {
   const { data: brands = [] } = useBrands()
 
   const getBrandName = (brandId: string | number) => {
     const brand = brands.find(b => b.id === brandId.toString() || b.id === brandId)
     // Try different possible field names from backend
     return brand?.brandName || brand?.name || `Brand ID: ${brandId}`
+  }
+
+  // Get brand-specific permissions based on brand filter
+  const getPermission = (action: 'VIEW' | 'CREATE' | 'UPDATE' | 'DELETE') => {
+    if (!brandFilter) {
+      return PERMISSIONS[`${action}_PRODUCTS` as keyof typeof PERMISSIONS]
+    }
+    
+    const brandPermissionMap: Record<string, string> = {
+      'project-zero': `${action}_PRODUCTS_PROJECT_ZERO`,
+      'thomas-mushet': `${action}_PRODUCTS_THOMAS_MUSHET`,
+      'hear-my-voice': `${action}_PRODUCTS_HEAR_MY_VOICE`
+    }
+    
+    const permissionKey = brandPermissionMap[brandFilter]
+    return permissionKey ? PERMISSIONS[permissionKey as keyof typeof PERMISSIONS] : PERMISSIONS[`${action}_PRODUCTS` as keyof typeof PERMISSIONS]
   }
 
   return (
@@ -80,7 +97,7 @@ const ProductsTable = ({ products, onView, onEdit, onDelete }: ProductsTableProp
                   </TableCell>
                   <TableCell sx={{ textAlign: 'center' }}>
                     <Box sx={{ display: 'flex', gap: 1.5, justifyContent: 'center' }}>
-                      <Permission permission={PERMISSIONS.VIEW_PRODUCTS}>
+                      <Permission permission={getPermission('VIEW')}>
                       <Button
                         onClick={() => onView(product)}
                         sx={{
@@ -103,7 +120,7 @@ const ProductsTable = ({ products, onView, onEdit, onDelete }: ProductsTableProp
                         <ViewIcon size={18} />
                       </Button>
                       </Permission>
-                      <Permission permission={PERMISSIONS.UPDATE_PRODUCTS}>
+                      <Permission permission={getPermission('UPDATE')}>
                       <Button
                         onClick={() => onEdit(product)}
                         sx={{
@@ -126,7 +143,7 @@ const ProductsTable = ({ products, onView, onEdit, onDelete }: ProductsTableProp
                         <EditIcon size={18} />
                       </Button>
                       </Permission>
-                      <Permission permission={PERMISSIONS.DELETE_PRODUCTS}>
+                      <Permission permission={getPermission('DELETE')}>
                       <Button
                         onClick={() => onDelete(product.id)}
                         sx={{

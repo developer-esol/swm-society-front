@@ -1,11 +1,12 @@
-import { Box, Container, Typography, Button, CircularProgress } from '@mui/material'
+import { Box, Container, Typography, Button, CircularProgress, TextField, IconButton } from '@mui/material'
 import { useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { Search as SearchIcon } from '@mui/icons-material'
 import { rolesService } from '../../api/services/admin/rolesService'
 import { QUERY_KEYS } from '../../configs/queryKeys'
 import { useNavigate } from 'react-router-dom'
 import AdminBreadcrumbs from '../../components/Admin/AdminBreadcrumbs'
-import { RoleCard, RolesHeader } from '../../features/Admin/roles'
+import { RoleCard } from '../../features/Admin/roles'
 import { useAdminRoles } from '../../hooks/admin'
 import { ConfirmDeleteDialog } from '../../components'
 import { colors } from '../../theme'
@@ -87,11 +88,33 @@ const AdminRoles = () => {
         </Box>
 
         {/* Search Bar and Create Button aligned */}
-        <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <RolesHeader
-            searchQuery={searchQuery}
-            onSearch={handleSearch}
-          />
+        <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 2 }}>
+          <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+            <TextField
+              placeholder="Search roles..."
+              value={searchQuery}
+              onChange={(e) => handleSearch(e.target.value)}
+              size="small"
+              sx={{
+                width: 250,
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: 1,
+                  bgcolor: colors.background.default,
+                },
+              }}
+            />
+            <IconButton
+              sx={{
+                bgcolor: '#C62C2B',
+                color: 'white',
+                borderRadius: 1,
+                p: 1,
+                '&:hover': { bgcolor: '#A82421' },
+              }}
+            >
+              <SearchIcon />
+            </IconButton>
+          </Box>
           <Permission permission={PERMISSIONS.CREATE_ROLES}>
             <Button
               variant="contained"

@@ -11,10 +11,10 @@ export const useStocks = (productId: string | undefined, refreshTrigger?: number
   });
 };
 
-export const useAllStocks = () => {
+export const useAllStocks = (brandSlug?: string | null) => {
   return useQuery({
-    queryKey: ['stocks', 'all'],
-    queryFn: () => stockService.getAllStocks(),
+    queryKey: brandSlug ? ['stocks', 'all', brandSlug] : ['stocks', 'all'],
+    queryFn: () => stockService.getAllStocks(brandSlug),
     staleTime: 1000 * 60 * 5,
   });
 };

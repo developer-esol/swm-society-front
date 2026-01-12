@@ -3,10 +3,10 @@ import { QUERY_KEYS } from "../configs/queryKeys";
 import { getAdminProducts } from "../api/services/admin/productsService";
 import { productsService } from "../api/services/products";
 
-export function useAdminProducts() {
+export function useAdminProducts(brandSlug?: string | null) {
   return useQuery({
-    queryKey: QUERY_KEYS.products.admin,
-    queryFn: getAdminProducts,
+    queryKey: brandSlug ? ['admin', 'products', brandSlug] : ['admin', 'products'],
+    queryFn: () => getAdminProducts(brandSlug),
     staleTime: 1000 * 60 * 5, // 5 minutes
     gcTime: 1000 * 60 * 10, // 10 minutes
     retry: 3,

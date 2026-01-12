@@ -1,6 +1,7 @@
-import { Box, Container, Typography, Button, Checkbox, FormControlLabel, Divider, CircularProgress } from '@mui/material'
+import { Box, Container, Typography, Button, Checkbox, FormControlLabel, Divider, CircularProgress, TextField, IconButton } from '@mui/material'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useEffect, useState, useMemo } from 'react'
+import { Search as SearchIcon } from '@mui/icons-material'
 import { rolesService } from '../../api/services/admin/rolesService'
 import { colors } from '../../theme'
 import type { Role, Permission } from '../../types/Admin/roles'
@@ -12,11 +13,25 @@ const PermissionLevels = () => {
   const [allPermissions, setAllPermissions] = useState<Permission[]>([])
   const [selectedPermissions, setSelectedPermissions] = useState<number[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [searchQuery, setSearchQuery] = useState('')
 
   const categories = useMemo(() => {
     const cats = new Set(allPermissions.map((p) => p.resource))
     return Array.from(cats)
   }, [allPermissions])
+
+  // Filter categories based on search query
+  const filteredCategories = useMemo(() => {
+    if (!searchQuery.trim()) return categories
+    const query = searchQuery.toLowerCase()
+    return categories.filter((category) => {
+      const categoryPermissions = allPermissions.filter((p) => p.resource === category)
+      return (
+        category.toLowerCase().includes(query) ||
+        categoryPermissions.some((p) => p.name.toLowerCase().includes(query))
+      )
+    })
+  }, [categories, allPermissions, searchQuery])
 
   useEffect(() => {
     const loadData = async () => {
@@ -117,6 +132,36 @@ const PermissionLevels = () => {
           {role.name}
         </Typography>
 
+        {/* Search Bar */}
+        <Box sx={{ mb: 3, display: 'flex', justifyContent: 'flex-start', alignItems: 'center' }}>
+          <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+            <TextField
+              placeholder="Search Permissions..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              size="small"
+              sx={{
+                width: 250,
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: 1,
+                  bgcolor: colors.background.default,
+                },
+              }}
+            />
+            <IconButton
+              sx={{
+                bgcolor: '#C62C2B',
+                color: 'white',
+                borderRadius: 1,
+                p: 1,
+                '&:hover': { bgcolor: '#A82421' },
+              }}
+            >
+              <SearchIcon />
+            </IconButton>
+          </Box>
+        </Box>
+
         {/* Permissions Grid */}
         <Box
           sx={{
@@ -126,7 +171,7 @@ const PermissionLevels = () => {
             mb: 4,
           }}
         >
-          {categories.map((category) => {
+          {filteredCategories.map((category) => {
             const categoryPermissions = allPermissions.filter((p) => p.resource === category)
             return (
               <Box

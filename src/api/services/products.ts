@@ -1,12 +1,34 @@
 import { apiClient } from '../apiClient';
 import type { Product, ProductFilters, CreateProductData, UpdateProductData } from '../../types';
+import { brandService } from './brandService';
 
 export const productsService = {
   // READ operations
   async getProducts(filters?: ProductFilters): Promise<Product[]> {
     console.log('Fetching all products from database API');
-    // Fetch from actual database API only
-    return await apiClient.get<Product[]>('/products');
+    try {
+      // First, fetch all brands to create a lookup map
+      const brands = await brandService.getBrands();
+      console.log('Brands fetched for products:', brands);
+      
+      // Create brandId -> brandName lookup map
+      const brandMap = new Map<string, string>();
+      brands.forEach(brand => {
+        brandMap.set(brand.id, brand.brandName);
+      });
+      
+      // Fetch from actual database API only
+      const products = await apiClient.get<Product[]>('/products');
+      
+      // Populate brandName for each product
+      return products.map(product => ({
+        ...product,
+        brandName: brandMap.get(product.brandId) || product.brandName || 'Unknown'
+      }));
+    } catch (error) {
+      console.error('Failed to fetch products:', error);
+      return [];
+    }
   },
 
   async getProductById(id: string): Promise<Product> {

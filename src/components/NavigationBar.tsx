@@ -139,7 +139,7 @@ export const NavigationBar: React.FC = () => {
                                                 },
                                             }}
                                         >
-                                            <Stars sx={{ fontSize: '1.1rem', color: '#FFD700' }} />
+                                            <Stars sx={{ fontSize: '1.1rem', color: '#dc2626' }} />
                                             <Typography
                                                 sx={{
                                                     fontSize: '0.875rem',

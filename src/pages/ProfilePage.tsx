@@ -181,7 +181,7 @@ const ProfilePage: React.FC = () => {
           </Box>
           <Box sx={{ flex: 1 }}>
             <Typography variant="h5" sx={{ fontWeight: 600, color: colors.text.primary }}>
-              {profile.firstName} {profile.lastName}
+              {profile.firstName.replace(/^User\s*/i, '').trim()} {profile.lastName}
             </Typography>
             <Typography variant="body2" sx={{ color: colors.text.disabled }}>
               {profile.email}
@@ -199,22 +199,13 @@ const ProfilePage: React.FC = () => {
           Personal Information
         </Typography>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-          <Box sx={{ display: 'flex', gap: 2, flexDirection: { xs: 'column', sm: 'row' } }}>
-            <TextField
-              label="First Name"
-              value={profile.firstName}
-              disabled
-              fullWidth
-              size="small"
-            />
-            <TextField
-              label="Last Name"
-              value={profile.lastName}
-              disabled
-              fullWidth
-              size="small"
-            />
-          </Box>
+          <TextField
+            label="Full Name"
+            value={`${profile.firstName.replace(/^User\s*/i, '').trim()} ${profile.lastName}`}
+            disabled
+            fullWidth
+            size="small"
+          />
           <TextField
             label="Email"
             value={profile.email}

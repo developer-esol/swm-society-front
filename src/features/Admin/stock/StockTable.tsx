@@ -20,9 +20,26 @@ interface StockTableProps {
   onView: (item: StockItem) => void;
   onEdit: (item: StockItem) => void;
   onDelete: (id: string) => void;
+  brandFilter?: string | null;
 }
 
-const StockTable = ({ items, onView, onEdit, onDelete }: StockTableProps) => {
+const StockTable = ({ items, onView, onEdit, onDelete, brandFilter }: StockTableProps) => {
+  // Get brand-specific permissions based on brand filter
+  const getPermission = (action: 'VIEW' | 'CREATE' | 'UPDATE' | 'DELETE') => {
+    if (!brandFilter) {
+      return PERMISSIONS[`${action}_STOCK` as keyof typeof PERMISSIONS]
+    }
+    
+    const brandPermissionMap: Record<string, string> = {
+      'project-zero': `${action}_STOCK_PROJECT_ZERO`,
+      'thomas-mushet': `${action}_STOCK_THOMAS_MUSHET`,
+      'hear-my-voice': `${action}_STOCK_HEAR_MY_VOICE`
+    }
+    
+    const permissionKey = brandPermissionMap[brandFilter]
+    return permissionKey ? PERMISSIONS[permissionKey as keyof typeof PERMISSIONS] : PERMISSIONS[`${action}_STOCK` as keyof typeof PERMISSIONS]
+  }
+
   return (
     <Paper sx={{ bgcolor: colors.background.default, border: `1px solid ${colors.border.default}` }}>
       <TableContainer>
@@ -76,7 +93,7 @@ const StockTable = ({ items, onView, onEdit, onDelete }: StockTableProps) => {
                   </TableCell>
                   <TableCell sx={{ textAlign: 'center' }}>
                     <Box sx={{ display: 'flex', gap: 1.5, justifyContent: 'center' }}>
-                      <Permission permission={PERMISSIONS.VIEW_STOCK}>
+                      <Permission permission={getPermission('VIEW')}>
                       <Button
                         onClick={() => onView(item)}
                         sx={{
@@ -99,7 +116,7 @@ const StockTable = ({ items, onView, onEdit, onDelete }: StockTableProps) => {
                         <ViewIcon size={18} />
                       </Button>
                       </Permission>
-                      <Permission permission={PERMISSIONS.UPDATE_STOCK}>
+                      <Permission permission={getPermission('UPDATE')}>
                       <Button
                         onClick={() => onEdit(item)}
                         sx={{
@@ -122,7 +139,7 @@ const StockTable = ({ items, onView, onEdit, onDelete }: StockTableProps) => {
                         <EditIcon size={18} />
                       </Button>
                       </Permission>
-                      <Permission permission={PERMISSIONS.DELETE_STOCK}>
+                      <Permission permission={getPermission('DELETE')}>
                       <Button
                         onClick={() => onDelete(item.id)}
                         sx={{
