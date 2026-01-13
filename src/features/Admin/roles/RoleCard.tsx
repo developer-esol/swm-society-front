@@ -15,13 +15,13 @@ interface RoleCardProps {
 const getRoleColor = (roleName: string) => {
   switch (roleName) {
     case 'Super Admin':
-      return '#dc2626'
+      return colors.button.primary
     case 'Admin':
-      return '#3b82f6'
+      return colors.status.processing
     case 'Manager':
-      return '#10b981'
+      return colors.status.delivered
     case 'Support':
-      return '#f59e0b'
+      return colors.status.shipped
     default:
       return colors.button.primary
   }
@@ -79,8 +79,8 @@ const RoleCard: React.FC<RoleCardProps> = ({ role, onEdit, onDelete }) => {
             </Box>
             <Box
               sx={{
-                backgroundColor: '#e5e5e5',
-                color: '#666666',
+                backgroundColor: colors.danger.role,
+                color: colors.menu.textSecondary,
                 padding: '4px 12px',
                 borderRadius: '12px',
                 fontSize: '0.8rem',
@@ -132,10 +132,10 @@ const RoleCard: React.FC<RoleCardProps> = ({ role, onEdit, onDelete }) => {
                 justifyContent: 'center',
                 border: `1px solid ${colors.border.default}`,
                 borderRadius: '6px',
-                color: '#dc2626',
+                color: colors.button.primary,
                 bgcolor: 'transparent',
                 '&:hover': {
-                  bgcolor: '#fee2e2',
+                  bgcolor: colors.danger.background,
                 },
               }}
             >

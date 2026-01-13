@@ -28,7 +28,7 @@ const RolesHeader: React.FC<RolesHeaderProps> = ({ searchQuery, onSearch, onCrea
         />
         <IconButton
           sx={{
-            bgcolor: '#C62C2B',
+            bgcolor: colors.button.new,
             color: 'white',
             borderRadius: 1,
             width: 40,
@@ -39,7 +39,7 @@ const RolesHeader: React.FC<RolesHeaderProps> = ({ searchQuery, onSearch, onCrea
             alignItems: 'center',
             justifyContent: 'center',
             '&:hover': {
-              bgcolor: '#A82421',
+              bgcolor: colors.button.dark,
             },
           }}
         >

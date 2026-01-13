@@ -160,11 +160,11 @@ const AdminLoyalty = () => {
             />
             <IconButton
               sx={{
-                bgcolor: '#C62C2B',
-                color: 'white',
+                bgcolor: colors.button.new,
+                color: colors.text.secondary,
                 borderRadius: 1,
                 p: 1,
-                '&:hover': { bgcolor: '#A82421' },
+                '&:hover': { bgcolor: colors.button.dark },
               }}
             >
               <SearchIcon sx={{ fontSize: 16 }} />
@@ -224,13 +224,13 @@ const AdminLoyalty = () => {
               alignItems: 'center',
               justifyContent: 'center',
             }}>
-              <Box sx={{ color: '#ff8c00', fontSize: '24px' }}>★</Box>
+              <Box sx={{ color: colors.loyalty.yellownew, fontSize: '24px' }}>★</Box>
             </Box>
             <Box sx={{ textAlign: 'center' }}>
-              <Typography sx={{ fontSize: '0.9rem', color: '#000000', fontWeight: 600, mb: 0.5 }}>
+              <Typography sx={{ fontSize: '0.9rem', color: colors.text.primary, fontWeight: 600, mb: 0.5 }}>
                 Available Points
               </Typography>
-              <Typography sx={{ fontSize: '1.75rem', fontWeight: 700, color: '#ff8c00' }}>
+              <Typography sx={{ fontSize: '1.75rem', fontWeight: 700, color: colors.loyalty.yellownew }}>
                 {customerData ? customerData.availablePoints : aggregatedStats.remaining}
               </Typography>
             </Box>
@@ -251,18 +251,18 @@ const AdminLoyalty = () => {
               width: 48,
               height: 48,
               borderRadius: '50%',
-              bgcolor: '#e6f7f0',
+              bgcolor: colors.loyalty.points,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
             }}>
-              <Box sx={{ color: '#00b386', fontSize: '24px' }}>↗</Box>
+              <Box sx={{ color: colors.loyalty.pointissue, fontSize: '24px' }}>↗</Box>
             </Box>
             <Box sx={{ textAlign: 'center' }}>
-              <Typography sx={{ fontSize: '0.9rem', color: '#000000', fontWeight: 600, mb: 0.5 }}>
+              <Typography sx={{ fontSize: '0.9rem', color: colors.text.primary, fontWeight: 600, mb: 0.5 }}>
                 Points Issued
               </Typography>
-              <Typography sx={{ fontSize: '1.75rem', fontWeight: 700, color: '#00b386' }}>
+              <Typography sx={{ fontSize: '1.75rem', fontWeight: 700, color: colors.loyalty.pointissue }}>
                 {customerData ? customerData.totalPoints : aggregatedStats.totalEarned}
               </Typography>
             </Box>
@@ -283,18 +283,18 @@ const AdminLoyalty = () => {
               width: 48,
               height: 48,
               borderRadius: '50%',
-              bgcolor: '#ffe6e6',
+              bgcolor: colors.loyalty.box,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
             }}>
-              <Box sx={{ color: '#ff4d4d', fontSize: '24px' }}>↘</Box>
+              <Box sx={{ color: colors.points.primary, fontSize: '24px' }}>↘</Box>
             </Box>
             <Box sx={{ textAlign: 'center' }}>
-              <Typography sx={{ fontSize: '0.9rem', color: '#000000', fontWeight: 600, mb: 0.5 }}>
+              <Typography sx={{ fontSize: '0.9rem', color: colors.text.primary, fontWeight: 600, mb: 0.5 }}>
                 Points Redeemed
               </Typography>
-              <Typography sx={{ fontSize: '1.75rem', fontWeight: 700, color: '#ff4d4d' }}>
+              <Typography sx={{ fontSize: '1.75rem', fontWeight: 700, color: colors.points.primary }}>
                 -{customerData ? customerData.pointsRedeemed : aggregatedStats.totalRedeemed}
               </Typography>
             </Box>
@@ -330,11 +330,11 @@ const AdminLoyalty = () => {
                   onClick={() => setAddPointsModalOpen(true)}
                   variant="contained"
                   sx={{
-                    bgcolor: '#C62C2B',
-                    color: 'white',
+                    bgcolor: colors.button.new,
+                    color: colors.text.secondary,
                     fontWeight: 600,
                     '&:hover': {
-                      bgcolor: '#A82421',
+                      bgcolor: colors.button.dark,
                     },
                   }}
                 >
@@ -415,7 +415,7 @@ const AdminLoyalty = () => {
                           color: colors.text.primary,
                           borderColor: colors.border.default,
                           '&.Mui-selected': {
-                            backgroundColor: '#dc2626',
+                            backgroundColor: colors.button.primary,
                             color: 'white',
                           },
                         },

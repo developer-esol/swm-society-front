@@ -152,10 +152,10 @@ const StockTable = ({ items, onView, onEdit, onDelete, brandFilter }: StockTable
                           justifyContent: 'center',
                           border: `1px solid ${colors.border.default}`,
                           borderRadius: '6px',
-                          color: '#dc2626',
+                          color: colors.button.primary,
                           bgcolor: 'transparent',
                           '&:hover': {
-                            bgcolor: '#fee2e2',
+                            bgcolor: colors.danger.background,
                           },
                         }}
                       >

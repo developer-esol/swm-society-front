@@ -234,11 +234,11 @@ const AdminUsers = () => {
             />
             <IconButton
               sx={{
-                bgcolor: '#C62C2B',
-                color: 'white',
+                bgcolor: colors.button.new,
+                color: colors.text.secondary,
                 borderRadius: 1,
                 p: 1,
-                '&:hover': { bgcolor: '#A82421' },
+                '&:hover': { bgcolor: colors.button.dark },
               }}
             >
               <SearchIcon />

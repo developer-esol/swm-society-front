@@ -1,6 +1,8 @@
 import React from 'react';
 import { Box, Container, Typography } from '@mui/material';
 import { CustomButton } from '../../components';
+import { colors } from '../../theme'
+
 
 interface BrandSectionProps {
   name: string;
@@ -111,9 +113,9 @@ export const BrandSection: React.FC<BrandSectionProps> = ({
                 text="Learn More"
                 onClick={() => window.location.href = storyLink}
                 sx={{
-                  borderColor: '#9ca3af',
+                  borderColor: colors.button.primaryDisabled,
                   color: 'black',
-                  bgcolor: '#e5e7eb',
+                  bgcolor: colors.border.default,
                   px: 4,
                   py: 1.5,
                   fontSize: '1rem',

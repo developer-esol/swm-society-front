@@ -301,8 +301,8 @@ const AdminStock = () => {
                     color: colors.text.primary,
                     borderColor: colors.border.default,
                     '&.Mui-selected': {
-                      backgroundColor: '#dc2626',
-                      color: 'white',
+                      backgroundColor: colors.button.primary,
+                      color: colors.text.secondary,
                     },
                   },
                 }}
@@ -381,13 +381,13 @@ const AdminStock = () => {
               variant="contained"
               disabled={isDeleting}
               sx={{
-                backgroundColor: '#dc2626',
-                color: 'white',
+                backgroundColor: colors.button.primary,
+                color: colors.text.secondary,
                 '&:hover': {
-                  backgroundColor: '#b91c1c',
+                  backgroundColor: colors.button.dark,
                 },
                 '&:disabled': {
-                  backgroundColor: '#9ca3af',
+                  backgroundColor: colors.button.primaryDisabled,
                 },
               }}
             >

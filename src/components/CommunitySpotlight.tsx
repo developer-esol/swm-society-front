@@ -8,17 +8,20 @@ import {
 } from '@mui/material';
 import { Favorite, FavoriteBorder, Instagram, Twitter } from '@mui/icons-material';
 import { colors } from '../theme';
+import { communityService } from '../api/services/communityService';
 import type { CommunityPost } from '../types/community';
 
 interface CommunitySpotlightProps {
   posts: CommunityPost[];
-  onLike?: (postId: string) => void;
+  onLikeUpdate?: () => void; // Callback to refresh posts after like
 }
 
 const CommunitySpotlight: React.FC<CommunitySpotlightProps> = ({
   posts,
-  onLike,
+  onLikeUpdate,
 }) => {
+  const currentUserId = localStorage.getItem('userId') || '';
+
   // Get top 3 most-liked posts
   const topPosts = posts
     .sort((a, b) => b.likes - a.likes)
@@ -28,8 +31,21 @@ const CommunitySpotlight: React.FC<CommunitySpotlightProps> = ({
     return null;
   }
 
+  const handleLike = async (postId: string) => {
+    if (!currentUserId) return;
+
+    try {
+      const result = await communityService.toggleLike(postId, currentUserId);
+      if (result) {
+        onLikeUpdate?.(); // Notify parent to refetch posts
+      }
+    } catch (error) {
+      console.error('Failed to like post:', error);
+    }
+  };
+
   return (
-    <Box sx={{ bgcolor: '#fafafa', py: 4, width: '100%' }}>
+    <Box sx={{ bgcolor: colors.background.box, py: 4, width: '100%' }}>
       <Container maxWidth="lg">
         {/* Section Title */}
         <Box sx={{ mb: 6, textAlign: 'center' }}>
@@ -62,7 +78,7 @@ const CommunitySpotlight: React.FC<CommunitySpotlightProps> = ({
             <Box key={post.id}>
               <Box
                 sx={{
-                  bgcolor: 'white',
+                  bgcolor: colors.background.default,
                   borderRadius: '12px',
                   overflow: 'hidden',
                   transition: 'transform 0.3s ease, box-shadow 0.3s ease',
@@ -136,14 +152,18 @@ const CommunitySpotlight: React.FC<CommunitySpotlightProps> = ({
                   </Typography>
 
                   {/* Social Icons */}
-                  <Box sx={{ display: 'flex', gap: 1, mt: 'auto', pt: 2, borderTop: '1px solid #e0e0e0' }}>
+                  <Box sx={{ display: 'flex', gap: 1, mt: 'auto', pt: 2, borderTop: `1px solid ${colors.border.light}` }}>
                     <IconButton
                       size="small"
-                      onClick={() => onLike?.(post.id)}
+                      onClick={() => handleLike(post.id)}
+                      disabled={!currentUserId}
                       sx={{
-                        color: post.isLiked ? colors.button.primary : 'grey.600',
+                        color: post.isLiked ? colors.danger.primary : 'grey.600',
                         '&:hover': {
-                          color: colors.button.primary,
+                          color: colors.danger.primary,
+                        },
+                        '&:disabled': {
+                          opacity: 0.5,
                         },
                       }}
                     >

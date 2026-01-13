@@ -60,13 +60,13 @@ export const ConfirmDeleteDialog: React.FC<ConfirmDeleteDialogProps> = ({
           onClick={onConfirm}
           variant="contained"
           sx={{
-            backgroundColor: '#dc2626',
-            color: 'white',
+            backgroundColor: colors.danger.primary,
+            color: colors.text.secondary,
             '&:hover': {
-              backgroundColor: '#b91c1c',
+              backgroundColor: colors.button.primaryHover,
             },
             '&:disabled': {
-              backgroundColor: '#9ca3af',
+              backgroundColor: colors.button.primaryDisabled,
             },
           }}
         >

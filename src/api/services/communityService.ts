@@ -48,25 +48,51 @@ export const communityService = {
       
       const response = await apiClient.get<CommunityPostResponse[]>('/community-posts');
       
+      // Get current user ID to check like status
+      const currentUserId = localStorage.getItem('userId');
+      let nestJsUserId: string | null = null;
+      
+      if (currentUserId) {
+        try {
+          nestJsUserId = await getNestJsUserUuid(currentUserId);
+        } catch (error) {
+          console.warn('Failed to get NestJS user UUID, isLiked will be false for all posts');
+        }
+      }
+      
       // Transform API response to match frontend types
-      const posts: CommunityPost[] = response.map(post => ({
-        id: post.id,
-        userId: post.userId,
-        userName: 'Community User', // Will be populated by user lookup
-        userHandle: `user_${post.userId.substring(0, 8)}`,
-        userAvatar: 'https://i.pravatar.cc/150?img=1',
-        image: post.imageUrl,
-        caption: post.description,
-        description: post.description,
-        productId: '', // Not in current API response
-        products: [], // Will be populated if needed
-        likes: post.noOfLikes || 0,
-        isLiked: false, // Will be determined by user interaction
-        createdAt: post.createdAt || post.date,
-        hashtags: [], // Extract from description if needed
+      const posts: CommunityPost[] = await Promise.all(response.map(async post => {
+        let isLiked = false;
+        
+        // Check if current user has liked this post
+        if (nestJsUserId) {
+          try {
+            const likeStatus = await communityService.checkLikedStatus(post.id, currentUserId!);
+            isLiked = likeStatus;
+          } catch (error) {
+            console.warn(`Failed to check like status for post ${post.id}`);
+          }
+        }
+        
+        return {
+          id: post.id,
+          userId: post.userId,
+          userName: 'Community User', // Will be populated by user lookup
+          userHandle: `user_${post.userId.substring(0, 8)}`,
+          userAvatar: 'https://i.pravatar.cc/150?img=1',
+          image: post.imageUrl,
+          caption: post.description,
+          description: post.description,
+          productId: '', // Not in current API response
+          products: [], // Will be populated if needed
+          likes: post.noOfLikes || 0,
+          isLiked: isLiked,
+          createdAt: post.createdAt || post.date,
+          hashtags: [], // Extract from description if needed
+        };
       }));
       
-      console.log(`Fetched ${posts.length} community posts`);
+      console.log(`Fetched ${posts.length} community posts with like status`);
       return posts;
     } catch (error) {
       console.error('Failed to fetch community posts:', error);
@@ -212,31 +238,60 @@ export const communityService = {
   },
 
   /**
-   * Toggle like/unlike a community post
+   * Toggle like/unlike a community post using new API
    * @param postId - Post ID
-   * @param isLiked - Whether the post should be liked or unliked
-   * @returns Updated post
+   * @param userId - User ID (Spring Boot externalId)
+   * @returns Like status and count
    */
-  toggleLike: async (postId: string, isLiked: boolean): Promise<CommunityPost | null> => {
+  toggleLike: async (postId: string, userId: string): Promise<{ liked: boolean; noOfLikes: number } | null> => {
     try {
-      // Get current post to determine new like count
-      const posts = await communityService.getAll();
-      const post = posts.find(p => p.id === postId);
+      console.log('[CommunityService] Toggling like for post:', postId, 'user:', userId);
       
-      if (!post) return null;
+      // Convert Spring Boot numeric ID to NestJS UUID if needed
+      let nestJsUserId = userId;
+      if (!userId.includes('-')) {
+        nestJsUserId = await getNestJsUserUuid(userId);
+        console.log('[CommunityService] Converted userId', userId, '→ UUID:', nestJsUserId);
+      }
       
-      const newLikes = isLiked ? post.likes + 1 : Math.max(0, post.likes - 1);
+      const response = await apiClient.post<{ liked: boolean; noOfLikes: number }>(
+        `/community-posts/${postId}/like`,
+        { userId: nestJsUserId }
+      );
       
-      await communityService.updateLikes(postId, newLikes);
-      
-      return {
-        ...post,
-        likes: newLikes,
-        isLiked: isLiked,
-      };
+      console.log('[CommunityService] Like toggled:', response);
+      return response;
     } catch (error) {
-      console.error('Failed to toggle post like:', error);
+      console.error('[CommunityService] Failed to toggle like:', error);
       return null;
+    }
+  },
+
+  /**
+   * Check if user has liked a post
+   * @param postId - Post ID
+   * @param userId - User ID (Spring Boot externalId)
+   * @returns Like status
+   */
+  checkLikedStatus: async (postId: string, userId: string): Promise<boolean> => {
+    try {
+      console.log('[CommunityService] Checking like status for post:', postId, 'user:', userId);
+      
+      // Convert Spring Boot numeric ID to NestJS UUID if needed
+      let nestJsUserId = userId;
+      if (!userId.includes('-')) {
+        nestJsUserId = await getNestJsUserUuid(userId);
+      }
+      
+      const response = await apiClient.get<{ liked: boolean }>(
+        `/community-posts/${postId}/liked-by/${nestJsUserId}`
+      );
+      
+      console.log('[CommunityService] Like status:', response.liked);
+      return response.liked;
+    } catch (error) {
+      console.error('[CommunityService] Failed to check like status:', error);
+      return false;
     }
   },
 

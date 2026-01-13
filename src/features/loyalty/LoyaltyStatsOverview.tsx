@@ -35,7 +35,7 @@ export const LoyaltyStatsOverview: React.FC<LoyaltyStatsOverviewProps> = ({ loya
                   display: 'flex',
                   alignItems: 'center',
                   gap: 1,
-                  background: 'linear-gradient(135deg, #FFD700 0%, #FFA500 100%)',
+                  background: `linear-gradient(135deg, ${colors.adminloyalty.yellow} 0%, ${colors.adminloyalty.yellownew} 100%)`,
                   color: 'white',
                   px: 2.5,
                   py: 1,
@@ -43,7 +43,7 @@ export const LoyaltyStatsOverview: React.FC<LoyaltyStatsOverviewProps> = ({ loya
                   fontSize: '0.9rem',
                   fontWeight: 'bold',
                   boxShadow: '0 4px 12px rgba(255, 215, 0, 0.3)',
-                  border: '2px solid #FFD700',
+                  border: `2px solid ${colors.adminloyalty.yellow}`,
                 }}
               >
                 <EmojiEvents sx={{ fontSize: '22px' }} />

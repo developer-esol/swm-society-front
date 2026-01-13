@@ -265,10 +265,10 @@ const YourPostsPage: React.FC = () => {
                         justifyContent: 'center',
                         border: `1px solid ${colors.border.default}`,
                         borderRadius: '6px',
-                        color: '#dc2626',
+                        color: colors.danger.primary,
                         bgcolor: 'transparent',
                         '&:hover': {
-                          bgcolor: '#fee2e2',
+                          bgcolor: colors.danger.background,
                         },
                       }}
                       aria-label="delete post"

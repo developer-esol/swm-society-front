@@ -169,7 +169,7 @@ const AdminProfilePage: React.FC = () => {
                   <Typography
                     sx={{
                       fontWeight: 600,
-                      color: profile.status === 'active' ? '#10b981' : '#ef4444',
+                      color: profile.status === 'active' ? colors.password.primary : colors.status.cancelled,
                     }}
                   >
                     {profile.status.charAt(0).toUpperCase() + profile.status.slice(1)}

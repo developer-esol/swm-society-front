@@ -79,8 +79,8 @@ export const NavigationBar: React.FC = () => {
             <AppBar 
                 position="fixed" 
                 sx={{ 
-                    bgcolor: 'black', 
-                    color: 'white',
+                    bgcolor: colors.text.primary, 
+                    color: colors.background.default,
                     width: '100%',
                     left: 0,
                     right: 0,
@@ -139,7 +139,7 @@ export const NavigationBar: React.FC = () => {
                                                 },
                                             }}
                                         >
-                                            <Stars sx={{ fontSize: '1.1rem', color: '#dc2626' }} />
+                                            <Stars sx={{ fontSize: '1.1rem', color: colors.danger.primary }} />
                                             <Typography
                                                 sx={{
                                                     fontSize: '0.875rem',

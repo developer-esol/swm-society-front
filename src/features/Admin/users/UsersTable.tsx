@@ -38,7 +38,7 @@ const UsersTable = ({ users, onEdit, onDelete }: UsersTableProps) => {
       <TableContainer>
         <Table>
           <TableHead>
-            <TableRow sx={{ bgcolor: '#d3d3d3' }}>
+            <TableRow sx={{ bgcolor: colors.login.access }}>
               <TableCell sx={{ fontWeight: 700, color: colors.text.primary, fontSize: '0.9rem' }}>
                 User ID
               </TableCell>
@@ -101,7 +101,7 @@ const UsersTable = ({ users, onEdit, onDelete }: UsersTableProps) => {
                             justifyContent: 'center',
                             border: `1px solid ${colors.border.default}`,
                             borderRadius: '6px',
-                            color: user.status === 'Inactive' ? '#9e9e9e' : colors.text.primary,
+                            color: user.status === 'Inactive' ? colors.password.disable : colors.text.primary,
                             bgcolor: 'transparent',
                             '&:hover': {
                               bgcolor: user.status === 'Inactive' ? 'transparent' : colors.background.lighter,
@@ -128,10 +128,10 @@ const UsersTable = ({ users, onEdit, onDelete }: UsersTableProps) => {
                           justifyContent: 'center',
                           border: `1px solid ${colors.border.default}`,
                           borderRadius: '6px',
-                          color: user.status === 'Inactive' ? '#9e9e9e' : '#dc2626',
+                          color: user.status === 'Inactive' ? colors.password.disable : colors.button.primary,
                           bgcolor: 'transparent',
                           '&:hover': {
-                            bgcolor: user.status === 'Inactive' ? 'transparent' : '#fee2e2',
+                            bgcolor: user.status === 'Inactive' ? 'transparent' : colors.danger.background,
                           },
                           '&:disabled': {
                             cursor: 'not-allowed',

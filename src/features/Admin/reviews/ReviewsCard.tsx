@@ -42,7 +42,7 @@ const ReviewsCard = ({ review, userName, onDelete }: ReviewsCardProps) => {
             width: { xs: '100%', sm: 200 },
             height: { xs: 180, sm: '100%' },
             objectFit: 'cover',
-            backgroundColor: '#f5f5f5',
+            backgroundColor: colors.card.imagePlaceholder,
             flexShrink: 0,
           }}
         />
@@ -63,10 +63,10 @@ const ReviewsCard = ({ review, userName, onDelete }: ReviewsCardProps) => {
             justifyContent: 'center',
             border: `1px solid ${colors.border.default}`,
             borderRadius: '6px',
-            color: '#dc2626',
+            color: colors.button.primary,
             bgcolor: 'transparent',
             '&:hover': {
-              bgcolor: '#fee2e2',
+              bgcolor: colors.danger.background,
             },
           }}
         >
@@ -88,7 +88,7 @@ const ReviewsCard = ({ review, userName, onDelete }: ReviewsCardProps) => {
           <ProductInfo productId={review.productId} comment={review.comment} />
 
           <Box sx={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'center', gap: 1 }}>
-            <Rating value={review.rating} readOnly size="small" sx={{ color: '#FFC107' }} />
+            <Rating value={review.rating} readOnly size="small" sx={{ color: colors.danger.yellow }} />
           </Box>
         </Box>
       </CardContent>

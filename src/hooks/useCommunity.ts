@@ -36,10 +36,10 @@ export const useCommunity = () => {
     []
   )
 
-  const likePost = useCallback(async (postId: string): Promise<CommunityPost | null> => {
+  const likePost = useCallback(async (postId: string, userId: string): Promise<{ liked: boolean; noOfLikes: number } | null> => {
     try {
-      // Toggle like on the post
-      return await communityService.toggleLike(postId, true)
+      // Toggle like on the post using new API
+      return await communityService.toggleLike(postId, userId)
     } catch (error) {
       console.error('Failed to like post:', error)
       throw error

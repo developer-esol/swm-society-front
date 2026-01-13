@@ -62,14 +62,7 @@ export const StyleInspiration: React.FC<StyleInspirationProps> = ({ posts: exter
   const handleLikePost = async (postId: string) => {
     try {
       await onLike(postId);
-      // Update local state
-      const updatedPosts = posts.map((post) =>
-        post.id === postId ? { ...post, isLiked: !post.isLiked, likes: post.isLiked ? post.likes - 1 : post.likes + 1 } : post
-      );
-      setPosts(updatedPosts);
-      setAllPosts(allPosts.map((post) =>
-        post.id === postId ? { ...post, isLiked: !post.isLiked, likes: post.isLiked ? post.likes - 1 : post.likes + 1 } : post
-      ));
+      // Parent component will refetch and update posts
     } catch (error) {
       console.error('Failed to like post:', error);
     }

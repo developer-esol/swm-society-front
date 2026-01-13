@@ -206,7 +206,7 @@ const EditPointsModal: React.FC<EditPointsModalProps> = ({ open, availablePoints
           variant="contained"
           sx={{
             backgroundColor: colors.button.primary,
-            color: 'white',
+            color: colors.text.secondary,
             fontWeight: 600,
             '&:hover': {
               backgroundColor: colors.button.primaryHover,

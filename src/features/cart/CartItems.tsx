@@ -137,7 +137,7 @@ export const CartItems: React.FC<CartItemsProps> = ({
                     color: '#dc2626',
                     bgcolor: 'transparent',
                     '&:hover': {
-                      bgcolor: '#fee2e2',
+                      bgcolor: colors.danger.background,
                     },
                   }}
                   aria-label="remove cart item"

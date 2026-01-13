@@ -90,12 +90,12 @@ export const PointsHistory: React.FC<PointsHistoryProps> = ({ loyaltyData }) => 
                 variant={filterType === 'all' ? 'filled' : 'outlined'}
                 onClick={() => setFilterType('all')}
                 sx={{
-                  bgcolor: filterType === 'all' ? '#fecaca' : 'transparent',
-                  color: filterType === 'all' ? '#7f1d1d' : colors.text.disabled,
+                  bgcolor: filterType === 'all' ? colors.loyalty.lightRedPink : 'transparent',
+                  color: filterType === 'all' ? colors.loyalty.darkRed : colors.text.disabled,
                   borderColor: filterType === 'all' ? colors.button.primary : colors.border.default,
                   fontWeight: 600,
                   cursor: 'pointer',
-                  '&:hover': { bgcolor: filterType === 'all' ? '#fca5a5' : colors.background.lighter }
+                  '&:hover': { bgcolor: filterType === 'all' ? colors.loyalty.lightRedPinkHover : colors.background.lighter }
                 }}
               />
               <Chip

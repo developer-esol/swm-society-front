@@ -55,7 +55,7 @@ const ProductsTable = ({ products, onView, onEdit, onDelete, brandFilter }: Prod
       <TableContainer>
         <Table>
           <TableHead>
-            <TableRow sx={{ bgcolor: '#d3d3d3' }}>
+            <TableRow sx={{ bgcolor: colors.login.access }}>
               <TableCell sx={{ fontWeight: 700, color: colors.text.primary, fontSize: '0.9rem' }}>
                 Product ID
               </TableCell>
@@ -156,10 +156,10 @@ const ProductsTable = ({ products, onView, onEdit, onDelete, brandFilter }: Prod
                           justifyContent: 'center',
                           border: `1px solid ${colors.border.default}`,
                           borderRadius: '6px',
-                          color: '#dc2626',
+                          color: colors.button.primary,
                           bgcolor: 'transparent',
                           '&:hover': {
-                            bgcolor: '#fee2e2',
+                            bgcolor: colors.danger.background,
                           },
                         }}
                       >

@@ -327,7 +327,7 @@ const RoleCreation = () => {
                             width: '32px',
                             height: '32px',
                             borderRadius: '6px',
-                            bgcolor: '#fee2e2',
+                            bgcolor: colors.danger.background,
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',

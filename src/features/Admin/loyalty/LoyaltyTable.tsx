@@ -26,26 +26,26 @@ interface LoyaltyTableProps {
 const getTypeColor = (type: string) => {
   switch (type) {
     case 'earned':
-      return '#10b981' // Green
+      return colors.status.delivered // Green
     case 'redeemed':
-      return '#f59e0b' // Amber
+      return colors.status.shipped // Amber
     case 'adjustment':
-      return '#3b82f6' // Blue
+      return colors.status.processing // Blue
     default:
-      return '#6b7280' // Gray
+      return colors.loyalty.grey // Gray
   }
 }
 
 const getTypeBgColor = (type: string) => {
   switch (type) {
     case 'earned':
-      return '#dcfce7'
+      return colors.points.earned
     case 'redeemed':
-      return '#fef3c7'
+      return colors.points.redeemed
     case 'adjustment':
-      return '#dbeafe'
+      return colors.points.adjustment
     default:
-      return '#f3f4f6'
+      return colors.points.default
   }
 }
 

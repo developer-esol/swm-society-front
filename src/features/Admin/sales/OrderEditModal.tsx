@@ -30,7 +30,7 @@ const OrderEditModal = ({ open, order, onClose, onSave }: OrderEditModalProps) =
   if (!order) return null
 
   const selectSx = {
-    bgcolor: colors.input?.bg || '#ffffff',
+    bgcolor: colors.input?.bg || colors.background.default,
     color: colors.text.primary,
     '& .MuiOutlinedInput-notchedOutline': {
       borderColor: colors.border.default,

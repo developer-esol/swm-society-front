@@ -52,13 +52,13 @@ const YourOrdersPage: React.FC = () => {
 
   const getColorDot = (colorName: string) => {
     const colorMap: { [key: string]: string } = {
-      Orange: '#ea580c',
-      Blue: '#3b82f6',
-      Red: '#dc2626',
-      Black: '#000000',
-      White: '#ffffff',
-      Green: '#10b981',
-      Purple: '#a855f7',
+      Orange: colors.order.orange,
+      Blue: colors.order.blue,
+      Red: colors.order.red,
+      Black: colors.order.black,
+      White: colors.order.white,
+      Green: colors.order.green,
+      Purple: colors.order.purple,
     };
     return colorMap[colorName] || '#6b7280';
   };

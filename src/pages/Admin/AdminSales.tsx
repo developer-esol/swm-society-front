@@ -107,11 +107,11 @@ const AdminSales = () => {
             />
             <IconButton
               sx={{
-                bgcolor: '#C62C2B',
-                color: 'white',
+                bgcolor: colors.button.new,
+                color: colors.text.secondary,
                 borderRadius: 1,
                 p: 1,
-                '&:hover': { bgcolor: '#A82421' },
+                '&:hover': { bgcolor: colors.button.dark },
               }}
             >
               <SearchIcon />
@@ -191,8 +191,8 @@ const AdminSales = () => {
                           color: colors.text.primary,
                           borderColor: colors.border.default,
                           '&.Mui-selected': {
-                            backgroundColor: '#dc2626',
-                            color: 'white',
+                            backgroundColor: colors.button.primary,
+                            color: colors.text.secondary,
                           },
                         },
                       }}

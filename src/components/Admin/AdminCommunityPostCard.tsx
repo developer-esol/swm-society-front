@@ -57,7 +57,7 @@ const AdminCommunityPostCard: React.FC<AdminCommunityPostCardProps> = ({
             width: '100%',
             height: '100%',
             objectFit: 'cover',
-            backgroundColor: '#f5f5f5',
+            backgroundColor: colors.card.imagePlaceholder,
           }}
         />
       </Box>
@@ -110,10 +110,10 @@ const AdminCommunityPostCard: React.FC<AdminCommunityPostCardProps> = ({
                   justifyContent: 'center',
                   border: `1px solid ${colors.border.default}`,
                   borderRadius: '6px',
-                  color: '#dc2626',
+                  color: colors.danger.primary,
                   bgcolor: 'transparent',
                   '&:hover': {
-                    bgcolor: '#fee2e2',
+                    bgcolor: colors.danger.background,
                   },
                 }}
               >

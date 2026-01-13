@@ -161,7 +161,7 @@ const AddPointsModal: React.FC<AddPointsModalProps> = ({ open, users, onClose, o
               sx={{
                 fontSize: '2rem',
                 fontWeight: 700,
-                color: '#ff8c00',
+                color: colors.loyalty.yellownew,
               }}
             >
               {availablePoints !== null ? availablePoints.toLocaleString() : '—'}
@@ -258,11 +258,11 @@ const AddPointsModal: React.FC<AddPointsModalProps> = ({ open, users, onClose, o
           disabled={isLoading}
           variant="contained"
           sx={{
-            bgcolor: '#C62C2B',
+            bgcolor: colors.button.new,
             color: 'white',
             fontWeight: 600,
             '&:hover': {
-              bgcolor: '#A82421',
+              bgcolor: colors.button.dark,
             },
           }}
         >

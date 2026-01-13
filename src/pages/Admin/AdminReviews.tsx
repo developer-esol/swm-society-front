@@ -143,11 +143,11 @@ const AdminReviews = () => {
           />
           <IconButton
             sx={{
-              bgcolor: '#C62C2B',
+              bgcolor: colors.button.new,
               color: 'white',
               borderRadius: 1,
               p: 1,
-              '&:hover': { bgcolor: '#A82421' },
+              '&:hover': { bgcolor: colors.button.dark },
             }}
           >
             <SearchIcon />
@@ -183,8 +183,8 @@ const AdminReviews = () => {
                         color: colors.text.primary,
                         borderColor: colors.border.default,
                         '&.Mui-selected': {
-                          backgroundColor: '#dc2626',
-                          color: 'white',
+                          backgroundColor: colors.button.primary,
+                          color: colors.text.secondary,
                         },
                       },
                     }}

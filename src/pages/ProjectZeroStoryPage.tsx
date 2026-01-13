@@ -14,9 +14,11 @@ import { ProjectZeroPlayerQuotes } from '../features/project-zero-story/ProjectZ
 import ProjectZeroStyle from '../features/project-zero-story/ProjectZeroStyle';
 import ProjectZeroZECHOBIIERO from '../features/project-zero-story/ProjectZeroZECHOBIIERO';
 import ProjectZeroFanCulture from '../features/project-zero-story/ProjectZeroFanCulture';
+import { colors } from '../theme';
+
 
 export const ProjectZeroStoryPage: React.FC = () => (
-  <Box sx={{ bgcolor: 'white', width: '100%' }}>
+  <Box sx={{ bgcolor: colors.background.default, width: '100%' }}>
     <Container maxWidth="lg" sx={{ px: { xs: 3, md: 6 }, py: { xs: 6, md: 12 } }}>
       <ProjectZeroHero />
       <ProjectZeroIntro />

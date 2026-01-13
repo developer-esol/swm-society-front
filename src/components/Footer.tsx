@@ -3,6 +3,8 @@ import { Box, Container, Typography, Link, TextField, IconButton } from '@mui/ma
 import { Instagram, Twitter, Facebook } from '@mui/icons-material';
 import { Link as RouterLink } from 'react-router-dom';
 import { CustomButton } from './CustomButton';
+import { colors } from '../theme';
+
 
 export const Footer: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -17,8 +19,8 @@ export const Footer: React.FC = () => {
     <Box
       component="footer"
       sx={{
-        bgcolor: 'black',
-        color: 'white',
+        bgcolor: colors.text.primary,
+        color: colors.text.secondary,
         py: { xs: 6, md: 8 },
         width: '100%',
       }}

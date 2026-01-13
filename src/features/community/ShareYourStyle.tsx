@@ -155,7 +155,7 @@ export const ShareYourStyle: React.FC<ShareYourStyleProps> = ({ onPostSuccess })
                   px: 4,
                   py: 1.5,
                   '&:hover': {
-                    bgcolor: '#b91c1c',
+                    bgcolor: colors.button.primaryHover,
                   },
                 }}
                 onClick={() => (window.location.href = '/shop')}
@@ -171,7 +171,7 @@ export const ShareYourStyle: React.FC<ShareYourStyleProps> = ({ onPostSuccess })
               variant="contained"
               fullWidth
               sx={{
-                bgcolor: '#1a1a1a',
+                bgcolor: colors.overlay.darkHover,
                 color: 'white',
                 textTransform: 'none',
                 fontSize: '1rem',
@@ -226,10 +226,10 @@ export const ShareYourStyle: React.FC<ShareYourStyleProps> = ({ onPostSuccess })
                     '& .MuiOutlinedInput-root': {
                       bgcolor: 'white',
                       '& fieldset': {
-                        borderColor: '#e0e0e0',
+                        borderColor: colors.border.light,
                       },
                       '&:hover fieldset': {
-                        borderColor: '#bdbdbd',
+                        borderColor: colors.border.grey,
                       },
                     },
                   }}
@@ -255,10 +255,10 @@ export const ShareYourStyle: React.FC<ShareYourStyleProps> = ({ onPostSuccess })
                     '& .MuiOutlinedInput-root': {
                       bgcolor: 'white',
                       '& fieldset': {
-                        borderColor: '#e0e0e0',
+                        borderColor: colors.border.light,
                       },
                       '&:hover fieldset': {
-                        borderColor: '#bdbdbd',
+                        borderColor: colors.border.grey,
                       },
                     },
                   }}
@@ -282,10 +282,10 @@ export const ShareYourStyle: React.FC<ShareYourStyleProps> = ({ onPostSuccess })
                     '& .MuiOutlinedInput-root': {
                       bgcolor: 'white',
                       '& fieldset': {
-                        borderColor: '#e0e0e0',
+                        borderColor: colors.border.light,
                       },
                       '&:hover fieldset': {
-                        borderColor: '#bdbdbd',
+                        borderColor: colors.border.grey,
                       },
                     },
                   }}
@@ -308,7 +308,7 @@ export const ShareYourStyle: React.FC<ShareYourStyleProps> = ({ onPostSuccess })
                       maxWidth: '100%',
                       maxHeight: '300px',
                       borderRadius: '8px',
-                      border: '1px solid #e0e0e0',
+                      border: `1px solid ${colors.border.light}`,
                     }}
                     onError={() => {
                       console.error('Failed to load image preview');

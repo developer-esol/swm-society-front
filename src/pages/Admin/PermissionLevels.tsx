@@ -150,11 +150,11 @@ const PermissionLevels = () => {
             />
             <IconButton
               sx={{
-                bgcolor: '#C62C2B',
-                color: 'white',
+                bgcolor: colors.button.new,
+                color: colors.text.secondary,
                 borderRadius: 1,
                 p: 1,
-                '&:hover': { bgcolor: '#A82421' },
+                '&:hover': { bgcolor: colors.button.dark },
               }}
             >
               <SearchIcon />
@@ -189,7 +189,7 @@ const PermissionLevels = () => {
                       width: '32px',
                       height: '32px',
                       borderRadius: '6px',
-                      bgcolor: '#fee2e2',
+                      bgcolor: colors.danger.background,
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',

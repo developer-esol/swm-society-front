@@ -149,12 +149,12 @@ const WishlistCard: React.FC<WishlistCardProps> = ({
           onClick={handleProductClick}
           sx={{
             fontWeight: 600,
-            color: 'black',
+            color: colors.text.primary,
             mb: 1,
             fontSize: '0.95rem',
             cursor: 'pointer',
             '&:hover': {
-              color: '#dc2626',
+              color: colors.danger.primary,
               transition: 'color 0.2s',
             },
           }}
@@ -167,7 +167,7 @@ const WishlistCard: React.FC<WishlistCardProps> = ({
           <Typography
             sx={{
               fontWeight: 600,
-              color: 'black',
+              color: colors.text.primary,
               mb: 1.5,
               fontSize: '0.9rem',
             }}
@@ -208,13 +208,13 @@ const WishlistCard: React.FC<WishlistCardProps> = ({
                     );
                   })()}
 
-                  <Typography sx={{ color: 'black', fontSize: '0.85rem', fontWeight: 500 }}>
+                  <Typography sx={{ color: colors.text.primary, fontSize: '0.85rem', fontWeight: 500 }}>
                     {item.color || '—'}
                   </Typography>
           </Box>
 
           {/* Size */}
-          <Typography sx={{ color: 'black', fontSize: '0.85rem', fontWeight: 500 }}>
+          <Typography sx={{ color: colors.text.primary, fontSize: '0.85rem', fontWeight: 500 }}>
             Size: {item.size || '—'}
           </Typography>
         </Box>
@@ -229,14 +229,14 @@ const WishlistCard: React.FC<WishlistCardProps> = ({
             onClick={decreaseQuantity}
             disabled={isOutOfStock || localQuantity <= 1}
             sx={{
-              border: isOutOfStock ? '1px solid #f0f0f0' : '1px solid #e0e0e0',
+              border: isOutOfStock ? `1px solid ${colors.background.new}` : `1px solid ${colors.border.light}`,
               borderRadius: '4px',
               padding: '4px',
               '&:hover': {
-                backgroundColor: '#f5f5f5',
+                backgroundColor: colors.card.imagePlaceholder,
               },
               '&:disabled': {
-                backgroundColor: '#f0f0f0',
+                backgroundColor: colors.background.new,
                 color: '#ccc',
               },
             }}
@@ -251,14 +251,14 @@ const WishlistCard: React.FC<WishlistCardProps> = ({
             onClick={increaseQuantity}
             disabled={isOutOfStock || localQuantity >= effectiveMaxQuantity}
             sx={{
-              border: isOutOfStock ? '1px solid #f0f0f0' : '1px solid #e0e0e0',
+              border: isOutOfStock ? `1px solid ${colors.background.new}` : `1px solid ${colors.border.light}`,
               borderRadius: '4px',
               padding: '4px',
               '&:hover': {
-                backgroundColor: '#f5f5f5',
+                backgroundColor: colors.card.imagePlaceholder,
               },
               '&:disabled': {
-                backgroundColor: '#f0f0f0',
+                backgroundColor: colors.background.new,
                 color: '#ccc',
               },
             }}
@@ -268,7 +268,7 @@ const WishlistCard: React.FC<WishlistCardProps> = ({
         </Box>
 
         {/* Subtotal */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 2, pt: 1.5, borderTop: '1px solid #f0f0f0' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 2, pt: 1.5, borderTop: `1px solid ${colors.background.new}` }}>
           {!isOutOfStock && (
             <Typography sx={{ fontSize: '0.85rem', color: 'grey.600', fontWeight: 500 }}>
               Item Total:
@@ -305,11 +305,11 @@ const WishlistCard: React.FC<WishlistCardProps> = ({
             justifyContent: 'center',
             border: `1px solid ${colors.border.default}`,
             borderRadius: '6px',
-            color: '#dc2626',
+            color: colors.danger.primary,
             bgcolor: 'transparent',
             alignSelf: 'flex-end',
             '&:hover': {
-              bgcolor: '#fee2e2',
+              bgcolor: colors.danger.background,
             },
           }}
           aria-label="remove wishlist item"
@@ -331,8 +331,8 @@ const WishlistCard: React.FC<WishlistCardProps> = ({
           disabled={isDeleting || isOutOfStock}
           onClick={handleAddToCart}
           sx={{
-            backgroundColor: isOutOfStock ? '#f0f0f0' : 'black',
-            color: isOutOfStock ? '#ccc' : 'white',
+            backgroundColor: isOutOfStock ? colors.background.lighter : colors.text.primary,
+            color: isOutOfStock ? '#ccc' : colors.text.secondary,
             textTransform: 'none',
             fontSize: '0.8rem',
             px: 2.5,
@@ -341,11 +341,11 @@ const WishlistCard: React.FC<WishlistCardProps> = ({
             alignSelf: 'flex-end',
             mt: 4.2,
             '&:hover': {
-              backgroundColor: isOutOfStock ? '#f0f0f0' : '#333',
+              backgroundColor: isOutOfStock ? colors.background.new : '#333',
             },
             '&:disabled': {
-              backgroundColor: '#f0f0f0',
-              color: '#ccc',
+              backgroundColor: colors.background.new,
+              color:'#ccc',
             },
           }}
           title={isOutOfStock ? 'Out of stock - cannot add to cart' : ''}

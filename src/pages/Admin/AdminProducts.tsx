@@ -257,7 +257,7 @@ const AdminProducts = () => {
               onClick={handleAddProduct}
               sx={{
                 bgcolor: colors.button.primary,
-                color: 'white',
+                color: colors.text.secondary,
                 textTransform: 'none',
                 fontWeight: 600,
                 px: 2.5,
@@ -296,8 +296,8 @@ const AdminProducts = () => {
                     color: colors.text.primary,
                     borderColor: colors.border.default,
                     '&.Mui-selected': {
-                      backgroundColor: '#dc2626',
-                      color: 'white',
+                      backgroundColor: colors.button.primary,
+                      color: colors.text.secondary,
                     },
                   },
                 }}
@@ -367,13 +367,13 @@ const AdminProducts = () => {
               variant="contained"
               disabled={isDeleting}
               sx={{
-                backgroundColor: '#dc2626',
-                color: 'white',
+                backgroundColor: colors.danger.primary,
+                color: colors.text.secondary,
                 '&:hover': {
-                  backgroundColor: '#b91c1c',
+                  backgroundColor: colors.button.primaryHover,
                 },
                 '&:disabled': {
-                  backgroundColor: '#9ca3af',
+                  backgroundColor: colors.button.primaryDisabled,
                 },
               }}
             >

@@ -27,11 +27,11 @@ const ProductAddModal = ({ open, onClose, onSave, brands, deliveryMethods }: Pro
       backgroundColor: colors.background.default,
     },
     '& .MuiOutlinedInput-input': {
-      color: '#000000 !important',
+      color: colors.text.primary,
       fontSize: '1rem',
     },
     '& .MuiInputLabel-root': {
-      color: '#000000 !important',
+      color: colors.text.primary,
     },
   }
 
@@ -105,7 +105,7 @@ const ProductAddModal = ({ open, onClose, onSave, brands, deliveryMethods }: Pro
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
           <Box>
             <FormControl fullWidth size="small">
-              <InputLabel sx={{ color: '#000000 !important' }}>Brand Name</InputLabel>
+              <InputLabel sx={{ color: colors.text.primary }}>Brand Name</InputLabel>
               <Select
                 value={formData.brandId}
                 onChange={handleSelectChange('brandId')}
@@ -113,7 +113,7 @@ const ProductAddModal = ({ open, onClose, onSave, brands, deliveryMethods }: Pro
                 sx={{
                   backgroundColor: colors.background.default,
                   '& .MuiOutlinedInput-input': {
-                    color: '#000000 !important',
+                    color: colors.text.primary,
                   },
                 }}
               >
@@ -141,7 +141,7 @@ const ProductAddModal = ({ open, onClose, onSave, brands, deliveryMethods }: Pro
 
           <Box>
             <FormControl fullWidth size="small">
-              <InputLabel sx={{ color: '#000000 !important' }}>Delivery Method</InputLabel>
+              <InputLabel sx={{ color: colors.text.primary }}>Delivery Method</InputLabel>
               <Select
                 value={formData.deliveryMethod}
                 onChange={handleSelectChange('deliveryMethod')}
@@ -149,7 +149,7 @@ const ProductAddModal = ({ open, onClose, onSave, brands, deliveryMethods }: Pro
                 sx={{
                   backgroundColor: colors.background.default,
                   '& .MuiOutlinedInput-input': {
-                    color: '#000000 !important',
+                    color: colors.text.primary,
                   },
                 }}
               >

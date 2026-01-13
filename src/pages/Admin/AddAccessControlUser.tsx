@@ -324,7 +324,7 @@ const AddAccessControlUser: React.FC = () => {
                     <Typography
                       sx={{
                         fontSize: '0.85rem',
-                        color: passwordRequirements.hasUpperLower ? '#10b981' : '#999999',
+                        color: passwordRequirements.hasUpperLower ? colors.password.primary : colors.password.secondary,
                         display: 'flex',
                         alignItems: 'center',
                         gap: 1,
@@ -337,7 +337,7 @@ const AddAccessControlUser: React.FC = () => {
                     <Typography
                       sx={{
                         fontSize: '0.85rem',
-                        color: passwordRequirements.hasNumber ? '#10b981' : '#999999',
+                        color: passwordRequirements.hasNumber ? colors.password.primary : colors.password.secondary,
                         display: 'flex',
                         alignItems: 'center',
                         gap: 1,
@@ -350,7 +350,7 @@ const AddAccessControlUser: React.FC = () => {
                     <Typography
                       sx={{
                         fontSize: '0.85rem',
-                        color: passwordRequirements.hasSpecial ? '#10b981' : '#999999',
+                        color: passwordRequirements.hasSpecial ? colors.password.primary : colors.password.secondary,
                         display: 'flex',
                         alignItems: 'center',
                         gap: 1,

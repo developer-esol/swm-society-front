@@ -42,8 +42,8 @@ export const GuestNavigationBar: React.FC = () => {
             <AppBar 
                 position="fixed" 
                 sx={{ 
-                    bgcolor: 'black', 
-                    color: 'white',
+                    bgcolor: colors.text.primary, 
+                    color: colors.text.secondary,
                     width: '100%',
                     left: 0,
                     right: 0,

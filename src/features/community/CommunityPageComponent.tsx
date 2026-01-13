@@ -53,20 +53,14 @@ export const CommunityPageComponent: React.FC<CommunityPageComponentProps> = ({ 
   };
 
   const handleLikePost = async (postId: string) => {
+    const currentUserId = localStorage.getItem('userId');
+    if (!currentUserId) return;
+
     try {
-      const updatedPost = await likePost(postId);
-      if (updatedPost) {
-        setPosts(
-          posts.map((post) =>
-            post.id === postId ? updatedPost : post
-          )
-        );
-        // Update spotlight if liked post is in top 3
-        setSpotlightPosts(
-          spotlightPosts.map((post) =>
-            post.id === postId ? updatedPost : post
-          )
-        );
+      const result = await likePost(postId, currentUserId);
+      if (result) {
+        // Refetch all posts to get updated like counts and status
+        await loadPosts();
       }
     } catch (error) {
       console.error('Failed to like post:', error);
@@ -83,7 +77,7 @@ export const CommunityPageComponent: React.FC<CommunityPageComponentProps> = ({ 
 
       {/* Community Spotlight Section */}
       {spotlightPosts.length > 0 && (
-        <CommunitySpotlightSection posts={spotlightPosts} onLike={handleLikePost} />
+        <CommunitySpotlightSection posts={spotlightPosts} onLike={handleLikePost} onLikeUpdate={loadPosts} />
       )}
 
       {/* Share Your Style Section */}

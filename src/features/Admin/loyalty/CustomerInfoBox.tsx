@@ -47,7 +47,7 @@ const StatBox: React.FC<{
       <Typography
         sx={{
           fontSize: '0.75rem',
-          color: '#3d3939ff',
+          color: colors.danger.info,
           fontWeight: 600,
           textAlign: 'center',
         }}

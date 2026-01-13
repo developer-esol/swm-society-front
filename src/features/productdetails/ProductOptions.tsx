@@ -97,8 +97,8 @@ export const ProductOptions: React.FC<ProductOptionsProps> = ({
                 borderRadius: 1,
                 cursor: 'pointer',
                 fontWeight: selectedColor === color ? 600 : 500,
-                bgcolor: selectedColor === color ? '#000000' : 'transparent',
-                color: selectedColor === color ? '#ffffff' : colors.text.primary,
+                bgcolor: selectedColor === color ? colors.text.primary : 'transparent',
+                color: selectedColor === color ? colors.text.secondary : colors.text.primary,
                 transition: 'all 0.2s',
               }}
             >

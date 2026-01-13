@@ -25,7 +25,7 @@ const TopSellingProducts = ({ products }: TopSellingProductsProps) => {
       <TableContainer>
         <Table>
           <TableHead>
-            <TableRow sx={{ bgcolor: '#fef2f2' }}>
+            <TableRow sx={{ bgcolor: colors.loyalty.lightRed }}>
               <TableCell sx={{ fontWeight: 600, color: colors.text.gray, fontSize: '0.85rem' }}>
                 Name
               </TableCell>
@@ -45,9 +45,9 @@ const TopSellingProducts = ({ products }: TopSellingProductsProps) => {
               <TableRow
                 key={idx}
                 sx={{
-                  bgcolor: '#fef2f2',
+                  bgcolor: colors.loyalty.lightRed,
                   '&:hover': {
-                    bgcolor: '#fecaca',
+                    bgcolor: colors.loyalty.lightRedPink,
                   },
                 }}
               >
