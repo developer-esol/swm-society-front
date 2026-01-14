@@ -147,6 +147,7 @@ const AdminProducts = () => {
       await deleteProduct(deleteConfirm.productId)
       // Invalidate and refetch products
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.admin })
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.all })
       setDeleteConfirm({ open: false, productId: '', productName: '' })
     } catch (error) {
       console.error('Error deleting product:', error)

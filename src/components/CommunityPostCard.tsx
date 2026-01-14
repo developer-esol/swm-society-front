@@ -27,6 +27,12 @@ const CommunityPostCard: React.FC<CommunityPostCardProps> = ({
   // Get current user ID from localStorage
   const currentUserId = localStorage.getItem('userId') || '';
 
+  // Check if the media is a video
+  const isVideo = (url: string) => {
+    const videoExtensions = ['.mp4', '.webm', '.mov'];
+    return videoExtensions.some(ext => url.toLowerCase().includes(ext));
+  };
+
   // Update local state when post prop changes
   useEffect(() => {
     setIsLiked(post.isLiked || false);
@@ -34,7 +40,13 @@ const CommunityPostCard: React.FC<CommunityPostCardProps> = ({
   }, [post.isLiked, post.likes]);
 
   const handleLikeClick = async () => {
-    if (isLiking || !currentUserId) return;
+    // If user not logged in, redirect to login
+    if (!currentUserId) {
+      window.location.href = '/login';
+      return;
+    }
+    
+    if (isLiking) return;
 
     try {
       setIsLiking(true);
@@ -67,22 +79,36 @@ const CommunityPostCard: React.FC<CommunityPostCardProps> = ({
         },
       }}
     >
-      {/* Post Image with Like Button */}
+      {/* Post Image/Video with Like Button */}
       <Box sx={{ position: 'relative' }}>
-        <CardMedia
-          component="img"
-          height="280"
-          image={post.image}
-          alt="Community post"
-          sx={{
-            objectFit: 'cover',
-            backgroundColor: colors.card.imagePlaceholder,
-          }}
-        />
-        {/* Like Button on Image Corner */}
+        {isVideo(post.image) ? (
+          <Box
+            component="video"
+            src={post.image}
+            controls
+            sx={{
+              width: '100%',
+              height: 280,
+              objectFit: 'cover',
+              backgroundColor: colors.card.imagePlaceholder,
+            }}
+          />
+        ) : (
+          <CardMedia
+            component="img"
+            height="280"
+            image={post.image}
+            alt="Community post"
+            sx={{
+              objectFit: 'cover',
+              backgroundColor: colors.card.imagePlaceholder,
+            }}
+          />
+        )}
+        {/* Like Button on Image/Video Corner */}
         <IconButton
           onClick={handleLikeClick}
-          disabled={isLiking || !currentUserId}
+          disabled={isLiking}
           sx={{
             position: 'absolute',
             top: 8,

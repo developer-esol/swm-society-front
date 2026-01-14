@@ -22,6 +22,12 @@ const CommunitySpotlight: React.FC<CommunitySpotlightProps> = ({
 }) => {
   const currentUserId = localStorage.getItem('userId') || '';
 
+  // Check if the media is a video
+  const isVideo = (url: string) => {
+    const videoExtensions = ['.mp4', '.webm', '.mov'];
+    return videoExtensions.some(ext => url.toLowerCase().includes(ext));
+  };
+
   // Get top 3 most-liked posts
   const topPosts = posts
     .sort((a, b) => b.likes - a.likes)
@@ -32,7 +38,11 @@ const CommunitySpotlight: React.FC<CommunitySpotlightProps> = ({
   }
 
   const handleLike = async (postId: string) => {
-    if (!currentUserId) return;
+    // If user not logged in, redirect to login
+    if (!currentUserId) {
+      window.location.href = '/login';
+      return;
+    }
 
     try {
       const result = await communityService.toggleLike(postId, currentUserId);
@@ -91,17 +101,30 @@ const CommunitySpotlight: React.FC<CommunitySpotlightProps> = ({
                   height: '100%',
                 }}
               >
-                {/* Post Image */}
-                <Box
-                  component="img"
-                  src={post.image}
-                  alt={post.caption}
-                  sx={{
-                    width: '100%',
-                    height: '280px',
-                    objectFit: 'cover',
-                  }}
-                />
+                {/* Post Image/Video */}
+                {isVideo(post.image) ? (
+                  <Box
+                    component="video"
+                    src={post.image}
+                    controls
+                    sx={{
+                      width: '100%',
+                      height: '280px',
+                      objectFit: 'cover',
+                    }}
+                  />
+                ) : (
+                  <Box
+                    component="img"
+                    src={post.image}
+                    alt={post.caption}
+                    sx={{
+                      width: '100%',
+                      height: '280px',
+                      objectFit: 'cover',
+                    }}
+                  />
+                )}
 
                 {/* Post Content */}
                 <Box sx={{ p: 3, display: 'flex', flexDirection: 'column', flex: 1 }}>
@@ -156,14 +179,10 @@ const CommunitySpotlight: React.FC<CommunitySpotlightProps> = ({
                     <IconButton
                       size="small"
                       onClick={() => handleLike(post.id)}
-                      disabled={!currentUserId}
                       sx={{
                         color: post.isLiked ? colors.danger.primary : 'grey.600',
                         '&:hover': {
                           color: colors.danger.primary,
-                        },
-                        '&:disabled': {
-                          opacity: 0.5,
                         },
                       }}
                     >

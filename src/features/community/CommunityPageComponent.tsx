@@ -54,7 +54,12 @@ export const CommunityPageComponent: React.FC<CommunityPageComponentProps> = ({ 
 
   const handleLikePost = async (postId: string) => {
     const currentUserId = localStorage.getItem('userId');
-    if (!currentUserId) return;
+    
+    // If user not logged in, redirect to login
+    if (!currentUserId) {
+      window.location.href = '/login';
+      return;
+    }
 
     try {
       const result = await likePost(postId, currentUserId);

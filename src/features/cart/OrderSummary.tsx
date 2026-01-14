@@ -2,6 +2,7 @@ import React from 'react';
 import { Box, Paper, Typography, Button as MuiButton } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { colors } from '../../theme';
+import { useAuthStore } from '../../store/useAuthStore';
 
 interface OrderSummaryProps {
   totalAmount: number;
@@ -13,6 +14,15 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
   totalItems,
 }) => {
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuthStore();
+
+  const handleCheckout = () => {
+    if (!isAuthenticated) {
+      // User not logged in, disable button (won't reach here due to disabled state)
+      return;
+    }
+    navigate('/checkout');
+  };
 
   return (
     <Box sx={{ position: 'sticky', top: 100 }}>
@@ -61,7 +71,8 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
         <MuiButton
           variant="contained"
           fullWidth
-          onClick={() => navigate('/checkout')}
+          onClick={handleCheckout}
+          disabled={!isAuthenticated}
           sx={{
             backgroundColor: colors.text.primary,
             color: colors.text.secondary,
@@ -73,9 +84,14 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
             '&:hover': {
               backgroundColor: colors.text.dark,
             },
+            '&:disabled': {
+              backgroundColor: colors.button.primaryDisabled,
+              color: colors.text.disabled,
+              cursor: 'not-allowed',
+            },
           }}
         >
-          Proceed to Checkout
+          {isAuthenticated ? 'Proceed to Checkout' : 'Login to Checkout'}
         </MuiButton>
 
         {/* Continue Shopping Link */}

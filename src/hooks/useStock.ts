@@ -42,6 +42,7 @@ export const useCreateStock = () => {
     mutationFn: (data: CreateStockData) => stockService.createStock(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['stocks'] });
+      queryClient.invalidateQueries({ queryKey: ['products'] });
     },
   });
 };
@@ -54,6 +55,7 @@ export const useUpdateStock = () => {
       stockService.updateStock(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['stocks'] });
+      queryClient.invalidateQueries({ queryKey: ['products'] });
     },
   });
 };
@@ -65,6 +67,7 @@ export const useDeleteStock = () => {
     mutationFn: (id: string) => stockService.deleteStock(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['stocks'] });
+      queryClient.invalidateQueries({ queryKey: ['products'] });
     },
   });
 };

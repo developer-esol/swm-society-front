@@ -88,6 +88,29 @@ export function useCartQuery() {
     onSettled: () => queryClient.invalidateQueries({ queryKey: cartQueryKey }),
   });
 
+  const addItemMutation = useMutation({
+    mutationFn: async (item: CartItem) => {
+      console.log('[useCartQuery] Adding item to cart:', item);
+      // Add to local storage first
+      cartService.addItem(item);
+      
+      // If authenticated, add to server
+      if (isAuthenticated && userId) {
+        console.log('[useCartQuery] Adding to server cart for user:', userId);
+        await cartService.addToServerCart(item);
+      }
+    },
+    onSuccess: () => {
+      console.log('[useCartQuery] Item added successfully, invalidating cart cache');
+      queryClient.invalidateQueries({ queryKey: cartQueryKey });
+      // Dispatch event for other components listening (like cart icon)
+      window.dispatchEvent(new Event('cart-updated'));
+    },
+    onError: (error) => {
+      console.error('[useCartQuery] Error adding item to cart:', error);
+    },
+  });
+
   const removeMutation = useMutation({
     mutationFn: async (id: string) => {
       // id may be a stockId or a productId; try to resolve local item
@@ -123,6 +146,7 @@ export function useCartQuery() {
     cartItems,
     isLoading,
     isError,
+    addItem: (item: CartItem) => addItemMutation.mutate(item),
     increaseQuantity: (stockId: string, maxQuantity?: number) => {
       const current = Number((cartItems.find((i) => i.stockId === stockId)?.quantity) ?? 1);
       const maxQ = typeof maxQuantity !== 'undefined' ? Number(maxQuantity) : undefined;

@@ -28,6 +28,12 @@ export const StyleInspiration: React.FC<StyleInspirationProps> = ({ posts: exter
   const [showAll, setShowAll] = useState(false);
   const postsRef = React.useRef<HTMLDivElement>(null);
 
+  // Check if the media is a video
+  const isVideo = (url: string) => {
+    const videoExtensions = ['.mp4', '.webm', '.mov'];
+    return videoExtensions.some(ext => url.toLowerCase().includes(ext));
+  };
+
   // Update posts when external posts change or load initially
   useEffect(() => {
     if (externalPosts && externalPosts.length > 0) {
@@ -133,17 +139,31 @@ export const StyleInspiration: React.FC<StyleInspirationProps> = ({ posts: exter
                     height: '100%',
                   }}
                 >
-                  {/* Post Image */}
-                  <Box
-                    component="img"
-                    src={post.image}
-                    alt={post.caption}
-                    sx={{
-                      width: '100%',
-                      height: '280px',
-                      objectFit: 'cover',
-                    }}
-                  />
+                  {/* Post Image/Video */}
+                  {isVideo(post.image) ? (
+                    <Box
+                      component="video"
+                      src={post.image}
+                      controls
+                      controlsList="nodownload"
+                      sx={{
+                        width: '100%',
+                        height: '280px',
+                        objectFit: 'cover',
+                      }}
+                    />
+                  ) : (
+                    <Box
+                      component="img"
+                      src={post.image}
+                      alt={post.caption}
+                      sx={{
+                        width: '100%',
+                        height: '280px',
+                        objectFit: 'cover',
+                      }}
+                    />
+                  )}
 
                   {/* Post Content */}
                   <Box sx={{ p: 3, display: 'flex', flexDirection: 'column', flex: 1 }}>

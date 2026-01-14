@@ -4,10 +4,12 @@ import type { SelectChangeEvent } from '@mui/material'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useFormik } from 'formik'
 import * as Yup from 'yup'
+import { useQueryClient } from '@tanstack/react-query'
 import { colors } from '../../theme'
 import AdminBreadcrumbs from '../../components/Admin/AdminBreadcrumbs'
 import ImageUpload from '../../components/Admin/ImageUpload'
 import { productsService } from '../../api/services/products';
+import { QUERY_KEYS } from '../../configs/queryKeys'
 import type { CreateProductData, CreateProductResponse } from '../../types/product'
 import { useBrands } from '../../hooks/useBrands'
 
@@ -67,6 +69,7 @@ const selectSx = {
 
 const AddProduct: React.FC = () => {
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const { brandSlug } = useParams<{ brandSlug?: string }>()
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
@@ -156,6 +159,10 @@ const AddProduct: React.FC = () => {
       try {
         const response: CreateProductResponse = await productsService.createProductAPI(values)
         console.log('Product created successfully:', response)
+        
+        // Invalidate products cache to refresh product lists
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.all })
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.admin })
         
         setSuccessMessage(`Product "${response.name}" created successfully with ID: ${response.id}`)
         

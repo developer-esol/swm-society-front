@@ -16,6 +16,7 @@ import {
 // Import hooks and services
 import { useStocks, useProduct } from '../../hooks/useStock';
 import { useWishlist } from '../../hooks/useWishlist';
+import { useCart } from '../cart/useCart';
 import { wishlistService } from '../../api/services/wishlistService';
 import { cartService } from '../../api/services/cartService';
 import { authService } from '../../api/services/authService';
@@ -34,6 +35,7 @@ interface ProductDetailsPageComponentProps {
 export const ProductDetailsPageComponent: React.FC<ProductDetailsPageComponentProps> = ({ productId }) => {
   const navigate = useNavigate();
   const { addItem, removeItem, isInWishlist } = useWishlist();
+  const { addItem: addToCart } = useCart();
 
   // State for product selection
   const [selectedSize, setSelectedSize] = useState<string>('');
@@ -372,27 +374,9 @@ export const ProductDetailsPageComponent: React.FC<ProductDetailsPageComponentPr
       addedAt: new Date().toISOString(),
     };
 
-    const doAdd = async () => {
-      try {
-        if (authService.isAuthenticated()) {
-          await cartService.addToServerCart(cartItem);
-        } else {
-          cartService.addItem(cartItem);
-        }
-        navigate('/cart');
-      } catch (error) {
-        console.error('Failed to add to cart:', error);
-
-        // Prefer the server-provided message when available
-        const serverMessage = (error as any)?.message || (error as any)?.body?.message;
-        const alertMessage = serverMessage || 'Failed to add to cart. Please try again.';
-
-        // Show a more specific message to the user
-        alert(alertMessage);
-      }
-    };
-
-    void doAdd();
+    // Use cart hook's addItem which triggers cache invalidation
+    addToCart(cartItem);
+    navigate('/cart');
   };
 
   const handleWishlistToggle = async () => {

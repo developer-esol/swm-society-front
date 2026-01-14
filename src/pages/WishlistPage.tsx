@@ -6,11 +6,13 @@ import { wishlistService } from '../api/services/wishlistService';
 import { authService } from '../api/services/authService';
 import { cartService } from '../api/services/cartService';
 import { stockService } from '../api/services/stockService';
+import { useCart } from '../features/cart/useCart';
 import { colors } from '../theme';
 import type { WishlistItem } from '../types/wishlist';
 
 const WishlistPage: React.FC = () => {
   const navigate = useNavigate();
+  const { addItem: addToCart } = useCart();
   const [wishlistItems, setWishlistItems] = useState<WishlistItem[]>([]);
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const [refreshTrigger, setRefreshTrigger] = useState(0);
@@ -192,13 +194,11 @@ const WishlistPage: React.FC = () => {
       return;
     }
     const cartQuantity = quantities[item.stockId] || item.quantity;
-    // Add to cart with the selected quantity
-    await cartService.addItem({
+    // Use cart hook's addItem which triggers cache invalidation
+    addToCart({
       ...item,
       quantity: cartQuantity,
     });
-    // Dispatch cart-updated event to update cart icon
-    window.dispatchEvent(new Event('cart-updated'));
     // Trigger stock refresh to update add to cart buttons
     setRefreshTrigger(prev => prev + 1);
     // Redirect to cart page
@@ -213,7 +213,7 @@ const WishlistPage: React.FC = () => {
         return;
       }
       const cartQuantity = quantities[item.stockId] || item.quantity;
-      cartService.addItem({
+      addToCart({
         ...item,
         quantity: cartQuantity,
       });

@@ -213,7 +213,13 @@ export const ShareYourStyle: React.FC<ShareYourStyleProps> = ({ onPostSuccess })
                   bgcolor: '#333',
                 },
               }}
-              onClick={() => setShowPostForm(true)}
+              onClick={() => {
+                if (!isAuthenticated) {
+                  window.location.href = '/login';
+                  return;
+                }
+                setShowPostForm(true);
+              }}
             >
               Add Your Post
             </MuiButton>
@@ -294,7 +300,7 @@ export const ShareYourStyle: React.FC<ShareYourStyleProps> = ({ onPostSuccess })
                 />
               </Box>
 
-              {/* Image Upload */}
+              {/* Media Upload - Images and Videos */}
               <Box sx={{ mb: 3, textAlign: 'left' }}>
                 <ImageUpload
                   value={formik.values.imageUrl}
@@ -302,6 +308,8 @@ export const ShareYourStyle: React.FC<ShareYourStyleProps> = ({ onPostSuccess })
                     formik.setFieldValue('imageUrl', url);
                     setPreviewUrl(url);
                   }}
+                  acceptVideo={true}
+                  label="Upload Image or Video"
                 />
                 {formik.touched.imageUrl && formik.errors.imageUrl && (
                   <Typography sx={{ color: colors.status.error, fontSize: '0.75rem', mt: 0.5 }}>

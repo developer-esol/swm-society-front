@@ -123,6 +123,7 @@ const ProductEditModal = ({ open, product, onClose, onSave }: ProductEditModalPr
       
       // Invalidate and refetch products
       await queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.admin })
+      await queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.all })
       
       setSuccess(`Product "${updatedProduct.productName}" updated successfully!`)
       onSave(updatedProduct)

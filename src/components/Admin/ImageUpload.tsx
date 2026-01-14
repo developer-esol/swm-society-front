@@ -5,11 +5,13 @@ import { colors } from '../../theme';
 import { apiClient } from '../../api/apiClient';
 
 interface ImageUploadProps {
-  value: string; // Current image URL
-  onChange: (url: string) => void; // Callback when image is uploaded
+  value: string; // Current image/video URL
+  onChange: (url: string) => void; // Callback when media is uploaded
   label?: string;
   error?: boolean;
   helperText?: string;
+  acceptVideo?: boolean; // Allow video uploads
+  maxFileSize?: number; // Max file size in MB
 }
 
 const ImageUpload: React.FC<ImageUploadProps> = ({
@@ -18,24 +20,45 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
   label = 'Product Image',
   error = false,
   helperText,
+  acceptVideo = false,
+  maxFileSize = 5, // Default 5MB for images (ignored when acceptVideo=true)
 }) => {
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
-  const ALLOWED_TYPES = ['image/png', 'image/jpg', 'image/jpeg', 'image/webp'];
+  const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB for images
+  const MAX_VIDEO_SIZE = 50 * 1024 * 1024; // 50MB for videos
+  const ALLOWED_IMAGE_TYPES = ['image/png', 'image/jpg', 'image/jpeg', 'image/webp'];
+  const ALLOWED_VIDEO_TYPES = ['video/mp4', 'video/webm', 'video/mov', 'video/quicktime'];
+  const ALLOWED_TYPES = acceptVideo 
+    ? [...ALLOWED_IMAGE_TYPES, ...ALLOWED_VIDEO_TYPES]
+    : ALLOWED_IMAGE_TYPES;
+
+  const isVideoFile = (fileType: string) => ALLOWED_VIDEO_TYPES.includes(fileType);
+
+  const isMediaUrlVideo = (url: string) => {
+    const videoExtensions = ['.mp4', '.webm', '.mov'];
+    return videoExtensions.some(ext => url.toLowerCase().includes(ext));
+  };
 
   const validateFile = (file: File): string | null => {
-    // Check file size
-    if (file.size > MAX_FILE_SIZE) {
-      return 'File size must be less than 5MB';
+    // Check file type first
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      if (acceptVideo) {
+        return 'Only PNG, JPG, JPEG, WebP images or MP4, WebM, MOV videos are allowed';
+      }
+      return 'Only PNG, JPG, JPEG, and WebP images are allowed';
     }
 
-    // Check file type
-    if (!ALLOWED_TYPES.includes(file.type)) {
-      return 'Only PNG, JPG, JPEG, and WebP images are allowed';
+    // Check file size based on type
+    const isVideo = isVideoFile(file.type);
+    const maxSize = isVideo ? MAX_VIDEO_SIZE : MAX_IMAGE_SIZE;
+    const maxSizeMB = isVideo ? 50 : 5;
+
+    if (file.size > maxSize) {
+      return `${isVideo ? 'Video' : 'Image'} size must be less than ${maxSizeMB}MB`;
     }
 
     return null;
@@ -62,9 +85,13 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
       const formData = new FormData();
       formData.append('file', file);
 
+      // Determine endpoint based on file type
+      const isVideo = isVideoFile(file.type);
+      const endpoint = isVideo ? '/upload/video' : '/upload/image';
+
       // Upload to backend (which will upload to Cloudinary)
       // Note: Don't set Content-Type header - browser will set it with the correct boundary
-      const response = await apiClient.post<{ url: string }>('/upload/image', formData);
+      const response = await apiClient.post<{ url: string }>(endpoint, formData);
 
       if (response && response.url) {
         onChange(response.url);
@@ -75,7 +102,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
       }
     } catch (err: any) {
       console.error('Upload error:', err);
-      const errorMessage = err?.response?.data?.message || err?.message || 'Failed to upload image';
+      const errorMessage = err?.response?.data?.message || err?.message || 'Failed to upload media';
       setUploadError(errorMessage);
     } finally {
       setUploading(false);
@@ -94,6 +121,20 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
     onChange('');
     setUploadSuccess(false);
     setUploadError(null);
+  };
+
+  const getAcceptAttribute = () => {
+    if (acceptVideo) {
+      return '.png,.jpg,.jpeg,.webp,.mp4,.webm,.mov';
+    }
+    return '.png,.jpg,.jpeg,.webp';
+  };
+
+  const getFileTypeText = () => {
+    if (acceptVideo) {
+      return `Images (PNG, JPG, WebP) max 5MB or Videos (MP4, WebM, MOV) max 50MB`;
+    }
+    return `PNG, JPG, JPEG, or WebP • Max 5MB`;
   };
 
   return (
@@ -127,25 +168,39 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
         <input
           ref={fileInputRef}
           type="file"
-          accept=".png,.jpg,.jpeg,.webp"
+          accept={getAcceptAttribute()}
           onChange={handleFileSelect}
           style={{ display: 'none' }}
         />
 
-        {/* Image Preview */}
+        {/* Media Preview */}
         {value && (
           <Box sx={{ mb: 2, position: 'relative', display: 'inline-block' }}>
-            <Box
-              component="img"
-              src={value}
-              alt="Preview"
-              sx={{
-                maxWidth: '100%',
-                maxHeight: '200px',
-                borderRadius: '4px',
-                objectFit: 'contain',
-              }}
-            />
+            {isMediaUrlVideo(value) ? (
+              <Box
+                component="video"
+                src={value}
+                controls
+                sx={{
+                  maxWidth: '100%',
+                  maxHeight: '300px',
+                  borderRadius: '4px',
+                  objectFit: 'contain',
+                }}
+              />
+            ) : (
+              <Box
+                component="img"
+                src={value}
+                alt="Preview"
+                sx={{
+                  maxWidth: '100%',
+                  maxHeight: '200px',
+                  borderRadius: '4px',
+                  objectFit: 'contain',
+                }}
+              />
+            )}
             <Button
               size="small"
               onClick={handleRemoveImage}
@@ -190,7 +245,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
             },
           }}
         >
-          {uploading ? 'Uploading...' : value ? 'Change Image' : 'Select Image'}
+          {uploading ? 'Uploading...' : value ? 'Change Media' : acceptVideo ? 'Select Media' : 'Select Image'}
         </Button>
 
         {/* File type info */}
@@ -201,7 +256,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
             mt: 1,
           }}
         >
-          PNG, JPG, JPEG, or WebP • Max 5MB
+          {getFileTypeText()}
         </Typography>
       </Box>
 
@@ -212,7 +267,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
           icon={<Check size={18} />}
           sx={{ mt: 2 }}
         >
-          Image uploaded successfully!
+          {acceptVideo ? 'Media uploaded successfully!' : 'Image uploaded successfully!'}
         </Alert>
       )}
 

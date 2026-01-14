@@ -36,6 +36,11 @@ export const QUERY_KEYS = {
     all: ['cart'] as const,
   },
   
+  // Wishlist
+  wishlist: {
+    all: ['wishlist'] as const,
+  },
+  
   // Orders
   orders: {
     all: ['orders'] as const,
