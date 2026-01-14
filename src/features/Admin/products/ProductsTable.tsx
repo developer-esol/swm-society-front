@@ -57,6 +57,9 @@ const ProductsTable = ({ products, onView, onEdit, onDelete, brandFilter }: Prod
           <TableHead>
             <TableRow sx={{ bgcolor: colors.login.access }}>
               <TableCell sx={{ fontWeight: 700, color: colors.text.primary, fontSize: '0.9rem' }}>
+                Image
+              </TableCell>
+              <TableCell sx={{ fontWeight: 700, color: colors.text.primary, fontSize: '0.9rem' }}>
                 Product ID
               </TableCell>
               <TableCell sx={{ fontWeight: 700, color: colors.text.primary, fontSize: '0.9rem' }}>
@@ -80,6 +83,20 @@ const ProductsTable = ({ products, onView, onEdit, onDelete, brandFilter }: Prod
             {products.length > 0 ? (
               products.map((product, index) => (
                 <TableRow key={index} sx={{ '&:hover': { bgcolor: colors.background.lighter } }}>
+                  <TableCell sx={{ py: 1 }}>
+                    <Box
+                      component="img"
+                      src={product.imageUrl || '/thumbnail.jpg'}
+                      alt={product.productName}
+                      sx={{
+                        width: 60,
+                        height: 60,
+                        objectFit: 'cover',
+                        borderRadius: '4px',
+                        bgcolor: colors.card.imagePlaceholder,
+                      }}
+                    />
+                  </TableCell>
                   <TableCell sx={{ color: colors.text.primary, fontSize: '0.9rem' }}>
                     {product.id}
                   </TableCell>
@@ -172,7 +189,7 @@ const ProductsTable = ({ products, onView, onEdit, onDelete, brandFilter }: Prod
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={6} sx={{ textAlign: 'center', py: 3 }}>
+                <TableCell colSpan={7} sx={{ textAlign: 'center', py: 3 }}>
                   <Typography sx={{ color: colors.text.disabled }}>
                     No products found
                   </Typography>

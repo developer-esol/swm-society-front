@@ -161,7 +161,11 @@ const AdminProducts = () => {
   }
 
   const handleAddProduct = () => {
-    navigate('/admin/add-product')
+    if (brandFilter) {
+      navigate(`/admin/${brandFilter}/add-product`)
+    } else {
+      navigate('/admin/add-product')
+    }
   }
 
   // Show loading state

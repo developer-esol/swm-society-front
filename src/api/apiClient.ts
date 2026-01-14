@@ -89,6 +89,16 @@ class ApiClient {
       ...options,
     };
 
+    // Remove undefined headers (like Content-Type for FormData)
+    if (config.headers) {
+      const headers = config.headers as Record<string, any>;
+      Object.keys(headers).forEach(key => {
+        if (headers[key] === undefined) {
+          delete headers[key];
+        }
+      });
+    }
+
     const response = await fetch(url, config);
 
     // Handle 401 Unauthorized - token expired
@@ -149,9 +159,18 @@ class ApiClient {
   }
 
   async post<T>(endpoint: string, data?: any): Promise<T> {
+    // Check if data is FormData (for file uploads)
+    const isFormData = data instanceof FormData;
+    
     return this.request<T>(endpoint, {
       method: 'POST',
-      body: JSON.stringify(data),
+      body: isFormData ? data : JSON.stringify(data),
+      ...(isFormData && {
+        headers: {
+          // Remove Content-Type header for FormData - browser will set it with boundary
+          'Content-Type': undefined as any,
+        },
+      }),
     });
   }
 

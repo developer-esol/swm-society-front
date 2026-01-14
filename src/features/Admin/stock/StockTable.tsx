@@ -47,6 +47,9 @@ const StockTable = ({ items, onView, onEdit, onDelete, brandFilter }: StockTable
           <TableHead>
             <TableRow sx={{ bgcolor: '#d3d3d3' }}>
               <TableCell sx={{ fontWeight: 700, color: colors.text.primary, fontSize: '0.9rem' }}>
+                Image
+              </TableCell>
+              <TableCell sx={{ fontWeight: 700, color: colors.text.primary, fontSize: '0.9rem' }}>
                 Item ID
               </TableCell>
               <TableCell sx={{ fontWeight: 700, color: colors.text.primary, fontSize: '0.9rem' }}>
@@ -73,6 +76,20 @@ const StockTable = ({ items, onView, onEdit, onDelete, brandFilter }: StockTable
             {items.length > 0 ? (
               items.map((item) => (
                 <TableRow key={item.id} sx={{ '&:hover': { bgcolor: colors.background.lighter } }}>
+                  <TableCell sx={{ py: 1 }}>
+                    <Box
+                      component="img"
+                      src={item.imageUrl || '/thumbnail.jpg'}
+                      alt={item.productName}
+                      sx={{
+                        width: 60,
+                        height: 60,
+                        objectFit: 'cover',
+                        borderRadius: '4px',
+                        bgcolor: colors.card.imagePlaceholder,
+                      }}
+                    />
+                  </TableCell>
                   <TableCell sx={{ color: colors.text.primary, fontSize: '0.9rem' }}>
                     {item.id}
                   </TableCell>
@@ -168,7 +185,7 @@ const StockTable = ({ items, onView, onEdit, onDelete, brandFilter }: StockTable
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={7} sx={{ textAlign: 'center', py: 3 }}>
+                <TableCell colSpan={8} sx={{ textAlign: 'center', py: 3 }}>
                   No stock items found
                 </TableCell>
               </TableRow>

@@ -1,6 +1,6 @@
 import { Box, Container, Typography, Pagination, Stack, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Button, TextField, IconButton } from '@mui/material'
 import { useState, useMemo } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { Search as SearchIcon } from '@mui/icons-material'
 import { StockTable, StockEditModal } from '../../features/Admin/stock'
 import StockViewModal from '../../features/Admin/stock/StockViewModal'
@@ -13,8 +13,8 @@ import { PERMISSIONS } from '../../configs/permissions'
 
 const AdminStock = () => {
   const navigate = useNavigate()
-  const [searchParams] = useSearchParams()
-  const brandFilter = searchParams.get('brand') // Get brand from query params
+  const { brandSlug } = useParams<{ brandSlug: string }>()
+  const brandFilter = brandSlug // Get brand from URL params
   const { data: stocks = [] } = useAllStocks(brandFilter)
   const { data: products = [] } = useAllProducts()
   const updateStockMutation = useUpdateStock()
@@ -116,7 +116,7 @@ const AdminStock = () => {
   }
 
   const handleAddStock = () => {
-    navigate('/admin/add-stock')
+    navigate(`/admin/${brandFilter}/add-stock`)
   }
 
   const handleCloseEditModal = () => {
@@ -200,7 +200,12 @@ const AdminStock = () => {
         }}
       >
         {/* Header */}
-        <AdminBreadcrumbs items={[{ label: 'Admin', to: '/admin' }, { label: 'Stock', to: '/admin/stock' }]} />
+        <AdminBreadcrumbs 
+          items={[
+            { label: 'Dashboard', to: '/admin' },
+            { label: getBrandDisplayName(brandFilter) || 'Stock', to: `/admin/${brandFilter}/stock` }
+          ]} 
+        />
         <Typography
           variant="h4"
           sx={{
@@ -210,7 +215,7 @@ const AdminStock = () => {
             fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' },
           }}
         >
-          {getBrandDisplayName(brandFilter) ? `${getBrandDisplayName(brandFilter)} Stock` : 'Stock Management'}
+          {getBrandDisplayName(brandFilter)} Stock
         </Typography>
 
         {/* Search Box with Add Button */}

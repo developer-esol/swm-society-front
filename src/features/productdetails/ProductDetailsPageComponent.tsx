@@ -112,32 +112,30 @@ export const ProductDetailsPageComponent: React.FC<ProductDetailsPageComponentPr
     loadProductData();
   }, [productId]);
 
-  // Update display image when color is selected
-  useEffect(() => {
-    if (!selectedColor || !productData) return;
-
-    if (productData?.colorImages) {
-      let colorImage: string | undefined = productData.colorImages[selectedColor];
-
-      if (!colorImage) {
-        const normalizedColor = selectedColor.toLowerCase();
-        const matchingKey = Object.keys(productData.colorImages).find(
-          (key) => key.toLowerCase() === normalizedColor
-        );
-        colorImage = matchingKey ? productData.colorImages[matchingKey] : undefined;
-      }
-
-      if (colorImage) {
-        setDisplayImage(colorImage);
-      }
-    }
-  }, [selectedColor, productData]);
-
   // Get product data using custom hook
   const { data: product, isLoading: productLoading } = useProduct(productId);
 
   // Get stock data using custom hook
   const { data: stocks = [], isLoading: stocksLoading } = useStocks(productId, refreshTrigger);
+
+  // Build color images from stocks
+  const colorImagesFromStocks = React.useMemo(() => {
+    const colorImageMap: Record<string, string> = {};
+    stocks.forEach((stock) => {
+      if (stock.color && stock.imageUrl && !colorImageMap[stock.color]) {
+        colorImageMap[stock.color] = stock.imageUrl;
+      }
+    });
+    return colorImageMap;
+  }, [stocks]);
+
+  // Merge product colorImages with stock images
+  const mergedColorImages = React.useMemo(() => {
+    return {
+      ...colorImagesFromStocks,
+      ...(productData?.colorImages || {}),
+    };
+  }, [colorImagesFromStocks, productData?.colorImages]);
 
   // Aggregate stocks by size+color so multiple rows for same variant are summed
   type AggStock = {
@@ -214,6 +212,45 @@ export const ProductDetailsPageComponent: React.FC<ProductDetailsPageComponentPr
       if (match && match !== selectedColor) setSelectedColor(match);
     }
   }, [stocks, availableSizes, availableColors, selectedColor, selectedSize]);
+
+  // Update display image and size when color is selected
+  useEffect(() => {
+    if (!selectedColor) return;
+
+    // First try stock images, then product colorImages
+    let colorImage = colorImagesFromStocks[selectedColor];
+    
+    if (!colorImage && productData?.colorImages) {
+      colorImage = productData.colorImages[selectedColor];
+
+      if (!colorImage) {
+        const normalizedColor = selectedColor.toLowerCase();
+        const matchingKey = Object.keys(productData.colorImages).find(
+          (key) => key.toLowerCase() === normalizedColor
+        );
+        colorImage = matchingKey ? productData.colorImages[matchingKey] : undefined;
+      }
+    }
+
+    if (colorImage) {
+      setDisplayImage(colorImage);
+    }
+
+    // Auto-select the first available size for the selected color
+    if (stocks.length > 0) {
+      const sizesForColor = [
+        ...new Set(
+          aggregatedStocks
+            .filter((a) => a.color === selectedColor && a.totalQuantity > 0)
+            .map((a) => a.size)
+        ),
+      ];
+      
+      if (sizesForColor.length > 0 && !sizesForColor.includes(selectedSize)) {
+        setSelectedSize(sizesForColor[0]);
+      }
+    }
+  }, [selectedColor, colorImagesFromStocks, productData, stocks, aggregatedStocks, selectedSize]);
 
   const availableColorsForSize: string[] = selectedSize
     ? [
@@ -540,7 +577,7 @@ export const ProductDetailsPageComponent: React.FC<ProductDetailsPageComponentPr
             selectedColor={selectedColor}
             onColorChange={setSelectedColor}
             availableColors={availableColors}
-            productData={productData}
+            productData={{ ...productData, colorImages: mergedColorImages } as Product}
           />
 
           {/* Right Column - Product Details and Options */}

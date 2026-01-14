@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { Container, Box, Typography, Button as MuiButton, TextField } from '@mui/material';
+import { Container, Box, Typography, Button as MuiButton, TextField, Alert } from '@mui/material';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { communityService } from '../../api/services/communityService';
 import { useAuthStore } from '../../store/useAuthStore';
 import { colors } from '../../theme';
+import ImageUpload from '../../components/Admin/ImageUpload';
 
 interface ShareYourStyleProps {
   onPostSuccess?: () => void;
@@ -35,13 +36,14 @@ export const ShareYourStyle: React.FC<ShareYourStyleProps> = ({ onPostSuccess })
   const [showPostForm, setShowPostForm] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
   const { user, isAuthenticated } = useAuthStore();
 
   const formik = useFormik<ShareYourStyleFormValues>({
     initialValues: {
       caption: '',
       description: '',
-      imageUrl: 'https://example.com/community-post.jpg',
+      imageUrl: '',
     },
     validationSchema,
     onSubmit: async (values: ShareYourStyleFormValues) => {
@@ -88,12 +90,18 @@ export const ShareYourStyle: React.FC<ShareYourStyleProps> = ({ onPostSuccess })
           onPostSuccess();
         }
         
-        alert('Post created successfully!');
+        // Show success message
+        setSuccessMessage('Post created successfully! 🎉');
         
         // Reset form after successful submission
         formik.resetForm();
         setPreviewUrl(null);
-        setShowPostForm(false);
+        
+        // Hide the form and success message after 2 seconds
+        setTimeout(() => {
+          setSuccessMessage('');
+          setShowPostForm(false);
+        }, 2000);
       } catch (error) {
         console.error('[ShareYourStyle] ❌ Failed to create post:', error);
         
@@ -112,6 +120,27 @@ export const ShareYourStyle: React.FC<ShareYourStyleProps> = ({ onPostSuccess })
       setPreviewUrl(formik.values.imageUrl);
     }
   }, [formik.values.imageUrl]);
+
+  // Show success message screen if post is successfully created
+  if (successMessage) {
+    return (
+      <Box sx={{ bgcolor: colors.background.light, width: '100%', py: 8 }}>
+        <Container maxWidth="lg">
+          <Box sx={{ textAlign: 'center' }}>
+            <Typography variant="h4" sx={{ fontWeight: 700, mb: 2 }}>
+              Post Created Successfully! 🎉
+            </Typography>
+            <Alert severity="success" sx={{ mb: 4, maxWidth: '600px', mx: 'auto' }}>
+              {successMessage}
+            </Alert>
+            <Typography variant="body1" sx={{ color: colors.text.disabled, mb: 4 }}>
+              Your post will appear in the community feed...
+            </Typography>
+          </Box>
+        </Container>
+      </Box>
+    );
+  }
 
   return (
     <Box sx={{ bgcolor: colors.background.light, width: '100%', py: 2 }}>
@@ -265,58 +294,21 @@ export const ShareYourStyle: React.FC<ShareYourStyleProps> = ({ onPostSuccess })
                 />
               </Box>
 
-              {/* Image URL Field */}
+              {/* Image Upload */}
               <Box sx={{ mb: 3, textAlign: 'left' }}>
-                <TextField
-                  fullWidth
-                  label="Image URL"
-                  name="imageUrl"
-                  placeholder="Enter image URL (e.g., https://example.com/image.jpg)"
+                <ImageUpload
                   value={formik.values.imageUrl}
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                  error={formik.touched.imageUrl && Boolean(formik.errors.imageUrl)}
-                  helperText={formik.touched.imageUrl && formik.errors.imageUrl}
-                  variant="outlined"
-                  sx={{
-                    '& .MuiOutlinedInput-root': {
-                      bgcolor: 'white',
-                      '& fieldset': {
-                        borderColor: colors.border.light,
-                      },
-                      '&:hover fieldset': {
-                        borderColor: colors.border.grey,
-                      },
-                    },
+                  onChange={(url) => {
+                    formik.setFieldValue('imageUrl', url);
+                    setPreviewUrl(url);
                   }}
                 />
-              </Box>
-
-              {/* Image Preview */}
-              {previewUrl && (
-                <Box sx={{ mb: 3, textAlign: 'center' }}>
-                  <Typography
-                    variant="body2"
-                    sx={{ mb: 2, color: colors.text.gray }}
-                  >
-                    Image Preview:
+                {formik.touched.imageUrl && formik.errors.imageUrl && (
+                  <Typography sx={{ color: colors.status.error, fontSize: '0.75rem', mt: 0.5 }}>
+                    {formik.errors.imageUrl}
                   </Typography>
-                  <img
-                    src={previewUrl}
-                    alt="Preview"
-                    style={{
-                      maxWidth: '100%',
-                      maxHeight: '300px',
-                      borderRadius: '8px',
-                      border: `1px solid ${colors.border.light}`,
-                    }}
-                    onError={() => {
-                      console.error('Failed to load image preview');
-                      setPreviewUrl(null);
-                    }}
-                  />
-                </Box>
-              )}
+                )}
+              </Box>
 
               {/* Action Buttons */}
               <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center' }}>

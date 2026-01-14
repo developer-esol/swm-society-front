@@ -372,7 +372,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeMenu, onCollapseChang
                       <List component="div" disablePadding>
                         <Permission permission={PERMISSIONS.VIEW_STOCK_PROJECT_ZERO}>
                           <Box
-                            onClick={() => handleMenuClick('/admin/stock?brand=project-zero')}
+                            onClick={() => handleMenuClick('/admin/project-zero/stock')}
                             sx={{
                               pl: 5,
                               pr: 1.75,
@@ -397,7 +397,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeMenu, onCollapseChang
                         </Permission>
                         <Permission permission={PERMISSIONS.VIEW_STOCK_THOMAS_MUSHET}>
                           <Box
-                            onClick={() => handleMenuClick('/admin/stock?brand=thomas-mushet')}
+                            onClick={() => handleMenuClick('/admin/thomas-mushet/stock')}
                             sx={{
                               pl: 5,
                               pr: 1.75,
@@ -422,7 +422,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeMenu, onCollapseChang
                         </Permission>
                         <Permission permission={PERMISSIONS.VIEW_STOCK_HEAR_MY_VOICE}>
                           <Box
-                            onClick={() => handleMenuClick('/admin/stock?brand=hear-my-voice')}
+                            onClick={() => handleMenuClick('/admin/hear-my-voice/stock')}
                             sx={{
                               pl: 5,
                               pr: 1.75,

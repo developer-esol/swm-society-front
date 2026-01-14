@@ -89,7 +89,8 @@ export const productsService = {
   },
 
   async getProductsByBrand(brandId: string): Promise<Product[]> {
-    return apiClient.get<Product[]>('/products', { brandId });
+    console.log('Fetching products by brandId:', brandId);
+    return apiClient.get<Product[]>(`/products/brand/${brandId}`);
   },
 
   async searchProducts(query: string): Promise<Product[]> {

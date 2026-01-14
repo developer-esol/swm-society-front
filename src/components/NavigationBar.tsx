@@ -98,7 +98,7 @@ export const NavigationBar: React.FC = () => {
                 }}>
                     {/* Logo */}
                     <Link to="/">
-                        <Box component="img" src="/image.png" alt="SWMSOCIETY" sx={{ height: { xs: 56, md: 72 } }} />
+                        <Box component="img" src="https://res.cloudinary.com/dmjacs0c9/image/upload/v1768295786/image_sosqdv.png" alt="SWMSOCIETY" sx={{ height: { xs: 56, md: 72 } }} />
                     </Link>
 
                     {/* Desktop Navigation */}

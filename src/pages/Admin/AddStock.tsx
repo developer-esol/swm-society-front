@@ -1,13 +1,17 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { Box, Typography, TextField, Button, Alert, Container, FormControl, InputLabel, Select, MenuItem } from '@mui/material'
 import type { SelectChangeEvent } from '@mui/material'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { useFormik } from 'formik'
 import * as Yup from 'yup'
 import { colors } from '../../theme'
 import AdminBreadcrumbs from '../../components/Admin/AdminBreadcrumbs'
+import ImageUpload from '../../components/Admin/ImageUpload'
 import { useAllProducts, useCreateStock } from '../../hooks/useStock'
+import { useBrands } from '../../hooks/useBrands'
+import { productsService } from '../../api/services/products'
 import type { CreateStockData } from '../../types'
+import type { Product } from '../../types/product'
 
 // Validation Schema
 const addStockValidationSchema = Yup.object().shape({
@@ -26,8 +30,8 @@ const addStockValidationSchema = Yup.object().shape({
     .positive('Price must be greater than 0')
     .required('Price is required'),
   imageUrl: Yup.string()
-    .url('Please enter a valid URL')
-    .required('Image URL is required'),
+    .url('Please enter a valid image URL')
+    .required('Stock image is required'),
 })
 
 // Field styling
@@ -68,11 +72,78 @@ const selectSx = {
 
 const AddStock: React.FC = () => {
   const navigate = useNavigate()
+  const { brandSlug } = useParams<{ brandSlug?: string }>()
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
+  const [filteredProducts, setFilteredProducts] = useState<Product[]>([])
   
-  const { data: products = [], isLoading: productsLoading } = useAllProducts()
+  const { data: allProducts = [], isLoading: productsLoading } = useAllProducts()
+  const { data: brands = [] } = useBrands()
   const createStockMutation = useCreateStock()
+
+  // Get brand info from slug using useMemo with brand name variations
+  const brandInfo = useMemo(() => {
+    if (!brandSlug) return { name: '', id: '' }
+    
+    // Map slug to possible brand name variations
+    const brandVariations: Record<string, string[]> = {
+      'project-zero': ['Project Zero', 'Project ZerO', "Project ZerO's", 'Project Zeros'],
+      'thomas-mushet': ['Thomas Mushet'],
+      'hear-my-voice': ['Hear My Voice', 'HMV']
+    }
+    
+    const possibleNames = brandVariations[brandSlug] || []
+    
+    console.log('=== BRAND MATCHING DEBUG ===')
+    console.log('Brand slug:', brandSlug)
+    console.log('Looking for brand names:', possibleNames)
+    console.log('Available brands:', brands)
+    
+    const brand = brands.find(b => {
+      const brandNameField = b.name || b.brandName || ''
+      const matches = possibleNames.some(name => 
+        brandNameField.toLowerCase().trim() === name.toLowerCase().trim()
+      )
+      console.log(`Brand "${brandNameField}" matches any of ${JSON.stringify(possibleNames)}? ${matches}`)
+      return matches
+    })
+    
+    console.log('Found brand:', brand)
+    const displayName = possibleNames[0] || ''
+    return { name: displayName, id: brand?.id || '' }
+  }, [brandSlug, brands])
+
+  // Filter products by brand when brand context exists
+  useEffect(() => {
+    const filterProducts = async () => {
+      if (brandSlug && brandInfo.id) {
+        try {
+          console.log('Fetching products for brand ID:', brandInfo.id)
+          const brandProducts = await productsService.getProductsByBrand(brandInfo.id)
+          console.log('Filtered products for', brandInfo.name, ':', brandProducts)
+          setFilteredProducts(brandProducts)
+        } catch (error) {
+          console.error('Error fetching brand products:', error)
+          setFilteredProducts([])
+        }
+      } else {
+        console.log('No brand ID found. Brand slug:', brandSlug, 'Brand ID:', brandInfo.id)
+        console.log('Using all products:', allProducts.length)
+        setFilteredProducts(allProducts)
+      }
+    }
+
+    filterProducts()
+  }, [brandSlug, brandInfo.id, allProducts])
+
+  const products = brandSlug && filteredProducts.length > 0 ? filteredProducts : allProducts
+  
+  console.log('=== PRODUCT DROPDOWN DEBUG ===')
+  console.log('Current brand slug:', brandSlug)
+  console.log('Brand info:', brandInfo)
+  console.log('Filtered products count:', filteredProducts.length)
+  console.log('All products count:', allProducts.length)
+  console.log('Products to display:', products.length, products)
 
   const formik = useFormik<CreateStockData>({
     initialValues: {
@@ -81,7 +152,7 @@ const AddStock: React.FC = () => {
       size: '',
       quantity: 0,
       price: 0,
-      imageUrl: 'https://example.com/stock-image.jpg',
+      imageUrl: '',
     },
     validationSchema: addStockValidationSchema,
     onSubmit: async (values) => {
@@ -94,7 +165,7 @@ const AddStock: React.FC = () => {
         setSuccessMessage('Stock added successfully!')
         
         setTimeout(() => {
-          navigate('/admin/stock')
+          navigate(`/admin/${brandSlug}/stock`)
         }, 1500)
       } catch (error) {
         console.error('Error adding stock:', error)
@@ -131,7 +202,21 @@ const AddStock: React.FC = () => {
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', bgcolor: colors.background.default }}>
       <Container maxWidth="lg" sx={{ py: 4, flex: 1, px: { xs: 2, sm: 3, md: 4 } }}>
         {/* Header */}
-        <AdminBreadcrumbs items={[{ label: 'Admin', to: '/admin' }, { label: 'Stock', to: '/admin/stock' }, { label: 'Add Stock' }]} />
+        <AdminBreadcrumbs 
+          items={
+            brandSlug && brandInfo.name
+              ? [
+                  { label: 'Dashboard', to: '/admin' },
+                  { label: brandInfo.name, to: `/admin/stock?brand=${brandSlug}` },
+                  { label: 'Add Stock' }
+                ]
+              : [
+                  { label: 'Dashboard', to: '/admin' },
+                  { label: 'Stock', to: '/admin/stock' },
+                  { label: 'Add Stock' }
+                ]
+          }
+        />
         <Typography
           variant="h4"
           sx={{
@@ -451,20 +536,16 @@ const AddStock: React.FC = () => {
                 />
               </Box>
 
-              {/* Image URL */}
-              <TextField
-                fullWidth
-                label="Image URL"
-                value={formik.values.imageUrl}
-                onChange={handleTextChange('imageUrl')}
-                onBlur={formik.handleBlur}
-                error={formik.touched.imageUrl && Boolean(formik.errors.imageUrl)}
-                helperText={formik.touched.imageUrl && formik.errors.imageUrl}
-                variant="outlined"
-                size="small"
-                sx={{ ...fieldSx, mb: { xs: 1.5, sm: 2 } }}
-                placeholder="https://example.com/stock-image.jpg"
-              />
+              {/* Image Upload */}
+              <Box sx={{ mb: { xs: 1.5, sm: 2 } }}>
+                <ImageUpload
+                  value={formik.values.imageUrl}
+                  onChange={(url) => formik.setFieldValue('imageUrl', url)}
+                  label="Stock Image"
+                  error={formik.touched.imageUrl && Boolean(formik.errors.imageUrl)}
+                  helperText={formik.touched.imageUrl ? formik.errors.imageUrl : undefined}
+                />
+              </Box>
             </Box>
 
             {/* Submit Button */}

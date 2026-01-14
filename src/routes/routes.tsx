@@ -159,11 +159,15 @@ export const routes: RouteObject[] = [
         element: <AddProduct />,
       },
       {
-        path: 'stock',
+        path: ':brandSlug/add-product',
+        element: <AddProduct />,
+      },
+      {
+        path: ':brandSlug/stock',
         element: <AdminStock />,
       },
       {
-        path: 'add-stock',
+        path: ':brandSlug/add-stock',
         element: <AddStock />,
       },
       {

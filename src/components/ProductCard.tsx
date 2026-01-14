@@ -30,7 +30,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         <CardMedia
           component="img"
           height="300"
-          image={product.image}
+          image={product.imageUrl || product.image || '/thumbnail.jpg'}
           alt={product.name}
           sx={{
             objectFit: 'cover',

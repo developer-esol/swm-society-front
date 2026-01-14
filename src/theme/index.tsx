@@ -105,7 +105,7 @@ export const colors = {
   adminloyalty: {
     yellow: '#FFD700',
     yellownew: '#FFA500'
-  }
+  },
   // Status Colors
   status: {
     delivered: '#10b981',        // Green
