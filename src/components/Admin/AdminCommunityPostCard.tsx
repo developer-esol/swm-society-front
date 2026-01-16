@@ -27,6 +27,12 @@ const AdminCommunityPostCard: React.FC<AdminCommunityPostCardProps> = ({
     onDelete(post)
   }
 
+  // Helper function to detect if URL is a video
+  const isVideo = (url: string) => {
+    const videoExtensions = ['.mp4', '.webm', '.mov'];
+    return videoExtensions.some(ext => url.toLowerCase().includes(ext));
+  };
+
   return (
     <Card
       sx={{
@@ -40,7 +46,7 @@ const AdminCommunityPostCard: React.FC<AdminCommunityPostCardProps> = ({
         },
       }}
     >
-      {/* Post Image */}
+      {/* Post Image or Video */}
       <Box
         sx={{
           width: { xs: '100%', sm: '200px' },
@@ -49,17 +55,31 @@ const AdminCommunityPostCard: React.FC<AdminCommunityPostCardProps> = ({
           overflow: 'hidden',
         }}
       >
-        <CardMedia
-          component="img"
-          image={post.image}
-          alt={post.caption}
-          sx={{
-            width: '100%',
-            height: '100%',
-            objectFit: 'cover',
-            backgroundColor: colors.card.imagePlaceholder,
-          }}
-        />
+        {isVideo(post.image) ? (
+          <video
+            src={post.image}
+            controls
+            controlsList="nodownload"
+            style={{
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              backgroundColor: colors.card.imagePlaceholder,
+            }}
+          />
+        ) : (
+          <CardMedia
+            component="img"
+            image={post.image}
+            alt={post.caption}
+            sx={{
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              backgroundColor: colors.card.imagePlaceholder,
+            }}
+          />
+        )}
       </Box>
 
       {/* Post Content */}

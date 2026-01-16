@@ -107,6 +107,7 @@ const CommunitySpotlight: React.FC<CommunitySpotlightProps> = ({
                     component="video"
                     src={post.image}
                     controls
+                    controlsList="nodownload"
                     sx={{
                       width: '100%',
                       height: '280px',

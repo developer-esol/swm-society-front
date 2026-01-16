@@ -1,18 +1,28 @@
-import React, { useState } from 'react';
-import { Box, Container, Typography, Link, TextField, IconButton } from '@mui/material';
-import { Instagram, Twitter, Facebook } from '@mui/icons-material';
+import React from 'react';
+import { Box, Container, Typography, Link, IconButton, Button } from '@mui/material';
+import { Instagram, ChatBubbleOutline } from '@mui/icons-material';
 import { Link as RouterLink } from 'react-router-dom';
-import { CustomButton } from './CustomButton';
 import { colors } from '../theme';
 
 
 export const Footer: React.FC = () => {
-  const [email, setEmail] = useState('');
+  const openHubSpotChat = () => {
+    // Check if HubSpot Conversations API is loaded
+    if (typeof window.HubSpotConversations !== 'undefined' && window.HubSpotConversations?.widget) {
+      try {
+        window.HubSpotConversations.widget.open();
+        console.log('[Footer] HubSpot chat opened successfully');
+        return;
+      } catch (error) {
+        console.error('[Footer] Error opening HubSpot chat:', error);
+        alert('Unable to open chat. Please email us at support@swmsociety.com');
+        return;
+      }
+    }
 
-  const handleSubscribe = () => {
-    // Handle newsletter subscription
-    console.log('Subscribe:', email);
-    setEmail('');
+    // HubSpot not loaded - show helpful message
+    console.warn('[Footer] HubSpot chat widget is not available. Make sure a chatflow is published in HubSpot.');
+    alert('Live chat is currently unavailable.\n\nTo enable it:\n1. Go to HubSpot → Conversations → Chatflows\n2. Create/publish a chatflow\n3. Set it to appear on all pages\n\nOr email us at: support@swmsociety.com');
   };
 
   return (
@@ -32,13 +42,13 @@ export const Footer: React.FC = () => {
             gridTemplateColumns: {
               xs: '1fr',
               sm: 'repeat(2, 1fr)',
-              md: 'repeat(12, 1fr)',
+              md: 'repeat(5, 1fr)',
             },
             gap: 4,
           }}
         >
           {/* Brand Section */}
-          <Box sx={{ gridColumn: { xs: 'span 1', sm: 'span 2', md: 'span 3' } }}>
+          <Box sx={{ gridColumn: { xs: 'span 1', sm: 'span 2', md: 'span 1' } }}>
             <Box sx={{ mb: 2 }}>
               <Box
                 component="img"
@@ -60,7 +70,7 @@ export const Footer: React.FC = () => {
           </Box>
 
           {/* Shop Section */}
-          <Box sx={{ gridColumn: { xs: 'span 1', sm: 'span 1', md: 'span 2' } }}>
+          <Box sx={{ gridColumn: { xs: 'span 1', sm: 'span 1', md: 'span 1' } }}>
             <Typography
               variant="h6"
               sx={{
@@ -132,7 +142,7 @@ export const Footer: React.FC = () => {
           </Box>
 
           {/* Information Section */}
-          <Box sx={{ gridColumn: { xs: 'span 1', sm: 'span 1', md: 'span 3' } }}>
+          <Box sx={{ gridColumn: { xs: 'span 1', sm: 'span 1', md: 'span 1' } }}>
             <Typography
               variant="h6"
               sx={{
@@ -203,8 +213,54 @@ export const Footer: React.FC = () => {
             </Box>
           </Box>
 
+          {/* Customer Support Section */}
+          <Box sx={{ gridColumn: { xs: 'span 1', sm: 'span 1', md: 'span 1' } }}>
+            <Typography
+              variant="h6"
+              sx={{
+                fontWeight: 'bold',
+                mb: 2,
+                fontSize: '1.125rem',
+              }}
+            >
+              Customer Support
+            </Typography>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <Typography
+                variant="body2"
+                sx={{
+                  color: 'grey.400',
+                  fontSize: '0.875rem',
+                  lineHeight: 1.6,
+                }}
+              >
+                Need help? Our support team is here to assist you.
+              </Typography>
+              <Button
+                onClick={openHubSpotChat}
+                startIcon={<ChatBubbleOutline />}
+                sx={{
+                  bgcolor: 'rgba(255, 255, 255, 0.1)',
+                  color: 'white',
+                  border: '1px solid',
+                  borderColor: 'grey.700',
+                  textTransform: 'none',
+                  '&:hover': {
+                    bgcolor: 'rgba(255, 255, 255, 0.2)',
+                    borderColor: 'white',
+                  },
+                  justifyContent: 'flex-start',
+                  px: 2,
+                  py: 1,
+                }}
+              >
+                Chat with us
+              </Button>
+            </Box>
+          </Box>
+
           {/* Stay Connected Section */}
-          <Box sx={{ gridColumn: { xs: 'span 1', sm: 'span 2', md: 'span 4' } }}>
+          <Box sx={{ gridColumn: { xs: 'span 1', sm: 'span 2', md: 'span 1' } }}>
             <Typography
               variant="h6"
               sx={{
@@ -217,11 +273,12 @@ export const Footer: React.FC = () => {
             </Typography>
             
             {/* Social Icons */}
-            <Box sx={{ display: 'flex', gap: 1, mb: 3 }}>
+            <Box sx={{ display: 'flex', gap: 1 }}>
               <IconButton
                 component="a"
-                href="https://instagram.com"
+                href="https://instagram.com/swmsociety_"
                 target="_blank"
+                rel="noopener noreferrer"
                 sx={{
                   color: 'white',
                   border: '1px solid',
@@ -236,8 +293,9 @@ export const Footer: React.FC = () => {
               </IconButton>
               <IconButton
                 component="a"
-                href="https://twitter.com"
+                href="https://www.tiktok.com/@swmsociety_"
                 target="_blank"
+                rel="noopener noreferrer"
                 sx={{
                   color: 'white',
                   border: '1px solid',
@@ -248,70 +306,15 @@ export const Footer: React.FC = () => {
                   },
                 }}
               >
-                <Twitter />
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                >
+                  <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/>
+                </svg>
               </IconButton>
-              <IconButton
-                component="a"
-                href="https://facebook.com"
-                target="_blank"
-                sx={{
-                  color: 'white',
-                  border: '1px solid',
-                  borderColor: 'grey.700',
-                  '&:hover': {
-                    borderColor: 'white',
-                    bgcolor: 'rgba(255, 255, 255, 0.1)',
-                  },
-                }}
-              >
-                <Facebook />
-              </IconButton>
-            </Box>
-
-            {/* Newsletter Subscription */}
-            <Typography
-              variant="body2"
-              sx={{
-                mb: 2,
-                fontSize: '0.875rem',
-              }}
-            >
-              Subscribe to our newsletter
-            </Typography>
-            <Box sx={{ display: 'flex', gap: 1 }}>
-              <TextField
-                placeholder="Your email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                size="small"
-                sx={{
-                  flex: 1,
-                  '& .MuiOutlinedInput-root': {
-                    bgcolor: 'rgba(255, 255, 255, 0.1)',
-                    color: 'white',
-                    '& fieldset': {
-                      borderColor: 'grey.700',
-                    },
-                    '&:hover fieldset': {
-                      borderColor: 'grey.500',
-                    },
-                    '&.Mui-focused fieldset': {
-                      borderColor: 'white',
-                    },
-                  },
-                  '& .MuiOutlinedInput-input': {
-                    color: 'white',
-                    '&::placeholder': {
-                      color: 'grey.500',
-                      opacity: 1,
-                    },
-                  },
-                }}
-              />
-              <CustomButton
-                text="Subscribe"
-                onClick={handleSubscribe}
-              />
             </Box>
           </Box>
         </Box>

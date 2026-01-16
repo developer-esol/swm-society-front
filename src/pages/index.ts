@@ -8,3 +8,4 @@ export { default as YourPostsPage } from './YourPostsPage';
 export { default as CheckoutPage } from './CheckoutPage';
 export { default as ShippingInfoPage } from './ShippingInfoPage';
 export { default as ReturnPolicyPage } from './ReturnPolicyPage';
+export { default as ResetPasswordPage } from './ResetPasswordPage';

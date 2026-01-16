@@ -37,6 +37,7 @@ import PermissionLevels from '../pages/Admin/PermissionLevels'
 import RoleCreation from '../pages/Admin/RoleCreation'
 import AdminProfilePage from '../pages/Admin/AdminProfilePage'
 import ProfilePage from '../pages/ProfilePage'
+import ResetPasswordPage from '../pages/ResetPasswordPage'
 import NotFoundPage from '../pages/NotFoundPage';
 
 
@@ -99,6 +100,14 @@ export const routes: RouteObject[] = [
       {
         path: 'register',
         element: <RegisterPage />,
+      },
+      {
+        path: 'reset-password',
+        element: <ResetPasswordPage />,
+      },
+      {
+        path: 'api/auth/reset-password',
+        element: <ResetPasswordPage />,
       },
       {
         path: 'cart',
