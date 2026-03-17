@@ -47,7 +47,14 @@ const GoogleAuthCallback: React.FC = () => {
           if (email) localStorage.setItem('userEmail', email);
           if (name) localStorage.setItem('userName', name);
           if (userId) localStorage.setItem('userId', userId);
-          if (role) localStorage.setItem('userRole', role);
+          // Normalize role: if backend sends role name (e.g. "USER"), map to role ID to match regular login
+          if (role) {
+            const roleNormalized = role.toLowerCase() === 'user' ? '1'
+              : role.toLowerCase() === 'moderator' ? '2'
+              : role.toLowerCase() === 'admin' ? '3'
+              : role;
+            localStorage.setItem('userRole', roleNormalized);
+          }
           
           console.log('[GoogleAuth] Successfully authenticated with token');
           

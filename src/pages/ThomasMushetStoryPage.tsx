@@ -1,5 +1,6 @@
 import React from 'react';
 import { Box, Container } from '@mui/material';
+import { colors } from '../theme';
 import { ThomasMushetHero } from '../features/thomas-mushet-story/ThomasMushetHero';
 import { ThomasMushetIntro } from '../features/thomas-mushet-story/ThomasMushetIntro';
 import { ThomasMushetImage } from '../features/thomas-mushet-story/ThomasMushetImage';

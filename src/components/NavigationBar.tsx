@@ -45,8 +45,11 @@ export const NavigationBar: React.FC = () => {
     // Check if user is admin (only Super Admin: 1, Admin: 2)
     const isAdmin = user?.role === '3';
     
-    // Check if user should see dashboard (any role except regular user with role ID 1)
-    const shouldShowDashboard = user?.role && user.role !== '1';
+    // Regular users have role ID '1' or role name 'USER' (Google OAuth may return name instead of ID)
+    const isRegularUser = !user?.role || user.role === '1' || user.role.toLowerCase() === 'user';
+    
+    // Check if user should see dashboard (any role except regular user)
+    const shouldShowDashboard = !isRegularUser;
     
     // Debug logging
     console.log('[NavigationBar] User role:', user?.role, '| isAdmin:', isAdmin, '| shouldShowDashboard:', shouldShowDashboard);

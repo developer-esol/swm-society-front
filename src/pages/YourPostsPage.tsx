@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Container,
   Box,
@@ -26,6 +27,7 @@ const YourPostsPage: React.FC = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [postToDelete, setPostToDelete] = useState<{ id: string; caption: string } | null>(null);
   const { user, isAuthenticated } = useAuthStore();
+  const navigate = useNavigate();
   const currentUserId = user?.id || '';
 
   // Load user posts on mount
@@ -298,6 +300,7 @@ const YourPostsPage: React.FC = () => {
             </Typography>
             <MuiButton
               variant="contained"
+              onClick={() => navigate('/community#share-your-style')}
               sx={{
                 bgcolor: colors.button.primary,
                 color: colors.text.secondary,

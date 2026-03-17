@@ -1,5 +1,5 @@
 import { Box, Container, Typography, Pagination, Stack, TextField, IconButton, Select, MenuItem, FormControl, InputLabel } from '@mui/material'
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useMemo } from 'react'
 import { Search as SearchIcon } from '@mui/icons-material'
 import AdminBreadcrumbs from '../../components/Admin/AdminBreadcrumbs'
 import { UsersTable } from '../../features/Admin/users'
@@ -16,7 +16,6 @@ import type { AdminUser } from '../../types/Admin/users'
 const ITEMS_PER_PAGE = 5
 
 const AdminUsers = () => {
-  const [filteredUsers, setFilteredUsers] = useState<AdminUser[]>([])
   const [selectedRole, setSelectedRole] = useState('all')
   const [searchQuery, setSearchQuery] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
@@ -65,10 +64,28 @@ const AdminUsers = () => {
     })
   }, [users, rolesList])
 
-  // Initialize filtered users when source users change
-  useEffect(() => {
-    setFilteredUsers(usersWithRoleNames)
-  }, [usersWithRoleNames])
+  // Derive filtered users reactively from search/role state
+  const filteredUsers = useMemo(() => {
+    let result = usersWithRoleNames
+    const lowerQuery = searchQuery.trim().toLowerCase()
+
+    if (lowerQuery) {
+      result = result.filter((user) =>
+        user.id.toLowerCase().includes(lowerQuery) ||
+        user.email.toLowerCase().includes(lowerQuery) ||
+        user.status.toLowerCase().includes(lowerQuery) ||
+        String(user.role || '').toLowerCase().includes(lowerQuery)
+      )
+    }
+
+    if (selectedRole && selectedRole !== 'all') {
+      const matched = rolesList.find((r) => String(r.id) === String(selectedRole))
+      const roleName = String(matched?.name ?? selectedRole)
+      result = result.filter((user) => String(user.role || '').toLowerCase() === roleName.toLowerCase())
+    }
+
+    return result
+  }, [usersWithRoleNames, searchQuery, selectedRole, rolesList])
 
   const queryClient = useQueryClient()
 
@@ -91,34 +108,11 @@ const AdminUsers = () => {
   const handleSearch = (query: string) => {
     setSearchQuery(query)
     setCurrentPage(1)
-    applyFilters(query, selectedRole)
   }
 
   const handleRoleChange = (roleId: string) => {
     setSelectedRole(roleId)
     setCurrentPage(1)
-    applyFilters(searchQuery, roleId)
-  }
-
-  const applyFilters = (query: string, roleId: string) => {
-    let result = usersWithRoleNames
-    const lowerQuery = query.trim().toLowerCase()
-
-    if (lowerQuery) {
-      result = result.filter((user) =>
-        user.id.toLowerCase().includes(lowerQuery) ||
-        user.email.toLowerCase().includes(lowerQuery) ||
-        user.status.toLowerCase().includes(lowerQuery) ||
-        (user.role || '').toLowerCase().includes(lowerQuery)
-      )
-    }
-
-    if (roleId && roleId !== 'all') {
-      const roleName = rolesList.find((r) => r.id === roleId)?.name || roleId
-      result = result.filter((user) => (user.role || '').toLowerCase() === roleName.toLowerCase())
-    }
-
-    setFilteredUsers(result)
   }
 
   // Prepare delete dialog
@@ -257,7 +251,7 @@ const AdminUsers = () => {
               >
                 <MenuItem value="all">All Roles</MenuItem>
                 {rolesList.map((r) => (
-                  <MenuItem key={r.id} value={r.id}>{r.name}</MenuItem>
+                  <MenuItem key={r.id} value={String(r.id)}>{r.name}</MenuItem>
                 ))}
               </Select>
             </FormControl>

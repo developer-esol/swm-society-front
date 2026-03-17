@@ -1,5 +1,6 @@
 import React, { useRef, useEffect } from 'react';
 import { Box } from '@mui/material';
+import { useLocation } from 'react-router-dom';
 import { colors } from '../../theme';
 import { CommunityHero } from './CommunityHero';
 import { StyleInspiration } from './StyleInspiration';
@@ -14,6 +15,7 @@ interface CommunityPageComponentProps {
 
 export const CommunityPageComponent: React.FC<CommunityPageComponentProps> = ({ onPostSuccess }) => {
   const shareYourStyleRef = useRef<HTMLDivElement>(null);
+  const location = useLocation();
   const { likePost, getAll } = useCommunity();
   const [posts, setPosts] = React.useState<CommunityPost[]>([]);
   const [spotlightPosts, setSpotlightPosts] = React.useState<CommunityPost[]>([]);
@@ -36,6 +38,16 @@ export const CommunityPageComponent: React.FC<CommunityPageComponentProps> = ({ 
   useEffect(() => {
     loadPosts();
   }, [getAll]);
+
+  // Scroll to Share Your Style section if navigated with #share-your-style
+  useEffect(() => {
+    if (location.hash === '#share-your-style' && shareYourStyleRef.current) {
+      setTimeout(() => {
+        const offsetTop = shareYourStyleRef.current!.offsetTop - 100;
+        window.scrollTo({ top: offsetTop, behavior: 'smooth' });
+      }, 300);
+    }
+  }, [location.hash]);
 
   const handlePostSuccess = () => {
     // Refresh posts after successful creation
@@ -86,7 +98,7 @@ export const CommunityPageComponent: React.FC<CommunityPageComponentProps> = ({ 
       )}
 
       {/* Share Your Style Section */}
-      <Box ref={shareYourStyleRef}>
+      <Box ref={shareYourStyleRef} id="share-your-style">
         <ShareYourStyle onPostSuccess={handlePostSuccess} />
       </Box>
     </Box>

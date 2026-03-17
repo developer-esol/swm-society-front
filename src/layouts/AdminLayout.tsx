@@ -94,6 +94,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = () => {
             width: isMobile || isCollapsed ? '100%' : `calc(100% - ${DRAWER_WIDTH}px)`,
             display: 'flex',
             flexDirection: 'column',
+            pb: 10, // padding to prevent HubSpot chat widget from covering bottom content
           }}
         >
           <Outlet />
