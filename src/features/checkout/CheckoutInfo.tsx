@@ -73,35 +73,11 @@ const CheckoutInfo: React.FC<CheckoutInfoProps> = ({ formData, errors, onInputCh
         />
       </Box>
 
-      {/* Shipping Address */}
+      {/* Delivery Address */}
       <Box sx={{ mb: 4 }}>
         <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
-          Shipping Address
+          Delivery Address
         </Typography>
-
-        {/* First and Last Name */}
-        <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, mb: 2 }}>
-          <TextField
-            label="First Name"
-            value={formData.firstName}
-            onChange={(e) => onInputChange('firstName', e.target.value)}
-            error={Boolean(errors.firstName)}
-            helperText={errors.firstName}
-            variant="outlined"
-            size="small"
-            sx={fieldSx}
-          />
-          <TextField
-            label="Last Name"
-            value={formData.lastName}
-            onChange={(e) => onInputChange('lastName', e.target.value)}
-            error={Boolean(errors.lastName)}
-            helperText={errors.lastName}
-            variant="outlined"
-            size="small"
-            sx={fieldSx}
-          />
-        </Box>
 
         {/* House Number and Apartment */}
         <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, mb: 2 }}>
@@ -158,28 +134,9 @@ const CheckoutInfo: React.FC<CheckoutInfoProps> = ({ formData, errors, onInputCh
             helperText={errors.postalCode}
             variant="outlined"
             size="small"
-            sx={{ ...fieldSx, mb: 2 }}
+            sx={fieldSx}
           />
         </Box>
-
-        {/* Country */}
-        <Select
-          fullWidth
-          value={formData.country}
-          onChange={(e) => onInputChange('country', e.target.value)}
-          variant="outlined"
-          size="small"
-          sx={{ ...selectSx, mb: 2 }}
-        >
-          <MenuItem value="United Kingdom">United Kingdom</MenuItem>
-          <MenuItem value="United States">United States</MenuItem>
-          <MenuItem value="Canada">Canada</MenuItem>
-          <MenuItem value="Australia">Australia</MenuItem>
-          <MenuItem value="France">France</MenuItem>
-          <MenuItem value="Germany">Germany</MenuItem>
-          <MenuItem value="Italy">Italy</MenuItem>
-          <MenuItem value="Spain">Spain</MenuItem>
-        </Select>
       </Box>
     </Box>
   );

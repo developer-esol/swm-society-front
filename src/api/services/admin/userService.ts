@@ -1,67 +1,115 @@
+import { apiClient, authApiClient } from '../../apiClient'
 import type { AdminUser } from '../../../types/Admin/users'
 
-class UserService {
-  // Mock data - 15+ users matching the screenshot
-  private mockUsers: AdminUser[] = [
-    { id: '001', email: 'johndoe@gmail.com', status: 'Active' },
-    { id: '002', email: 'johndoe@gmail.com', status: 'Inactive' },
-    { id: '003', email: 'johndoe@gmail.com', status: 'Active' },
-    { id: '004', email: 'johndoe@gmail.com', status: 'Active' },
-    { id: '005', email: 'johndoe@gmail.com', status: 'Active' },
-    { id: '006', email: 'johndoe@gmail.com', status: 'Active' },
-    { id: '007', email: 'johndoe@gmail.com', status: 'Inactive' },
-    { id: '008', email: 'johndoe@gmail.com', status: 'Active' },
-    { id: '009', email: 'johndoe@gmail.com', status: 'Active' },
-    { id: '010', email: 'johndoe@gmail.com', status: 'Inactive' },
-    { id: '011', email: 'johndoe@gmail.com', status: 'Active' },
-    { id: '012', email: 'johndoe@gmail.com', status: 'Active' },
-    { id: '013', email: 'johndoe@gmail.com', status: 'Active' },
-    { id: '014', email: 'johndoe@gmail.com', status: 'Inactive' },
-    { id: '015', email: 'johndoe@gmail.com', status: 'Active' },
-    { id: '016', email: 'johndoe@gmail.com', status: 'Active' },
-  ]
+type UserApi = {
+  id: number // Database primary key (bigint)
+  email: string
+  emailVerified: boolean
+  fullName: string | null
+  isActive: boolean
+  lastLogin: string | null
+  provider: string
+  createdAt: string
+  role?: {
+    id: number
+    name: string
+    description?: string
+    permissions?: any[]
+  } | null
+}
 
+class UserService {
   /**
-   * Get all users
+   * Get all users from the Spring Boot backend API (port 8080)
    * @returns Promise with array of users
    */
   async getAll(): Promise<AdminUser[]> {
-    return new Promise((resolve) => {
-      setTimeout(() => resolve([...this.mockUsers]), 500)
-    })
+    try {
+      const response = await authApiClient.get<any>('/api/users')
+      console.log('[UserService] Raw response:', response)
+      
+      // Unwrap response if needed
+      const data = response?.data ? response.data : response
+      const users = Array.isArray(data) ? data : []
+      
+      return users.map((user: UserApi) => {
+        const roleId = user.role?.id
+        const roleName = user.role?.name || '—'
+        return {
+          id: String(user.id), // Convert numeric ID to string for display
+          numericId: user.id, // Store numeric ID for API calls
+          email: user.email,
+          status: user.isActive ? 'Active' : 'Inactive',
+          role: roleName,
+          roleId: roleId,
+        }
+      })
+    } catch (error) {
+      console.error('[UserService] Error fetching users:', error)
+      return []
+    }
+  }
+
+  /**
+   * Get a single user by id. Uses a small in-memory cache to avoid repeated calls.
+   */
+  private userCache: Record<string, { id: string; name?: string; email?: string }> = {}
+
+  async getById(userId: string): Promise<{ id: string; name?: string; email?: string } | null> {
+    if (!userId) return null
+    if (this.userCache[userId]) return this.userCache[userId]
+
+    try {
+      const response = await authApiClient.get<any>(`/api/users/${userId}`)
+      const user = response?.data || response
+      const result = { id: String(user.id), name: user.fullName || user.name || user.email, email: user.email }
+      this.userCache[userId] = result
+      return result
+    } catch (err) {
+      console.error('userService.getById error:', err)
+      return null
+    }
   }
 
   /**
    * Remove a user by ID
-   * @param userId - User ID to remove
-   * @returns Promise with boolean success status
    */
   async removeUser(userId: string): Promise<boolean> {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        this.mockUsers = this.mockUsers.filter((u) => u.id !== userId)
-        resolve(true)
-      }, 300)
-    })
+    try {
+      // Use numeric ID if possible
+      const numericId = isNaN(Number(userId)) ? userId : Number(userId)
+      await authApiClient.delete(`/api/users/${numericId}`)
+      return true
+    } catch (err) {
+      console.error('Failed to remove user:', err)
+      return false
+    }
   }
 
   /**
-   * Search users by email or ID
-   * @param query - Search query
-   * @returns Promise with filtered users
+   * Update user's role
+   * @param userId - The ID of the user (string for display)
+   * @param roleId - The new role ID (number)
+   * @param numericId - The numeric ID from database (required)
+   * @returns Promise with success status
    */
-  async searchUsers(query: string): Promise<AdminUser[]> {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const lowerQuery = query.toLowerCase()
-        const filtered = this.mockUsers.filter(
-          (u) =>
-            u.id.toLowerCase().includes(lowerQuery) ||
-            u.email.toLowerCase().includes(lowerQuery)
-        )
-        resolve(filtered)
-      }, 300)
-    })
+  async updateUserRole(userId: string, roleId: number, numericId?: number): Promise<boolean> {
+    try {
+      // Use numericId if provided, otherwise try to parse userId
+      const userIdToUse = numericId !== undefined ? numericId : (isNaN(Number(userId)) ? userId : Number(userId))
+      
+      console.log('[UserService] Updating role for user:', userIdToUse, 'to role:', roleId)
+      
+      const response = await authApiClient.put<any>(
+        `/api/admin/users/${userIdToUse}/role`,
+        { roleId }
+      )
+      console.log('[UserService] Updated user role:', response)
+      return true
+    } catch (err) {
+      console.error('Failed to update user role:', err)
+      throw err
+    }
   }
 }
 

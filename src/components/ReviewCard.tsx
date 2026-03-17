@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { useEffect } from 'react';
+import { userService } from '../api/services/admin/userService';
 import {
   Card,
   CardContent,
@@ -6,7 +8,6 @@ import {
   Typography,
   Rating,
   Button,
-  IconButton,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -32,8 +33,28 @@ const ReviewCard: React.FC<ReviewCardProps> = ({
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [userName, setUserName] = useState<string | null>(null);
 
   const isOwnReview = currentUserId === review.userId;
+
+  useEffect(() => {
+    let mounted = true;
+    const loadName = async () => {
+      try {
+        // Fetch user from NestJS (port 3000) since review.userId is a UUID
+        const response = await fetch(`http://localhost:3000/users/${review.userId}`);
+        if (response.ok) {
+          const user = await response.json();
+          if (mounted) setUserName(user?.fullName || user?.name || user?.email || null);
+        }
+      } catch (e) {
+        console.error('[ReviewCard] Error loading user:', e);
+        // Silently fail - just don't show the name
+      }
+    };
+    void loadName();
+    return () => { mounted = false };
+  }, [review.userId]);
 
   const handleDeleteClick = () => {
     setOpenDeleteDialog(true);
@@ -109,49 +130,84 @@ const ReviewCard: React.FC<ReviewCardProps> = ({
           >
             <Box>
               <Typography variant="subtitle2" sx={{ fontWeight: 600, fontSize: '0.95rem' }}>
-                {review.userName}
+                {userName ? userName : `User: ${review.userId}`}
               </Typography>
-              {review.verified && (
-                <Typography variant="caption" sx={{ color: '#4caf50', fontSize: '0.75rem' }}>
-                  ✓ Verified Purchase
+            </Box>
+            <Box sx={{ textAlign: 'right' }}>
+              <Typography 
+                variant="caption" 
+                sx={{ 
+                  color: colors.text.secondary, 
+                  fontSize: '0.85rem',
+                  fontWeight: 500,
+                  display: 'block'
+                }}
+              >
+                {formatDate(review.createdAt)}
+              </Typography>
+              {review.updatedAt && review.updatedAt !== review.createdAt && (
+                <Typography 
+                  variant="caption" 
+                  sx={{ 
+                    color: colors.text.disabled, 
+                    fontSize: '0.75rem',
+                    fontStyle: 'italic',
+                    display: 'block',
+                    mt: 0.3
+                  }}
+                >
+                  Updated: {formatDate(review.updatedAt)}
                 </Typography>
               )}
             </Box>
-            <Typography variant="caption" sx={{ color: colors.text.disabled, fontSize: '0.75rem' }}>
-              {formatDate(review.createdAt)}
-            </Typography>
           </Box>
 
           {/* Rating */}
-          <Box sx={{ mb: 0.8 }}>
+          <Box sx={{ mb: 1 }}>
             <Rating value={review.rating} readOnly size="small" />
           </Box>
 
-          {/* Title */}
-          {review.title && (
-            <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 0.5, fontSize: '0.9rem' }}>
-              {review.title}
+          {/* Comment/Description */}
+          {review.comment && (
+            <Typography 
+              variant="body2" 
+              sx={{ 
+                color: colors.text.primary, 
+                mb: 1.5, 
+                fontSize: '0.95rem', 
+                lineHeight: 1.6,
+                whiteSpace: 'pre-wrap',
+                wordBreak: 'break-word'
+              }}
+            >
+              {review.comment}
             </Typography>
           )}
-
-          {/* Comment */}
-          <Typography variant="body2" sx={{ color: colors.text.lightGray, mb: 1.5, fontSize: '0.85rem', lineHeight: 1.4 }}>
-            {review.comment}
-          </Typography>
 
           {/* Delete Button - Only for own reviews */}
           {isOwnReview && onDelete && (
             <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 1 }}>
-              <IconButton
-                size="small"
-                color="error"
+              <Button
                 onClick={handleDeleteClick}
                 sx={{
-                  padding: '4px',
+                  minWidth: '40px',
+                  width: '40px',
+                  height: '40px',
+                  p: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  border: `1px solid ${colors.border.default}`,
+                  borderRadius: '6px',
+                  color: colors.button.primary,
+                  bgcolor: 'transparent',
+                  '&:hover': {
+                    bgcolor: colors.danger.background,
+                  },
                 }}
               >
                 <Trash2 size={18} />
-              </IconButton>
+              </Button>
             </Box>
           )}
         </CardContent>

@@ -6,13 +6,17 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  IconButton,
+  Button,
   Chip,
   Paper,
+  IconButton,
+  Tooltip,
 } from '@mui/material'
-import { Edit2 as EditIcon } from 'lucide-react'
+import { Edit as EditIcon } from 'lucide-react'
 import { colors } from '../../../theme'
 import type { LoyaltyTransaction } from '../../../types/Admin/loyalty'
+import { Permission } from '../../../components/Permission'
+import { PERMISSIONS } from '../../../configs/permissions'
 
 interface LoyaltyTableProps {
   transactions: LoyaltyTransaction[]
@@ -22,26 +26,26 @@ interface LoyaltyTableProps {
 const getTypeColor = (type: string) => {
   switch (type) {
     case 'earned':
-      return '#10b981' // Green
+      return colors.status.delivered // Green
     case 'redeemed':
-      return '#f59e0b' // Amber
+      return colors.status.shipped // Amber
     case 'adjustment':
-      return '#3b82f6' // Blue
+      return colors.status.processing // Blue
     default:
-      return '#6b7280' // Gray
+      return colors.loyalty.grey // Gray
   }
 }
 
 const getTypeBgColor = (type: string) => {
   switch (type) {
     case 'earned':
-      return '#dcfce7'
+      return colors.points.earned
     case 'redeemed':
-      return '#fef3c7'
+      return colors.points.redeemed
     case 'adjustment':
-      return '#dbeafe'
+      return colors.points.adjustment
     default:
-      return '#f3f4f6'
+      return colors.points.default
   }
 }
 
@@ -72,6 +76,16 @@ const LoyaltyTable: React.FC<LoyaltyTableProps> = ({ transactions, onEditBalance
               }}
             >
               Date
+            </TableCell>
+            <TableCell
+              sx={{
+                fontWeight: 700,
+                color: colors.text.primary,
+                fontSize: '0.9rem',
+                padding: '12px 16px',
+              }}
+            >
+              User Name
             </TableCell>
             <TableCell
               sx={{
@@ -114,29 +128,6 @@ const LoyaltyTable: React.FC<LoyaltyTableProps> = ({ transactions, onEditBalance
             >
               Description
             </TableCell>
-            <TableCell
-              sx={{
-                fontWeight: 700,
-                color: colors.text.primary,
-                fontSize: '0.9rem',
-                padding: '12px 16px',
-              }}
-              align="right"
-            >
-              Balance
-            </TableCell>
-            <TableCell
-              sx={{
-                fontWeight: 700,
-                color: colors.text.primary,
-                fontSize: '0.9rem',
-                padding: '12px 16px',
-                width: '50px',
-              }}
-              align="center"
-            >
-              Action
-            </TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -152,6 +143,9 @@ const LoyaltyTable: React.FC<LoyaltyTableProps> = ({ transactions, onEditBalance
             >
               <TableCell sx={{ padding: '12px 16px', fontSize: '0.9rem', color: colors.text.primary }}>
                 {transaction.date}
+              </TableCell>
+              <TableCell sx={{ padding: '12px 16px', fontSize: '0.9rem', color: colors.text.primary, fontWeight: 600 }}>
+                {transaction.name}
               </TableCell>
               <TableCell sx={{ padding: '12px 16px' }}>
                 <Chip
@@ -170,43 +164,17 @@ const LoyaltyTable: React.FC<LoyaltyTableProps> = ({ transactions, onEditBalance
                   padding: '12px 16px',
                   fontSize: '0.9rem',
                   fontWeight: 600,
-                  color: transaction.points > 0 ? colors.loyalty.green : colors.status.error,
+                  color: transaction.type === 'earned' ? colors.loyalty.green : colors.status.error,
                 }}
                 align="right"
               >
-                {transaction.points > 0 ? '+' : ''}{transaction.points}
+                {transaction.type === 'earned' ? '+' : '-'}{transaction.points}
               </TableCell>
               <TableCell sx={{ padding: '12px 16px', fontSize: '0.9rem', color: colors.status.error, fontWeight: 600 }}>
                 {transaction.orderId}
               </TableCell>
               <TableCell sx={{ padding: '12px 16px', fontSize: '0.9rem', color: colors.text.primary }}>
                 {transaction.description}
-              </TableCell>
-              <TableCell
-                sx={{
-                  padding: '12px 16px',
-                  fontSize: '0.9rem',
-                  fontWeight: 700,
-                  color: colors.loyalty.primary,
-                }}
-                align="right"
-              >
-                {transaction.balance}
-              </TableCell>
-              <TableCell sx={{ padding: '12px 16px' }} align="center">
-                <IconButton
-                  size="small"
-                  onClick={() => onEditBalance(transaction)}
-                  sx={{
-                    color: colors.text.primary,
-                    '&:hover': {
-                      backgroundColor: `${colors.button.primary}20`,
-                      color: colors.button.primary,
-                    },
-                  }}
-                >
-                  <EditIcon size={18} />
-                </IconButton>
               </TableCell>
             </TableRow>
           ))}

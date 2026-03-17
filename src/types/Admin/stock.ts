@@ -2,6 +2,7 @@ export interface StockItem {
   id: string
   itemId: string
   productName: string
+  brandName?: string
   color: string
   size: string
   quantity: number

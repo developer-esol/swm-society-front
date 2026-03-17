@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Box, IconButton, Typography } from '@mui/material';
 import { ChevronLeft, ChevronRight } from '@mui/icons-material';
 import { CustomButton } from '../../components';
@@ -13,26 +14,27 @@ interface BrandSlide {
 
 export const Carousel: React.FC = () => {
   const [activeSlide, setActiveSlide] = useState(0);
+  const navigate = useNavigate();
 
   const slides: BrandSlide[] = [
     {
       id: 1,
       name: "Project ZerO's",
-      image: '/thumbnail.jpg',
+      image: 'https://res.cloudinary.com/dmjacs0c9/image/upload/v1768294857/SWM3_ko58b3.jpg',
       shopLink: "/shop?collection=Project%20ZerO's",
-      storyLink: '/brand-story',
+      storyLink:'/project-zero-story',
     },
     {
       id: 2,
       name: 'Thomas Mushet',
-      image: '/B2.webp',
+      image: 'https://res.cloudinary.com/dmjacs0c9/image/upload/v1768294900/B2_copy_zlgtot.webp',
       shopLink: '/shop?collection=Thomas%20Mushet',
       storyLink: '/thomas-mushet-story',
     },
     {
       id: 3,
       name: 'Hear My Voice',
-      image: '/b3.jpg',
+      image: 'https://res.cloudinary.com/dmjacs0c9/image/upload/v1768294940/b3_copy_elzd6c.jpg',
       shopLink: '/shop?collection=Hear%20My%20Voice',
       storyLink: '/hear-my-voice-story',
     },
@@ -153,7 +155,7 @@ export const Carousel: React.FC = () => {
                 >
                   <CustomButton
                     text="Shop Now"
-                    onClick={() => window.location.href = slide.shopLink}
+                    onClick={() => navigate(slide.shopLink)}
                     sx={{
                       px: 4,
                       py: 1.5,
@@ -162,7 +164,7 @@ export const Carousel: React.FC = () => {
                   />
                   <CustomButton
                     text="Learn More"
-                    onClick={() => window.location.href = slide.storyLink}
+                    onClick={() => navigate(slide.storyLink)}
                     sx={{
                       borderColor: 'white',
                       color: 'white',

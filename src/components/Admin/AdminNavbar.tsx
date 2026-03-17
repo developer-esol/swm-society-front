@@ -10,6 +10,7 @@ import {
 } from '@mui/material'
 import { AccountCircle, Logout, Home, Person } from '@mui/icons-material'
 import { useNavigate } from 'react-router-dom'
+import { useAuthStore } from '../../store/useAuthStore'
 import { colors } from '../../theme'
 
 interface AdminNavbarProps {
@@ -18,6 +19,7 @@ interface AdminNavbarProps {
 
 const AdminNavbar: React.FC<AdminNavbarProps> = () => {
   const navigate = useNavigate()
+  const { logout } = useAuthStore()
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
   const open = Boolean(anchorEl)
 
@@ -40,11 +42,10 @@ const AdminNavbar: React.FC<AdminNavbarProps> = () => {
   }
 
   const handleLogout = () => {
-    localStorage.removeItem('authToken')
-    localStorage.removeItem('userEmail')
-    localStorage.removeItem('userName')
-    navigate('/login')
+    console.log('AdminNavbar: Logging out user')
     handleClose()
+    logout() // Use auth store logout to properly clear state
+    navigate('/login')
   }
 
   return (

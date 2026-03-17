@@ -21,11 +21,11 @@ interface AccessControlTableProps {
 const getRoleColor = (role: string) => {
   switch (role) {
     case 'Super Admin':
-      return '#dc2626'
+      return colors.button.primary
     case 'Manager':
-      return '#10b981'
+      return colors.status.delivered
     case 'User':
-      return '#3b82f6'
+      return colors.status.processing
     default:
       return colors.text.primary
   }
@@ -37,7 +37,7 @@ const AccessControlTable = ({ users, onEdit, onDelete }: AccessControlTableProps
       <TableContainer>
         <Table>
           <TableHead>
-            <TableRow sx={{ bgcolor: '#d3d3d3' }}>
+            <TableRow sx={{ bgcolor: colors.login.access }}>
               <TableCell sx={{ fontWeight: 700, color: colors.text.primary, fontSize: '0.9rem', textAlign: 'left' }}>
                 User
               </TableCell>

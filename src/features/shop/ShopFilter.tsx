@@ -16,6 +16,7 @@ interface FilterProps {
   setSortBy: (sort: string) => void;
   allSizes: string[];
   allColors: string[];
+  clearAllFilters?: () => void;
 }
 
 export const ShopFilter: React.FC<FilterProps> = ({
@@ -31,6 +32,7 @@ export const ShopFilter: React.FC<FilterProps> = ({
   setSortBy,
   allSizes,
   allColors,
+  clearAllFilters,
 }) => {
   const toggleSize = (size: string) => {
     setSelectedSizes(

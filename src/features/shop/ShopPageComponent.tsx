@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Box, Container, Typography, CircularProgress } from '@mui/material';
 import { useLocation } from 'react-router-dom';
-import { useHMVProduct, useProjectZeroProduct, useProjectThomasMushetProduct } from '../../hooks/useProducts';
+import { useProductsByCollection } from '../../hooks/useProducts';
+import { useAllStocks } from '../../hooks/useStock';
 import type { Product } from '../../types';
 import { ShopFilter } from './ShopFilter';
 import { ProductsGrid } from './ProductsGrid';
@@ -24,79 +25,76 @@ export const ShopPageComponent: React.FC = () => {
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const collection = params.get('collection');
+    console.log('ShopPage: URL params:', params.toString());
+    console.log('ShopPage: Collection from URL:', collection);
     setActiveCollection(collection);
   }, [location.search]);
 
-  // Conditionally enable hooks based on the collection
-  const shouldLoadHMV = activeCollection === 'Hear My Voice' || !activeCollection;
-  const shouldLoadProjectZero = activeCollection === "Project ZerO's" || !activeCollection;
-  const shouldLoadThomasMushet = activeCollection === 'Thomas Mushet' || !activeCollection;
+  // Use the new hook to fetch products by collection from the real API
+  const productsQuery = useProductsByCollection(activeCollection);
+  
+  // Fetch all stocks to get size/color information
+  const stocksQuery = useAllStocks();
+  
+  const allProducts: Product[] = productsQuery.data || [];
+  const allStocks = stocksQuery.data || [];
+  const isLoading = productsQuery.isLoading || stocksQuery.isLoading;
+  const error = productsQuery.error || stocksQuery.error;
 
-  const hmvQuery = useHMVProduct(shouldLoadHMV);
-  const projectZeroQuery = useProjectZeroProduct(shouldLoadProjectZero);
-  const thomasMushetQuery = useProjectThomasMushetProduct(shouldLoadThomasMushet);
-
-  // Determine which products to use based on active collection
-  let allProducts: Product[] = [];
-  let isLoading = false;
-  let error: Error | null = null;
-
-  if (activeCollection === 'Hear My Voice') {
-    allProducts = hmvQuery.data || [];
-    isLoading = hmvQuery.isLoading;
-    error = hmvQuery.error;
-  } else if (activeCollection === "Project ZerO's") {
-    allProducts = projectZeroQuery.data || [];
-    isLoading = projectZeroQuery.isLoading;
-    error = projectZeroQuery.error;
-  } else if (activeCollection === 'Thomas Mushet') {
-    allProducts = thomasMushetQuery.data || [];
-    isLoading = thomasMushetQuery.isLoading;
-    error = thomasMushetQuery.error;
-  } else {
-    // Show all products when no specific collection is selected
-    allProducts = [
-      ...(hmvQuery.data || []),
-      ...(projectZeroQuery.data || []),
-      ...(thomasMushetQuery.data || []),
-    ];
-    isLoading = hmvQuery.isLoading || projectZeroQuery.isLoading || thomasMushetQuery.isLoading;
-    error = hmvQuery.error || projectZeroQuery.error || thomasMushetQuery.error;
-  }
+  console.log('ShopPage: Active collection:', activeCollection);
+  console.log('ShopPage: Products query state:', {
+    isLoading,
+    error: error?.message,
+    dataLength: allProducts.length
+  });
+  console.log('ShopPage: All products:', allProducts);
 
   // Filter products
   let filteredProducts = allProducts;
 
-  // Filter by price range
+  // Filter by price range - convert price to number
   filteredProducts = filteredProducts.filter(
-    (product) => product.price >= priceRange[0] && product.price <= priceRange[1]
+    (product) => {
+      const price = Number(product.price);
+      return price >= priceRange[0] && price <= priceRange[1];
+    }
   );
 
-  // Filter by sizes (if product has tags that include sizes)
+  // Filter by sizes - check if product has stock in selected sizes
   if (selectedSizes.length > 0) {
-    filteredProducts = filteredProducts.filter((product) =>
-      selectedSizes.some((size) => product.tags.includes(size.toLowerCase()))
-    );
+    filteredProducts = filteredProducts.filter((product) => {
+      const productStocks = allStocks.filter(stock => 
+        stock.productId === product.id && 
+        stock.isActive && 
+        stock.quantity > 0
+      );
+      return selectedSizes.some((size) =>
+        productStocks.some(stock => stock.size === size)
+      );
+    });
   }
 
-  // Filter by colors (if product has tags that include colors)
+  // Filter by colors - check if product has stock in selected colors
   if (selectedColors.length > 0) {
-    filteredProducts = filteredProducts.filter((product) =>
-      selectedColors.some(
-        (color) =>
-          product.tags.includes(color.toLowerCase()) ||
-          product.name.toLowerCase().includes(color.toLowerCase())
-      )
-    );
+    filteredProducts = filteredProducts.filter((product) => {
+      const productStocks = allStocks.filter(stock => 
+        stock.productId === product.id && 
+        stock.isActive && 
+        stock.quantity > 0
+      );
+      return selectedColors.some((color) =>
+        productStocks.some(stock => stock.color === color)
+      );
+    });
   }
 
   // Sort products
   switch (sortBy) {
     case 'price-low-high':
-      filteredProducts.sort((a, b) => a.price - b.price);
+      filteredProducts.sort((a, b) => Number(a.price) - Number(b.price));
       break;
     case 'price-high-low':
-      filteredProducts.sort((a, b) => b.price - a.price);
+      filteredProducts.sort((a, b) => Number(b.price) - Number(a.price));
       break;
     case 'newest':
       filteredProducts.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
@@ -106,7 +104,7 @@ export const ShopPageComponent: React.FC = () => {
       break;
   }
 
-  // Collection titles and descriptions
+  // Collection titles and descriptions - fallback for unknown collections
   const collectionInfo: Record<string, { title: string; description: string }> = {
     "Project ZerO's": {
       title: "Project ZerO's Collection",
@@ -123,18 +121,30 @@ export const ShopPageComponent: React.FC = () => {
   };
 
   // Get the title and description based on active collection
-  const title =
-    activeCollection && collectionInfo[activeCollection]
-      ? collectionInfo[activeCollection].title
-      : 'All Collections';
-  const description =
-    activeCollection && collectionInfo[activeCollection]
-      ? collectionInfo[activeCollection].description
-      : 'Browse our complete range of collections.';
+  const title = activeCollection && collectionInfo[activeCollection]
+    ? collectionInfo[activeCollection].title
+    : activeCollection 
+    ? `${activeCollection} Collection`
+    : 'All Collections';
+    
+  const description = activeCollection && collectionInfo[activeCollection]
+    ? collectionInfo[activeCollection].description
+    : activeCollection 
+    ? `Discover our exclusive ${activeCollection} collection.`
+    : 'Browse our complete range of collections.';
 
-  // Get unique sizes and colors for filter options (from product tags and names)
-  const allSizes = Array.from(new Set(['S', 'M', 'L', 'XL', 'XXL']));
-  const allColors = Array.from(new Set(['Red', 'Blue', 'Black', 'White', 'Orange']));
+  // Get unique sizes and colors from actual stock data
+  const allSizes = Array.from(new Set(
+    allStocks
+      .filter(stock => stock.isActive && stock.quantity > 0)
+      .map(stock => stock.size)
+  )).sort();
+  
+  const allColors = Array.from(new Set(
+    allStocks
+      .filter(stock => stock.isActive && stock.quantity > 0)
+      .map(stock => stock.color)
+  )).sort();
 
   const clearAllFilters = () => {
     setSelectedSizes([]);
@@ -151,9 +161,15 @@ export const ShopPageComponent: React.FC = () => {
   }
 
   if (error) {
+    console.error('Shop page error:', error);
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
-        <Typography color="error">Error loading products. Please try again.</Typography>
+        <Typography color="error">
+          {activeCollection 
+            ? `Unable to load ${activeCollection} products. Please check your connection and try again.`
+            : 'Unable to load products. Please check your connection and try again.'
+          }
+        </Typography>
       </Box>
     );
   }
@@ -189,7 +205,24 @@ export const ShopPageComponent: React.FC = () => {
         />
 
         {/* Products Grid Component */}
-        <ProductsGrid products={filteredProducts} clearAllFilters={clearAllFilters} />
+        {filteredProducts.length === 0 && !isLoading && !error ? (
+          <Box sx={{ textAlign: 'center', py: 8 }}>
+            <Typography variant="h6" sx={{ mb: 2 }}>
+              {activeCollection 
+                ? `No products found for ${activeCollection}`
+                : 'No products found'
+              }
+            </Typography>
+            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+              {activeCollection 
+                ? `There are currently no products available in the ${activeCollection} collection.`
+                : 'Try adjusting your filters or check back later.'
+              }
+            </Typography>
+          </Box>
+        ) : (
+          <ProductsGrid products={filteredProducts} clearAllFilters={clearAllFilters} />
+        )}
       </Container>
     </Box>
   );

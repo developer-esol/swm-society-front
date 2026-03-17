@@ -1,7 +1,14 @@
-import { Box, Container, Typography, Pagination, Stack } from '@mui/material'
+import { Box, Container, Typography, Pagination, Stack, TextField, IconButton } from '@mui/material'
+import { Search as SearchIcon } from '@mui/icons-material'
+import { useState } from 'react'
+import AdminBreadcrumbs from '../../components/Admin/AdminBreadcrumbs'
 import { useAdminSales } from '../../hooks/admin'
-import { SalesTableHeader, SalesTable } from '../../features/Admin/sales'
+import { SalesTable } from '../../features/Admin/sales'
+import OrderViewModal from '../../features/Admin/sales/OrderViewModal'
+import OrderEditModal from '../../features/Admin/sales/OrderEditModal'
+import { orderService } from '../../api/services/orderService'
 import { colors } from '../../theme'
+import type { Order } from '../../types/order'
 
 const AdminSales = () => {
   const {
@@ -17,12 +24,38 @@ const AdminSales = () => {
     handleDateFilterChange,
   } = useAdminSales()
 
+  const [viewModalOpen, setViewModalOpen] = useState(false)
+  const [editModalOpen, setEditModalOpen] = useState(false)
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
+
   const handlePageChange = (_event: React.ChangeEvent<unknown>, page: number) => {
     handlePageChangeHook(page)
   }
 
   const handleDateChange = (from: string, to: string) => {
     handleDateFilterChange(from, to)
+  }
+
+  const handleView = (order: Order) => {
+    setSelectedOrder(order)
+    setViewModalOpen(true)
+  }
+
+  const handleEdit = (order: Order) => {
+    setSelectedOrder(order)
+    setEditModalOpen(true)
+  }
+
+  const handleUpdateStatus = async (orderId: string, status: string) => {
+    try {
+      await orderService.updateOrderStatus(orderId, status)
+      setEditModalOpen(false)
+      // Optionally refresh the orders list here
+      window.location.reload()
+    } catch (error) {
+      console.error('Failed to update order status:', error)
+      throw error
+    }
   }
 
   return (
@@ -37,10 +70,11 @@ const AdminSales = () => {
         }}
       >
         {/* Header */}
+        <AdminBreadcrumbs items={[{ label: 'Admin', to: '/admin' }, { label: 'Sales', to: '/admin/sales' }]} />
         <Typography
           variant="h4"
           sx={{
-            mb: { xs: 3, sm: 4 },
+            mb: 3,
             fontWeight: 700,
             color: colors.text.primary,
             fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' },
@@ -49,12 +83,43 @@ const AdminSales = () => {
           Sales
         </Typography>
 
-        {/* Search and Filter Section */}
-        <Box sx={{ display: 'flex', gap: 3, mb: 4, alignItems: 'flex-start' }}>
-          <SalesTableHeader searchQuery={searchQuery} onSearch={handleSearch} />
-
-          {/* Date Range Inputs - Aligned with Search Bar */}
-          <Box sx={{ display: 'flex', gap: 3, alignItems: 'center', pt: 0.5 }}>
+        {/* Search Box with Date Filters */}
+        <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Box
+            sx={{
+              display: 'flex',
+              gap: 1,
+              alignItems: 'center',
+            }}
+          >
+            <TextField
+              placeholder="Search Sales..."
+              value={searchQuery}
+              onChange={(e) => handleSearch(e.target.value)}
+              size="small"
+              sx={{
+                width: 250,
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: 1,
+                  bgcolor: colors.background.default,
+                },
+              }}
+            />
+            <IconButton
+              sx={{
+                bgcolor: colors.button.new,
+                color: colors.text.secondary,
+                borderRadius: 1,
+                p: 1,
+                '&:hover': { bgcolor: colors.button.dark },
+              }}
+            >
+              <SearchIcon />
+            </IconButton>
+          </Box>
+          
+          {/* Date Range Inputs */}
+          <Box sx={{ display: 'flex', gap: 3, alignItems: 'center' }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
               <Typography sx={{ fontSize: '0.95rem', color: colors.text.primary, fontWeight: 500, whiteSpace: 'nowrap' }}>From:</Typography>
               <Box
@@ -106,11 +171,13 @@ const AdminSales = () => {
         {/* Sales Table */}
         <SalesTable 
           transactions={transactions}
+          onView={handleView}
+          onEdit={handleEdit}
         />
 
        {/* Pagination */}
               {totalPages > 1 && (
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 3 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 4 }}>
                   <Typography sx={{ color: colors.text.secondary, fontSize: '0.9rem' }}>
                     {(currentPage - 1) * 5 + 1}-{Math.min(currentPage * 5, filteredTransactions.length)} of {filteredTransactions.length} transactions
                   </Typography>
@@ -124,8 +191,8 @@ const AdminSales = () => {
                           color: colors.text.primary,
                           borderColor: colors.border.default,
                           '&.Mui-selected': {
-                            backgroundColor: '#dc2626',
-                            color: 'white',
+                            backgroundColor: colors.button.primary,
+                            color: colors.text.secondary,
                           },
                         },
                       }}
@@ -134,6 +201,23 @@ const AdminSales = () => {
                 </Box>
               )}
       </Container>
+
+      {/* Modals */}
+      {selectedOrder && (
+        <>
+          <OrderViewModal
+            open={viewModalOpen}
+            onClose={() => setViewModalOpen(false)}
+            order={selectedOrder}
+          />
+          <OrderEditModal
+            open={editModalOpen}
+            onClose={() => setEditModalOpen(false)}
+            order={selectedOrder}
+            onSave={handleUpdateStatus}
+          />
+        </>
+      )}
     </Box>
   )
 }

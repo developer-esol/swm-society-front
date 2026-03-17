@@ -1,50 +1,96 @@
 import { apiClient } from '../apiClient';
-import type { Product, ProductFilters, CreateProductData, UpdateProductData, CreateProductResponse } from '../../types';
-
-// Import the individual product services for demo data
-import { hmvProductService } from './hmvProductsService';
-import { projectZeroProductService } from './projectZeroProductService';
-import { thomasMushetProductService } from './thomasMushetService';
+import type { Product, ProductFilters, CreateProductData, UpdateProductData } from '../../types';
+import { brandService } from './brandService';
 
 export const productsService = {
   // READ operations
   async getProducts(filters?: ProductFilters): Promise<Product[]> {
-    // For demo purposes, combine all product services
+    console.log('Fetching all products from database API');
     try {
-      const hmvProducts = await hmvProductService.getProducts(filters);
-      const projectZeroProducts = await projectZeroProductService.getProducts();
-      const thomasMushetProducts = await thomasMushetProductService.getProducts(filters);
+      // First, fetch all brands to create a lookup map
+      const brands = await brandService.getBrands();
+      console.log('Brands fetched for products:', brands);
       
-      return [...hmvProducts, ...projectZeroProducts, ...thomasMushetProducts];
+      // Create brandId -> brandName lookup map
+      const brandMap = new Map<string, string>();
+      brands.forEach(brand => {
+        brandMap.set(brand.id, brand.brandName);
+      });
+      
+      // Fetch from actual database API only
+      const products = await apiClient.get<Product[]>('/products');
+      
+      // Populate brandName for each product
+      return products.map(product => ({
+        ...product,
+        brandName: brandMap.get(product.brandId) || product.brandName || 'Unknown'
+      }));
     } catch (error) {
-      console.error('Error fetching products:', error);
+      console.error('Failed to fetch products:', error);
       return [];
     }
   },
 
   async getProductById(id: string): Promise<Product> {
-    // Try to find the product in all services
-    try {
-      const allProducts = await this.getProducts();
-      const product = allProducts.find(p => p.id === id);
-      
-      if (!product) {
-        throw new Error(`Product with id ${id} not found`);
-      }
-      
-      return product;
-    } catch (error) {
-      console.error('Error fetching product by id:', error);
-      throw error;
-    }
+    console.log('Fetching product by ID from database API:', id);
+    // Get the specific product from API only
+    return await apiClient.get<Product>(`/products/${id}`);
   },
 
   async getProductsByCollection(collection: string): Promise<Product[]> {
-    return apiClient.get<Product[]>('/products', { collection });
+    console.log('Fetching products by brand from database API:', collection);
+    
+    try {
+      // First get all products and brands
+      const allProducts = await apiClient.get<Product[]>('/products');
+      console.log('All products fetched:', allProducts.length);
+      console.log('Sample product:', allProducts[0]);
+      
+      if (!collection) {
+        return allProducts;
+      }
+      
+      // Get brands from database
+      const brands = await apiClient.get<Brand[]>('/brands');
+      console.log('All brands fetched:', brands);
+      
+      // Find the brand that matches the collection name
+      // Based on your database, brands have a 'name' field, not 'brandName'
+      const matchingBrand = brands.find(brand => {
+        const brandName = brand.name || brand.brandName || '';
+        const matches = brandName.toLowerCase().trim() === collection.toLowerCase().trim();
+        console.log(`Comparing brand "${brandName}" with "${collection}": ${matches}`);
+        return matches;
+      });
+      
+      if (!matchingBrand) {
+        console.log(`No brand found for collection: ${collection}`);
+        console.log('Available brands:', brands.map(b => b.name || b.brandName));
+        return [];
+      }
+      
+      console.log('Matching brand found:', matchingBrand);
+      const brandId = matchingBrand.id;
+      
+      // Filter products by brandId
+      const filteredProducts = allProducts.filter(product => {
+        const matches = product.brandId === brandId;
+        console.log(`Product "${product.name}" (brandId: ${product.brandId}) matches brandId "${brandId}": ${matches}`);
+        return matches;
+      });
+      
+      console.log(`Found ${filteredProducts.length} products for brand "${collection}" (brandId: ${brandId})`);
+      return filteredProducts;
+      
+    } catch (error) {
+      console.error('Error fetching products by collection:', error);
+      return [];
+    }
   },
 
   async getProductsByBrand(brandId: string): Promise<Product[]> {
-    return apiClient.get<Product[]>('/products', { brandId });
+    console.log('Fetching products by brandId:', brandId);
+    return apiClient.get<Product[]>(`/products/brand/${brandId}`);
   },
 
   async searchProducts(query: string): Promise<Product[]> {

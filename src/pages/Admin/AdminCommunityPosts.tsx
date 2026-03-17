@@ -1,38 +1,42 @@
-import { Box, Container, Typography, Button as MuiButton } from '@mui/material'
+import { Box, Container, Typography, Button as MuiButton, TextField, IconButton, Pagination, Stack } from '@mui/material'
 import { useState, useEffect } from 'react'
+import { Search as SearchIcon } from '@mui/icons-material'
+import { useAdminCommunity } from '../../hooks/useCommunity'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { communityService } from '../../api/services/communityService'
+import { QUERY_KEYS } from '../../configs/queryKeys'
+import { ConfirmDeleteDialog } from '../../components'
+import AdminBreadcrumbs from '../../components/Admin/AdminBreadcrumbs'
 import { colors } from '../../theme'
 import type { CommunityPost } from '../../types/community'
-import AdminCommunityPostCard from '../../components/AdminCommunityPostCard'
-import { TextField } from '@mui/material'
-import { Search as SearchIcon } from '@mui/icons-material'
+import AdminCommunityPostCard from '../../components/Admin/AdminCommunityPostCard'
 
 const AdminCommunityPosts = () => {
-  const [posts, setPosts] = useState<CommunityPost[]>([])
   const [filteredPosts, setFilteredPosts] = useState<CommunityPost[]>([])
   const [searchQuery, setSearchQuery] = useState('')
   const [showAll, setShowAll] = useState(false)
-  const [loading, setLoading] = useState(true)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [postToDelete, setPostToDelete] = useState<{ id: string; caption: string } | null>(null)
+  const [currentPage, setCurrentPage] = useState(1)
 
-  const ITEMS_PER_PAGE = 3
+  const ITEMS_PER_PAGE = 5
 
-  // Fetch posts on mount
+  const { data: posts = [], isLoading: postsLoading } = useAdminCommunity()
+  const loading = postsLoading
+
+  // initialize filtered posts when posts change
   useEffect(() => {
-    const loadPosts = async () => {
-      try {
-        setLoading(true)
-        const allPosts = await communityService.getAll()
-        setPosts(allPosts)
-        setFilteredPosts(allPosts)
-      } catch (error) {
-        console.error('Error loading posts:', error)
-      } finally {
-        setLoading(false)
-      }
-    }
+    setFilteredPosts(posts)
+  }, [posts])
 
-    loadPosts()
-  }, [])
+  const queryClient = useQueryClient()
+
+  const deletePostMutation = useMutation({
+    mutationFn: (id: string) => communityService.deletePost(id),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: QUERY_KEYS.community.admin })
+    },
+  })
 
   // Handle search filter
   const handleSearch = (query: string) => {
@@ -54,20 +58,36 @@ const AdminCommunityPosts = () => {
   }
 
   // Handle delete post
-  const handleDeletePost = async (postId: string) => {
+  const handleDeletePost = (post: CommunityPost) => {
+    setPostToDelete({ id: post.id, caption: post.caption })
+    setDeleteDialogOpen(true)
+  }
+
+  const confirmDeletePost = async () => {
+    if (!postToDelete) return
     try {
-      await communityService.deletePost(postId)
-      const updatedPosts = posts.filter((p) => p.id !== postId)
-      setPosts(updatedPosts)
-      setFilteredPosts(updatedPosts)
+      await deletePostMutation.mutateAsync(postToDelete.id)
+      setDeleteDialogOpen(false)
+      setPostToDelete(null)
     } catch (error) {
       console.error('Error deleting post:', error)
     }
   }
 
-  // Get posts to display
-  const displayedPosts = showAll ? filteredPosts : filteredPosts.slice(0, ITEMS_PER_PAGE)
-  const hasMorePosts = filteredPosts.length > ITEMS_PER_PAGE
+  const cancelDelete = () => {
+    setDeleteDialogOpen(false)
+    setPostToDelete(null)
+  }
+
+  // Calculate pagination
+  const totalPages = Math.ceil(filteredPosts.length / ITEMS_PER_PAGE)
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE
+  const endIndex = startIndex + ITEMS_PER_PAGE
+  const paginatedPosts = filteredPosts.slice(startIndex, endIndex)
+
+  const handlePageChange = (_event: React.ChangeEvent<unknown>, page: number) => {
+    setCurrentPage(page)
+  }
 
   if (loading) {
     return (
@@ -88,10 +108,11 @@ const AdminCommunityPosts = () => {
           width: '100%'
         }}
       >
+        <AdminBreadcrumbs items={[{ label: 'Admin', to: '/admin' }, { label: 'Community Posts', to: '/admin/community-posts' }]} />
         <Typography
           variant="h4"
           sx={{
-            mb: { xs: 3, sm: 4 },
+            mb: 3,
             fontWeight: 700,
             color: colors.text.primary,
             fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' }
@@ -100,34 +121,45 @@ const AdminCommunityPosts = () => {
           Community Posts
         </Typography>
 
-        {/* Search Bar */}
-        <TextField
-          placeholder="Search Community Posts..."
-          value={searchQuery}
-          onChange={(e) => handleSearch(e.target.value)}
-          variant="outlined"
-          size="small"
-          sx={{
-            flex: 1,
-            maxWidth: '350px',
-            mb: 3,
-            '& .MuiOutlinedInput-root': {
-              borderRadius: '20px',
-              bgcolor: colors.background.default,
-            },
-          }}
-          InputProps={{
-            startAdornment: (
-              <Box sx={{ mr: 1, display: 'flex', alignItems: 'center' }}>
-                <SearchIcon sx={{ fontSize: '1.2rem', color: colors.button.primary }} />
-              </Box>
-            ),
-          }}
-        />
+        {/* Search Box */}
+        <Box sx={{ mb: 3, display: 'flex', justifyContent: 'flex-start' }}>
+          <Box
+            sx={{
+              display: 'flex',
+              gap: 1,
+              alignItems: 'center',
+            }}
+          >
+            <TextField
+              placeholder="Search Community Posts..."
+              value={searchQuery}
+              onChange={(e) => handleSearch(e.target.value)}
+              size="small"
+              sx={{
+                width: 250,
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: 1,
+                  bgcolor: colors.background.default,
+                },
+              }}
+            />
+            <IconButton
+              sx={{
+                bgcolor: colors.button.new,
+                color: colors.text.secondary,
+                borderRadius: 1,
+                p: 1,
+                '&:hover': { bgcolor: colors.button.dark },
+              }}
+            >
+              <SearchIcon />
+            </IconButton>
+          </Box>
+        </Box>
 
         {/* Posts Grid */}
         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr' }, gap: 2, mb: 3 }}>
-          {displayedPosts.map((post) => (
+          {paginatedPosts.map((post) => (
             <AdminCommunityPostCard
               key={post.id}
               post={post}
@@ -136,26 +168,29 @@ const AdminCommunityPosts = () => {
           ))}
         </Box>
 
-        {/* View More Button */}
-        {hasMorePosts && !showAll && (
-          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3, mb: 2 }}>
-            <MuiButton
-              variant="text"
-              sx={{
-                color: colors.text.primary,
-                textTransform: 'none',
-                fontSize: '1rem',
-                px: 4,
-                py: 1.5,
-                '&:hover': {
-                  color: colors.button.primary,
-                  bgcolor: 'transparent',
-                },
-              }}
-              onClick={() => setShowAll(true)}
-            >
-              View More
-            </MuiButton>
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 4 }}>
+            <Typography sx={{ color: colors.text.secondary, fontSize: '0.9rem' }}>
+              {(currentPage - 1) * ITEMS_PER_PAGE + 1}-{Math.min(currentPage * ITEMS_PER_PAGE, filteredPosts.length)} of {filteredPosts.length} posts
+            </Typography>
+            <Stack spacing={2} direction="row">
+              <Pagination
+                count={totalPages}
+                page={currentPage}
+                onChange={handlePageChange}
+                sx={{
+                  '& .MuiPaginationItem-root': {
+                    color: colors.text.primary,
+                    borderColor: colors.border.default,
+                    '&.Mui-selected': {
+                      backgroundColor: colors.button.primary,
+                      color: colors.text.secondary,
+                    },
+                  },
+                }}
+              />
+            </Stack>
           </Box>
         )}
 
@@ -174,6 +209,14 @@ const AdminCommunityPosts = () => {
           </Box>
         )}
       </Container>
+
+      {/* Confirmation Dialog */}
+      <ConfirmDeleteDialog
+        open={deleteDialogOpen}
+        message={`Are you sure you want to delete "${postToDelete?.caption}"? This action cannot be undone.`}
+        onConfirm={confirmDeletePost}
+        onCancel={cancelDelete}
+      />
     </Box>
   )
 }

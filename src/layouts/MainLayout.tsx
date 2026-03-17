@@ -2,12 +2,14 @@ import React from 'react';
 import { Outlet } from 'react-router-dom';
 import { Box } from '@mui/material';
 import { NavigationBar, Footer } from '../components';
+import ScrollToTop from '../components/ScrollToTop';
 
 export const MainLayout: React.FC = () => {
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       {/* Navigation Bar */}
       <NavigationBar />
+      <ScrollToTop />
       
       {/* Main Content */}
       <Box

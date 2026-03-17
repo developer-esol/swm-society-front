@@ -1,67 +1,165 @@
-import { Box, Container, Typography, Pagination, Stack } from '@mui/material'
-import { useState, useEffect } from 'react'
-import { UsersTable, UserTableHeader } from '../../features/Admin/users'
+import { Box, Container, Typography, Pagination, Stack, TextField, IconButton, Select, MenuItem, FormControl, InputLabel } from '@mui/material'
+import { useState, useMemo } from 'react'
+import { Search as SearchIcon } from '@mui/icons-material'
+import AdminBreadcrumbs from '../../components/Admin/AdminBreadcrumbs'
+import { UsersTable } from '../../features/Admin/users'
+import UserRoleEditModal from '../../features/Admin/users/UserRoleEditModal'
+import { useAdminUsers } from '../../hooks/useUsers'
+import { useRolesList } from '../../hooks/useRoles'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { userService } from '../../api/services/admin/userService'
+import { QUERY_KEYS } from '../../configs/queryKeys'
+import { ConfirmDeleteDialog } from '../../components'
 import { colors } from '../../theme'
 import type { AdminUser } from '../../types/Admin/users'
 
 const ITEMS_PER_PAGE = 5
 
 const AdminUsers = () => {
-  const [users, setUsers] = useState<AdminUser[]>([])
-  const [filteredUsers, setFilteredUsers] = useState<AdminUser[]>([])
+  const [selectedRole, setSelectedRole] = useState('all')
   const [searchQuery, setSearchQuery] = useState('')
-  const [loading, setLoading] = useState(true)
   const [currentPage, setCurrentPage] = useState(1)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [userToDelete, setUserToDelete] = useState<AdminUser | null>(null)
+  const [editModalOpen, setEditModalOpen] = useState(false)
+  const [userToEdit, setUserToEdit] = useState<AdminUser | null>(null)
 
-  // Fetch users on mount
-  useEffect(() => {
-    const loadUsers = async () => {
-      try {
-        setLoading(true)
-        const allUsers = await userService.getAll()
-        setUsers(allUsers)
-        setFilteredUsers(allUsers)
-      } catch (error) {
-        console.error('Error loading users:', error)
-      } finally {
-        setLoading(false)
+  // Use React Query to fetch users and roles
+  const { data: users = [], isLoading: usersLoading } = useAdminUsers()
+  const { data: roles = [], isLoading: rolesLoading } = useRolesList()
+
+  const loading = usersLoading || rolesLoading
+
+  const rolesList = useMemo(() => (roles || []).map((r) => ({ id: r.id, name: r.name })), [roles])
+
+  // Map users to include role name
+  const usersWithRoleNames = useMemo(() => {
+    console.log('[AdminUsers] Users from API:', users)
+    console.log('[AdminUsers] Roles from API:', rolesList)
+    
+    // If user already has role name from backend, use it directly
+    return (users || []).map((u) => {
+      // The backend already returns role name in u.role, so we can use it directly
+      // Only if role is empty or undefined, try to look it up from roleId
+      if (u.role && typeof u.role === 'string') {
+        console.log('[AdminUsers] User:', u.email, 'already has role name:', u.role)
+        return u
       }
+      
+      // Fallback: If role name is missing, try to find it using roleId
+      if (u.roleId) {
+        const roleMap = new Map<number | string, string>()
+        rolesList.forEach((r) => {
+          roleMap.set(r.id, r.name)
+          roleMap.set(String(r.id), r.name)
+        })
+        
+        const roleName = roleMap.get(u.roleId) || roleMap.get(String(u.roleId)) || `Unknown Role (${u.roleId})`
+        console.log('[AdminUsers] User:', u.email, 'roleId:', u.roleId, 'mapped to:', roleName)
+        return { ...u, role: roleName }
+      }
+      
+      console.log('[AdminUsers] User:', u.email, 'has no role info')
+      return { ...u, role: '—' }
+    })
+  }, [users, rolesList])
+
+  // Derive filtered users reactively from search/role state
+  const filteredUsers = useMemo(() => {
+    let result = usersWithRoleNames
+    const lowerQuery = searchQuery.trim().toLowerCase()
+
+    if (lowerQuery) {
+      result = result.filter((user) =>
+        user.id.toLowerCase().includes(lowerQuery) ||
+        user.email.toLowerCase().includes(lowerQuery) ||
+        user.status.toLowerCase().includes(lowerQuery) ||
+        String(user.role || '').toLowerCase().includes(lowerQuery)
+      )
     }
 
-    loadUsers()
-  }, [])
+    if (selectedRole && selectedRole !== 'all') {
+      const matched = rolesList.find((r) => String(r.id) === String(selectedRole))
+      const roleName = String(matched?.name ?? selectedRole)
+      result = result.filter((user) => String(user.role || '').toLowerCase() === roleName.toLowerCase())
+    }
+
+    return result
+  }, [usersWithRoleNames, searchQuery, selectedRole, rolesList])
+
+  const queryClient = useQueryClient()
+
+  const deleteUserMutation = useMutation({
+    mutationFn: (id: string) => userService.removeUser(id),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: QUERY_KEYS.users.admin })
+    },
+  })
+
+  const updateUserRoleMutation = useMutation({
+    mutationFn: ({ userId, roleId, numericId }: { userId: string; roleId: number; numericId?: number }) => 
+      userService.updateUserRole(userId, roleId, numericId),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: QUERY_KEYS.users.admin })
+    },
+  })
 
   // Handle search filter
   const handleSearch = (query: string) => {
     setSearchQuery(query)
     setCurrentPage(1)
+  }
 
-    if (query.trim() === '') {
-      setFilteredUsers(users)
-    } else {
-      const lowerQuery = query.toLowerCase()
-      const filtered = users.filter(
-        (user) =>
-          user.id.toLowerCase().includes(lowerQuery) ||
-          user.email.toLowerCase().includes(lowerQuery) ||
-          user.status.toLowerCase().includes(lowerQuery)
-      )
-      setFilteredUsers(filtered)
+  const handleRoleChange = (roleId: string) => {
+    setSelectedRole(roleId)
+    setCurrentPage(1)
+  }
+
+  // Prepare delete dialog
+  const handleRequestDelete = (userId: string) => {
+    const user = users.find((u) => u.id === userId) || null
+    setUserToDelete(user)
+    setDeleteDialogOpen(true)
+  }
+
+  // Confirm delete user
+  const handleConfirmDelete = async () => {
+    if (!userToDelete) return
+    try {
+      await deleteUserMutation.mutateAsync(userToDelete.id)
+    } catch (error) {
+      console.error('Error deleting user:', error)
+    } finally {
+      setDeleteDialogOpen(false)
+      setUserToDelete(null)
     }
   }
 
-  // Handle delete user
-  const handleDeleteUser = async (userId: string) => {
+  const handleCancelDelete = () => {
+    setDeleteDialogOpen(false)
+    setUserToDelete(null)
+  }
+
+  // Handle edit user
+  const handleEditUser = (user: AdminUser) => {
+    setUserToEdit(user)
+    setEditModalOpen(true)
+  }
+
+  // Handle save user role
+  const handleSaveUserRole = async (userId: string, roleId: number, numericId?: number) => {
     try {
-      await userService.removeUser(userId)
-      const updatedUsers = users.filter((u) => u.id !== userId)
-      setUsers(updatedUsers)
-      setFilteredUsers(updatedUsers)
-      setCurrentPage(1)
+      await updateUserRoleMutation.mutateAsync({ userId, roleId, numericId })
     } catch (error) {
-      console.error('Error deleting user:', error)
+      console.error('Error updating user role:', error)
+      throw error
     }
+  }
+
+  // Handle close edit modal
+  const handleCloseEditModal = () => {
+    setEditModalOpen(false)
+    setUserToEdit(null)
   }
 
   // Calculate pagination
@@ -93,10 +191,11 @@ const AdminUsers = () => {
           width: '100%'
         }}
       >
+        <AdminBreadcrumbs items={[{ label: 'Admin', to: '/admin' }, { label: 'Users', to: '/admin/users' }]} />
         <Typography
           variant="h4"
           sx={{
-            mb: { xs: 3, sm: 4 },
+            mb: 3,
             fontWeight: 700,
             color: colors.text.primary,
             fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' }
@@ -105,14 +204,64 @@ const AdminUsers = () => {
           Users
         </Typography>
 
-        <UserTableHeader
-          searchQuery={searchQuery}
-          onSearch={handleSearch}
-        />
+        {/* Search + Role Filter Row */}
+        <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Box
+            sx={{
+              display: 'flex',
+              gap: 1,
+              alignItems: 'center',
+            }}
+          >
+            <TextField
+              placeholder="Search Users..."
+              value={searchQuery}
+              onChange={(e) => handleSearch(e.target.value)}
+              size="small"
+              sx={{
+                width: 250,
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: 1,
+                  bgcolor: colors.background.default,
+                },
+              }}
+            />
+            <IconButton
+              sx={{
+                bgcolor: colors.button.new,
+                color: colors.text.secondary,
+                borderRadius: 1,
+                p: 1,
+                '&:hover': { bgcolor: colors.button.dark },
+              }}
+            >
+              <SearchIcon />
+            </IconButton>
+          </Box>
+
+          <Box>
+            <FormControl size="small" sx={{ minWidth: 200 }}>
+              <InputLabel id="role-filter-label">Role</InputLabel>
+              <Select
+                labelId="role-filter-label"
+                value={selectedRole}
+                label="Role"
+                onChange={(e) => handleRoleChange(e.target.value as string)}
+                sx={{ bgcolor: colors.background.paper }}
+              >
+                <MenuItem value="all">All Roles</MenuItem>
+                {rolesList.map((r) => (
+                  <MenuItem key={r.id} value={String(r.id)}>{r.name}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Box>
+        </Box>
 
         <UsersTable
           users={paginatedUsers}
-          onDelete={handleDeleteUser}
+          onEdit={handleEditUser}
+          onDelete={handleRequestDelete}
         />
 
         {filteredUsers.length > 0 && (
@@ -141,6 +290,22 @@ const AdminUsers = () => {
           </Box>
         )}
       </Container>
+      <ConfirmDeleteDialog
+        open={deleteDialogOpen}
+        title="Delete User"
+        message={`Are you sure you want to delete "${userToDelete?.email || userToDelete?.id}"? This action cannot be undone.`}
+        onConfirm={handleConfirmDelete}
+        onCancel={handleCancelDelete}
+        confirmText="Delete"
+        cancelText="Cancel"
+      />
+      <UserRoleEditModal
+        open={editModalOpen}
+        user={userToEdit}
+        roles={rolesList}
+        onClose={handleCloseEditModal}
+        onSave={handleSaveUserRole}
+      />
     </Box>
   )
 }

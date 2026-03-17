@@ -1,19 +1,22 @@
 export interface Permission {
-  id: string
+  id: number
   name: string
-  category: string
-  enabled: boolean
+  description: string
+  resource: string
+  action: string
 }
 
 export interface Role {
-  id: string
+  id: number
   name: string
   description: string
-  icon: string
-  usersCount: number
-  permissionsCount: number
-  status: string
   permissions: Permission[]
+}
+
+export interface CreateRoleRequest {
+  name: string
+  description: string
+  permissionIds: number[]
 }
 
 export interface PermissionCategory {

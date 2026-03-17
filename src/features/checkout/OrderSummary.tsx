@@ -11,15 +11,15 @@ import type { CartItem } from '../../types/cart';
 interface OrderSummaryProps {
   cartItems: CartItem[];
   subtotal: number;
-  shipping: number;
   total: number;
+  loyaltyDiscount?: number;
 }
 
 const OrderSummary: React.FC<OrderSummaryProps> = ({
   cartItems,
   subtotal,
-  shipping,
   total,
+  loyaltyDiscount = 0,
 }) => {
   return (
     <Paper sx={{ p: 3, bgcolor: colors.background.light, position: 'sticky', top: 100 }}>
@@ -31,16 +31,21 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
       <Box sx={{ mb: 3 }}>
         {cartItems.map((item, index) => (
           <Box key={index} sx={{ mb: 2 }}>
+            {item.brandName && (
+              <Typography variant="caption" sx={{ color: colors.text.disabled, display: 'block', mb: 0.3, fontWeight: 500 }}>
+                {item.brandName}
+              </Typography>
+            )}
             <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
               <Typography variant="body2">
                 {item.productName}
               </Typography>
               <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                £{(item.price * item.quantity).toFixed(2)}
+                £{(Number(item.price) * item.quantity).toFixed(2)}
               </Typography>
             </Box>
             <Typography variant="caption" sx={{ color: colors.text.disabled }}>
-              Qty: {item.quantity} × £{item.price.toFixed(2)}
+              Qty: {item.quantity} × £{Number(item.price).toFixed(2)}
             </Typography>
             {item.color && (
               <Typography variant="caption" sx={{ color: 'grey.600', display: 'block' }}>
@@ -68,15 +73,18 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
             £{subtotal.toFixed(2)}
           </Typography>
         </Box>
-
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1.5 }}>
-          <Typography variant="body2" sx={{ color: 'grey.600' }}>
-            Shipping
-          </Typography>
-          <Typography variant="body2" sx={{ fontWeight: 500 }}>
-            £{shipping.toFixed(2)}
-          </Typography>
-        </Box>
+        
+        {/* Loyalty Discount */}
+        {loyaltyDiscount > 0 && (
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1.5 }}>
+            <Typography variant="body2" sx={{ color: 'success.main', fontWeight: 500 }}>
+              Loyalty Discount
+            </Typography>
+            <Typography variant="body2" sx={{ color: 'success.main', fontWeight: 600 }}>
+              -£{loyaltyDiscount.toFixed(2)}
+            </Typography>
+          </Box>
+        )}
       </Box>
 
       <Divider sx={{ my: 2 }} />

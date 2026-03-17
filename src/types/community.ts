@@ -21,3 +21,24 @@ export interface CommunityPost {
   createdAt: string;
   hashtags?: string[];
 }
+
+//newly added 
+export interface CreateCommunityPostData {
+  userId: string;
+  description: string;
+  imageUrl: string;
+}
+
+export interface CommunityPostResponse {
+  id: string;
+  userId: string;
+  description: string;
+  noOfLikes: number;
+  imageUrl: string;
+  date: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+  createdBy: string | null;
+  updatedBy: string | null;
+}

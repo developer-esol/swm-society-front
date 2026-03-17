@@ -16,7 +16,9 @@ import {
 } from '@mui/material'
 import { Edit as EditIcon, Camera as CameraIcon, Lock as LockIcon } from '@mui/icons-material'
 import { useAdminProfile } from '../../hooks/admin/useAdminProfile'
+import { authService } from '../../api/services/authService'
 import { colors } from '../../theme'
+import AdminBreadcrumbs from '../../components/Admin/AdminBreadcrumbs'
 
 const AdminProfilePage: React.FC = () => {
   const { profile, isLoading, error, updateProfile, updateProfilePicture, changePassword } = useAdminProfile()
@@ -78,20 +80,14 @@ const AdminProfilePage: React.FC = () => {
   }
 
   const handleChangePassword = async () => {
-    if (newPassword !== confirmPassword) {
-      alert('Passwords do not match')
-      return
-    }
-    const result = await changePassword(currentPassword, newPassword)
-    if (result.success) {
-      setSuccessMessage('Password changed successfully!')
+    try {
+      const result = await authService.requestPasswordReset(profile!.email)
+      setSuccessMessage('Password reset link sent to your email!')
       setPasswordDialogOpen(false)
-      setCurrentPassword('')
-      setNewPassword('')
-      setConfirmPassword('')
-      setTimeout(() => setSuccessMessage(null), 3000)
-    } else {
-      alert(result.error || 'Failed to change password')
+      setTimeout(() => setSuccessMessage(null), 5000)
+    } catch (error: any) {
+      const errorMessage = error?.response?.data?.message || error?.message || 'Failed to send password reset email'
+      alert(errorMessage)
     }
   }
 
@@ -158,8 +154,9 @@ const AdminProfilePage: React.FC = () => {
 
             {/* Profile Info */}
             <Box sx={{ flex: 1 }}>
-              <Typography variant="h5" sx={{ fontWeight: 700, color: colors.text.primary, mb: 1 }}>
-                {profile.firstName} {profile.lastName}
+              <AdminBreadcrumbs items={[{ label: 'Admin', to: '/admin' }, { label: 'Profile', to: '/admin/profile' }]} />
+              <Typography variant="h4" sx={{ fontWeight: 700, color: colors.text.primary, mb: 1 }}>
+                Profile
               </Typography>
               <Typography sx={{ color: colors.text.gray, mb: 0.5 }}>{profile.email}</Typography>
               <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
@@ -172,7 +169,7 @@ const AdminProfilePage: React.FC = () => {
                   <Typography
                     sx={{
                       fontWeight: 600,
-                      color: profile.status === 'active' ? '#10b981' : '#ef4444',
+                      color: profile.status === 'active' ? colors.password.primary : colors.status.cancelled,
                     }}
                   >
                     {profile.status.charAt(0).toUpperCase() + profile.status.slice(1)}
@@ -186,21 +183,6 @@ const AdminProfilePage: React.FC = () => {
                 </Box>
               </Box>
             </Box>
-
-            {/* Edit Button */}
-            {!isEditing && (
-              <Button
-                onClick={() => setIsEditing(true)}
-                startIcon={<EditIcon />}
-                sx={{
-                  bgcolor: colors.button.primary,
-                  color: 'white',
-                  '&:hover': { bgcolor: colors.button.primaryHover },
-                }}
-              >
-                Edit Profile
-              </Button>
-            )}
           </Box>
         </Card>
 
@@ -339,29 +321,19 @@ const AdminProfilePage: React.FC = () => {
 
       {/* Change Password Dialog */}
       <Dialog open={passwordDialogOpen} onClose={() => setPasswordDialogOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle sx={{ fontWeight: 700, color: colors.text.primary }}>Change Password</DialogTitle>
-        <DialogContent sx={{ pt: 3, display: 'flex', flexDirection: 'column', gap: 2 }}>
-          <TextField
-            type="password"
-            label="Current Password"
-            value={currentPassword}
-            onChange={(e) => setCurrentPassword(e.target.value)}
-            fullWidth
-          />
-          <TextField
-            type="password"
-            label="New Password"
-            value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
-            fullWidth
-          />
-          <TextField
-            type="password"
-            label="Confirm Password"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            fullWidth
-          />
+        <DialogTitle sx={{ fontWeight: 700, color: colors.text.primary }}>Reset Password</DialogTitle>
+        <DialogContent sx={{ pt: 3 }}>
+          <Box sx={{ py: 2 }}>
+            <Typography variant="body1" sx={{ mb: 2 }}>
+              A password reset link will be sent to your email address:
+            </Typography>
+            <Typography variant="body1" sx={{ fontWeight: 600, color: colors.button.primary, mb: 2 }}>
+              {profile?.email}
+            </Typography>
+            <Typography variant="body2" sx={{ color: colors.text.secondary }}>
+              The link will expire in 24 hours. Click the link in your email to reset your password.
+            </Typography>
+          </Box>
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
           <Button onClick={() => setPasswordDialogOpen(false)}>Cancel</Button>
@@ -370,7 +342,7 @@ const AdminProfilePage: React.FC = () => {
             variant="contained"
             sx={{ bgcolor: colors.button.primary, '&:hover': { bgcolor: colors.button.primaryHover } }}
           >
-            Change Password
+            Send Reset Link
           </Button>
         </DialogActions>
       </Dialog>

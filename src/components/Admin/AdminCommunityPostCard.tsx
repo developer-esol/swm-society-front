@@ -5,31 +5,33 @@ import {
   CardContent,
   Box,
   Typography,
-  IconButton,
+  Button,
   Chip,
 } from '@mui/material'
-import { Delete as DeleteIcon } from '@mui/icons-material'
-import { colors } from '../theme'
-import type { CommunityPost } from '../types/community'
+import { Trash2 as DeleteIcon } from 'lucide-react'
+import { colors } from '../../theme'
+import type { CommunityPost } from '../../types/community'
+import { Permission } from '../Permission'
+import { PERMISSIONS } from '../../configs/permissions'
 
 interface AdminCommunityPostCardProps {
   post: CommunityPost
-  onDelete: (postId: string) => Promise<void>
+  onDelete: (post: CommunityPost) => void
 }
 
 const AdminCommunityPostCard: React.FC<AdminCommunityPostCardProps> = ({
   post,
   onDelete,
 }) => {
-  const handleDelete = async () => {
-    if (window.confirm('Are you sure you want to delete this post?')) {
-      try {
-        await onDelete(post.id)
-      } catch (error) {
-        console.error('Failed to delete post:', error)
-      }
-    }
+  const handleDelete = () => {
+    onDelete(post)
   }
+
+  // Helper function to detect if URL is a video
+  const isVideo = (url: string) => {
+    const videoExtensions = ['.mp4', '.webm', '.mov'];
+    return videoExtensions.some(ext => url.toLowerCase().includes(ext));
+  };
 
   return (
     <Card
@@ -44,7 +46,7 @@ const AdminCommunityPostCard: React.FC<AdminCommunityPostCardProps> = ({
         },
       }}
     >
-      {/* Post Image */}
+      {/* Post Image or Video */}
       <Box
         sx={{
           width: { xs: '100%', sm: '200px' },
@@ -53,17 +55,31 @@ const AdminCommunityPostCard: React.FC<AdminCommunityPostCardProps> = ({
           overflow: 'hidden',
         }}
       >
-        <CardMedia
-          component="img"
-          image={post.image}
-          alt={post.caption}
-          sx={{
-            width: '100%',
-            height: '100%',
-            objectFit: 'cover',
-            backgroundColor: '#f5f5f5',
-          }}
-        />
+        {isVideo(post.image) ? (
+          <video
+            src={post.image}
+            controls
+            controlsList="nodownload"
+            style={{
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              backgroundColor: colors.card.imagePlaceholder,
+            }}
+          />
+        ) : (
+          <CardMedia
+            component="img"
+            image={post.image}
+            alt={post.caption}
+            sx={{
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              backgroundColor: colors.card.imagePlaceholder,
+            }}
+          />
+        )}
       </Box>
 
       {/* Post Content */}
@@ -101,17 +117,29 @@ const AdminCommunityPostCard: React.FC<AdminCommunityPostCardProps> = ({
 
           {/* Right Actions */}
           <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
-            <IconButton
-              size="small"
-              onClick={handleDelete}
-              sx={{
-                color: '#d32f2f',
-                p: 0.5,
-                '&:hover': { bgcolor: '#d32f2f10' },
-              }}
-            >
-              <DeleteIcon sx={{ fontSize: '1.2rem' }} />
-            </IconButton>
+            <Permission permission={PERMISSIONS.DELETE_COMMUNITY_POSTS}>
+              <Button
+                onClick={handleDelete}
+                sx={{
+                  minWidth: '40px',
+                  width: '40px',
+                  height: '40px',
+                  p: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  border: `1px solid ${colors.border.default}`,
+                  borderRadius: '6px',
+                  color: colors.danger.primary,
+                  bgcolor: 'transparent',
+                  '&:hover': {
+                    bgcolor: colors.danger.background,
+                  },
+                }}
+              >
+                <DeleteIcon size={18} />
+              </Button>
+            </Permission>
             <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 0.5 }}>
               <Typography sx={{ fontSize: '1.1rem' }}>❤️</Typography>
               <Typography sx={{ fontSize: '0.85rem', color: colors.text.disabled, fontWeight: 500 }}>

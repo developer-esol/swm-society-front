@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
-import { Container, Box, Typography, Button as MuiButton, TextField } from '@mui/material';
+import { Container, Box, Typography, Button as MuiButton, TextField, Alert } from '@mui/material';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
+import { communityService } from '../../api/services/communityService';
+import { useAuthStore } from '../../store/useAuthStore';
 import { colors } from '../../theme';
+import ImageUpload from '../../components/Admin/ImageUpload';
 
 interface ShareYourStyleProps {
   onPostSuccess?: () => void;
@@ -11,7 +14,7 @@ interface ShareYourStyleProps {
 interface ShareYourStyleFormValues {
   caption: string;
   description: string;
-  image: string;
+  imageUrl: string;
 }
 
 // Yup Validation Schema
@@ -24,66 +27,120 @@ const validationSchema = Yup.object().shape({
     .required('Description is required')
     .min(10, 'Description must be at least 10 characters')
     .max(500, 'Description cannot exceed 500 characters'),
-  image: Yup.string().required('Image is required'),
+  imageUrl: Yup.string()
+    .required('Image URL is required')
+    .url('Please enter a valid URL'),
 });
 
 export const ShareYourStyle: React.FC<ShareYourStyleProps> = ({ onPostSuccess }) => {
   const [showPostForm, setShowPostForm] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
+  const { user, isAuthenticated } = useAuthStore();
 
   const formik = useFormik<ShareYourStyleFormValues>({
     initialValues: {
       caption: '',
       description: '',
-      image: '',
+      imageUrl: '',
     },
     validationSchema,
     onSubmit: async (values: ShareYourStyleFormValues) => {
+      const userId = user?.id || localStorage.getItem('userId');
+      const token = localStorage.getItem('authToken');
+      
+      console.log('[ShareYourStyle] Submitting post...');
+      console.log('[ShareYourStyle] UserId:', userId);
+      console.log('[ShareYourStyle] Authenticated:', isAuthenticated);
+      console.log('[ShareYourStyle] Token:', token ? 'Present' : 'MISSING');
+      
+      if (!isAuthenticated || !userId) {
+        console.error('[ShareYourStyle] User not authenticated');
+        alert('Please log in to create a post');
+        return;
+      }
+      
+      if (!token) {
+        console.error('[ShareYourStyle] Token missing');
+        alert('Authentication token is missing. Please log in again.');
+        return;
+      }
+
       try {
-        // Here you would typically call the service to create a post
-        // For now, we're just validating the form
-        console.log('Form submitted:', values);
-        // Reset form after successful submission
-        formik.resetForm();
-        setPreviewUrl(null);
-        setShowPostForm(false);
+        setIsSubmitting(true);
+        
+        console.log('[ShareYourStyle] Creating post with data:', {
+          userId,
+          description: values.description || values.caption,
+          imageUrl: values.imageUrl,
+        });
+        
+        // Create the post using the real API with user-provided image URL
+        const newPost = await communityService.create({
+          userId: userId,
+          description: values.description || values.caption,
+          imageUrl: values.imageUrl,
+        });
+        
+        console.log('[ShareYourStyle] ✅ Post created successfully:', newPost);
+        
+        // Call onPostSuccess FIRST to update UI immediately
         if (onPostSuccess) {
           onPostSuccess();
         }
+        
+        // Show success message
+        setSuccessMessage('Post created successfully! 🎉');
+        
+        // Reset form after successful submission
+        formik.resetForm();
+        setPreviewUrl(null);
+        
+        // Hide the form and success message after 2 seconds
+        setTimeout(() => {
+          setSuccessMessage('');
+          setShowPostForm(false);
+        }, 2000);
       } catch (error) {
-        console.error('Failed to create post:', error);
+        console.error('[ShareYourStyle] ❌ Failed to create post:', error);
+        
+        // Show more detailed error message
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+        alert(`Failed to create post: ${errorMessage}`);
+      } finally {
+        setIsSubmitting(false);
       }
     },
   });
 
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      formik.setFieldValue('image', file.name);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPreviewUrl(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+  // Update preview when imageUrl changes
+  React.useEffect(() => {
+    if (formik.values.imageUrl) {
+      setPreviewUrl(formik.values.imageUrl);
     }
-  };
+  }, [formik.values.imageUrl]);
 
-  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-  };
-
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    const file = e.dataTransfer.files?.[0];
-    if (file && file.type.startsWith('image/')) {
-      formik.setFieldValue('image', file.name);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPreviewUrl(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
+  // Show success message screen if post is successfully created
+  if (successMessage) {
+    return (
+      <Box sx={{ bgcolor: colors.background.light, width: '100%', py: 8 }}>
+        <Container maxWidth="lg">
+          <Box sx={{ textAlign: 'center' }}>
+            <Typography variant="h4" sx={{ fontWeight: 700, mb: 2 }}>
+              Post Created Successfully! 🎉
+            </Typography>
+            <Alert severity="success" sx={{ mb: 4, maxWidth: '600px', mx: 'auto' }}>
+              {successMessage}
+            </Alert>
+            <Typography variant="body1" sx={{ color: colors.text.disabled, mb: 4 }}>
+              Your post will appear in the community feed...
+            </Typography>
+          </Box>
+        </Container>
+      </Box>
+    );
+  }
 
   return (
     <Box sx={{ bgcolor: colors.background.light, width: '100%', py: 2 }}>
@@ -127,7 +184,7 @@ export const ShareYourStyle: React.FC<ShareYourStyleProps> = ({ onPostSuccess })
                   px: 4,
                   py: 1.5,
                   '&:hover': {
-                    bgcolor: '#b91c1c',
+                    bgcolor: colors.button.primaryHover,
                   },
                 }}
                 onClick={() => (window.location.href = '/shop')}
@@ -143,7 +200,7 @@ export const ShareYourStyle: React.FC<ShareYourStyleProps> = ({ onPostSuccess })
               variant="contained"
               fullWidth
               sx={{
-                bgcolor: '#1a1a1a',
+                bgcolor: colors.overlay.darkHover,
                 color: 'white',
                 textTransform: 'none',
                 fontSize: '1rem',
@@ -156,7 +213,13 @@ export const ShareYourStyle: React.FC<ShareYourStyleProps> = ({ onPostSuccess })
                   bgcolor: '#333',
                 },
               }}
-              onClick={() => setShowPostForm(true)}
+              onClick={() => {
+                if (!isAuthenticated) {
+                  window.location.href = '/login';
+                  return;
+                }
+                setShowPostForm(true);
+              }}
             >
               Add Your Post
             </MuiButton>
@@ -198,10 +261,10 @@ export const ShareYourStyle: React.FC<ShareYourStyleProps> = ({ onPostSuccess })
                     '& .MuiOutlinedInput-root': {
                       bgcolor: 'white',
                       '& fieldset': {
-                        borderColor: '#e0e0e0',
+                        borderColor: colors.border.light,
                       },
                       '&:hover fieldset': {
-                        borderColor: '#bdbdbd',
+                        borderColor: colors.border.grey,
                       },
                     },
                   }}
@@ -227,110 +290,30 @@ export const ShareYourStyle: React.FC<ShareYourStyleProps> = ({ onPostSuccess })
                     '& .MuiOutlinedInput-root': {
                       bgcolor: 'white',
                       '& fieldset': {
-                        borderColor: '#e0e0e0',
+                        borderColor: colors.border.light,
                       },
                       '&:hover fieldset': {
-                        borderColor: '#bdbdbd',
+                        borderColor: colors.border.grey,
                       },
                     },
                   }}
                 />
               </Box>
 
-              {/* Upload Image Section */}
-              <Box
-                onDragOver={handleDragOver}
-                onDrop={handleDrop}
-                sx={{
-                  border: '2px dashed #e0e0e0',
-                  borderRadius: '8px',
-                  py: 4,
-                  px: 2,
-                  mb: 4,
-                  cursor: 'pointer',
-                  textAlign: 'center',
-                  transition: 'border-color 0.3s ease',
-                  '&:hover': {
-                    borderColor: colors.button.primary,
-                  },
-                  bgcolor: previewUrl ? 'transparent' : 'white',
-                }}
-              >
-                {previewUrl ? (
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      gap: 2,
-                    }}
-                  >
-                    <img
-                      src={previewUrl}
-                      alt="Preview"
-                      style={{
-                        maxWidth: '100%',
-                        maxHeight: '300px',
-                        borderRadius: '8px',
-                      }}
-                    />
-                    <MuiButton
-                      variant="text"
-                      onClick={() => {
-                        setPreviewUrl(null);
-                        formik.setFieldValue('image', '');
-                      }}
-                      sx={{ color: colors.button.primary }}
-                    >
-                      Change Image
-                    </MuiButton>
-                  </Box>
-                ) : (
-                  <Box>
-                    <Box
-                      sx={{
-                        width: 64,
-                        height: 64,
-                        mx: 'auto',
-                        mb: 2,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: '2rem',
-                      }}
-                    >
-                      🖼️
-                    </Box>
-                    <Typography
-                      sx={{
-                        color: 'grey.600',
-                        fontSize: '0.9rem',
-                        mb: 1,
-                      }}
-                    >
-                      Drag and drop your image or click to upload
-                    </Typography>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleImageUpload}
-                      style={{ display: 'none' }}
-                      id="image-upload"
-                    />
-                    <label htmlFor="image-upload" style={{ cursor: 'pointer' }}>
-                      <MuiButton
-                        variant="text"
-                        component="span"
-                        sx={{ color: colors.button.primary }}
-                      >
-                        Choose Image
-                      </MuiButton>
-                    </label>
-                  </Box>
-                )}
-                {formik.touched.image && formik.errors.image && (
-                  <Typography sx={{ color: 'error.main', mt: 1, fontSize: '0.75rem' }}>
-                    {formik.errors.image}
+              {/* Media Upload - Images and Videos */}
+              <Box sx={{ mb: 3, textAlign: 'left' }}>
+                <ImageUpload
+                  value={formik.values.imageUrl}
+                  onChange={(url) => {
+                    formik.setFieldValue('imageUrl', url);
+                    setPreviewUrl(url);
+                  }}
+                  acceptVideo={true}
+                  label="Upload Image or Video"
+                />
+                {formik.touched.imageUrl && formik.errors.imageUrl && (
+                  <Typography sx={{ color: colors.status.error, fontSize: '0.75rem', mt: 0.5 }}>
+                    {formik.errors.imageUrl}
                   </Typography>
                 )}
               </Box>
@@ -362,6 +345,7 @@ export const ShareYourStyle: React.FC<ShareYourStyleProps> = ({ onPostSuccess })
                 <MuiButton
                   variant="contained"
                   type="submit"
+                  disabled={isSubmitting || !isAuthenticated}
                   sx={{
                     bgcolor: colors.overlay.dark,
                     color: colors.text.secondary,
@@ -372,9 +356,13 @@ export const ShareYourStyle: React.FC<ShareYourStyleProps> = ({ onPostSuccess })
                     '&:hover': {
                       bgcolor: colors.overlay.darkHover,
                     },
+                    '&:disabled': {
+                      bgcolor: colors.border.default,
+                      color: colors.text.disabled,
+                    },
                   }}
                 >
-                  Publish Post
+                  {isSubmitting ? 'Publishing...' : 'Publish Post'}
                 </MuiButton>
               </Box>
             </form>

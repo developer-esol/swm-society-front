@@ -1,11 +1,15 @@
 import React, { useState, useEffect } from 'react'
 import { Box, Typography, TextField, Button, Select, MenuItem, FormControl, InputLabel, Alert, Container, CircularProgress } from '@mui/material'
 import type { SelectChangeEvent } from '@mui/material'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { useFormik } from 'formik'
 import * as Yup from 'yup'
+import { useQueryClient } from '@tanstack/react-query'
 import { colors } from '../../theme'
+import AdminBreadcrumbs from '../../components/Admin/AdminBreadcrumbs'
+import ImageUpload from '../../components/Admin/ImageUpload'
 import { productsService } from '../../api/services/products';
+import { QUERY_KEYS } from '../../configs/queryKeys'
 import type { CreateProductData, CreateProductResponse } from '../../types/product'
 import { useBrands } from '../../hooks/useBrands'
 
@@ -25,6 +29,9 @@ const addProductValidationSchema = Yup.object().shape({
   description: Yup.string()
     .min(10, 'Description must be at least 10 characters')
     .required('Description is required'),
+  imageUrl: Yup.string()
+    .url('Please enter a valid image URL')
+    .required('Product image is required'),
 })
 
 // Field styling matching checkout page
@@ -62,18 +69,61 @@ const selectSx = {
 
 const AddProduct: React.FC = () => {
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
+  const { brandSlug } = useParams<{ brandSlug?: string }>()
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   
   // Use React Query hook for brands
   const { data: brands = [], isLoading: brandsLoading, error: brandsError } = useBrands()
 
+  // Get brand display name and ID from slug
+  const getBrandInfo = () => {
+    if (!brandSlug) return { name: '', id: '' }
+    
+    // Map slug to possible brand name variations
+    const brandVariations: Record<string, string[]> = {
+      'project-zero': ['Project Zero', 'Project ZerO', "Project ZerO's", 'Project Zeros'],
+      'thomas-mushet': ['Thomas Mushet'],
+      'hear-my-voice': ['Hear My Voice', 'HMV']
+    }
+    
+    const possibleNames = brandVariations[brandSlug] || []
+    const displayName = possibleNames[0] || ''
+    
+    const brand = brands.find(b => {
+      const brandNameField = b.name || b.brandName || ''
+      const matches = possibleNames.some(name => 
+        brandNameField.toLowerCase().trim() === name.toLowerCase().trim()
+      )
+      return matches
+    })
+    
+    console.log('Brand slug:', brandSlug)
+    console.log('Looking for brand names:', possibleNames)
+    console.log('Available brands:', brands.map(b => ({ id: b.id, name: b.name, brandName: b.brandName })))
+    console.log('Found brand:', brand)
+    
+    return { name: displayName, id: brand?.id || '' }
+  }
+
+  const brandInfo = getBrandInfo()
+  const isBrandLocked = !!brandSlug // Lock brand field if accessed via brand-specific route
+
   // Debug logging
   useEffect(() => {
     console.log('Brands data:', brands);
     console.log('Brands loading:', brandsLoading);
     console.log('Brands error:', brandsError);
-  }, [brands, brandsLoading, brandsError]);
+    console.log('Brand info:', brandInfo);
+  }, [brands, brandsLoading, brandsError, brandInfo]);
+
+  // Set brandId when brands load and brand is locked
+  useEffect(() => {
+    if (isBrandLocked && brandInfo.id && !formik.values.brandId) {
+      formik.setFieldValue('brandId', brandInfo.id)
+    }
+  }, [isBrandLocked, brandInfo.id, brands])
 
   // Set error message if brands failed to load
   React.useEffect(() => {
@@ -83,36 +133,53 @@ const AddProduct: React.FC = () => {
   }, [brandsError, submitError])
 
   const DELIVERY_METHODS = ['standard', 'express', 'pickup']
-  const HARDCODED_IMAGE_URL = 'https://example.com/product.jpg'
 
   const formik = useFormik<CreateProductData>({
     initialValues: {
-      brandId: '',
+      brandId: brandInfo.id,
       name: '',
       deliveryMethod: '',
       description: '',
       price: 0,
-      imageUrl: HARDCODED_IMAGE_URL,
+      imageUrl: '',
     },
     validationSchema: addProductValidationSchema,
     onSubmit: async (values) => {
       setSubmitError(null)
       setSuccessMessage(null)
+      
+      console.log('Form values:', values)
+      console.log('Brand ID:', values.brandId)
+      
+      if (!values.brandId) {
+        setSubmitError('Brand is required. Please select a brand.')
+        return
+      }
+      
       try {
         const response: CreateProductResponse = await productsService.createProductAPI(values)
         console.log('Product created successfully:', response)
+        
+        // Invalidate products cache to refresh product lists
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.all })
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.admin })
         
         setSuccessMessage(`Product "${response.name}" created successfully with ID: ${response.id}`)
         
         // Reset form
         formik.resetForm()
         
-        // Navigate back to products page after a short delay
+        // Navigate back to brand-specific products page after a short delay
         setTimeout(() => {
-          navigate('/admin/products')
+          if (brandSlug) {
+            navigate(`/admin/products?brand=${brandSlug}`)
+          } else {
+            navigate('/admin/products')
+          }
         }, 2000)
       } catch (error: any) {
-        const errorMessage = error?.message || 'Failed to create product. Please try again.'
+        console.error('Full error object:', error)
+        const errorMessage = error?.message || error?.response?.data?.message || 'Failed to create product. Please try again.'
         setSubmitError(errorMessage)
         console.error('Error creating product:', error)
       }
@@ -135,6 +202,21 @@ const AddProduct: React.FC = () => {
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', bgcolor: colors.background.default }}>
       <Container maxWidth="lg" sx={{ py: 4, flex: 1, px: { xs: 2, sm: 3, md: 4 } }}>
         {/* Header */}
+        <AdminBreadcrumbs 
+          items={
+            isBrandLocked && brandInfo.name
+              ? [
+                  { label: 'Dashboard', to: '/admin' },
+                  { label: brandInfo.name, to: `/admin/products?brand=${brandSlug}` },
+                  { label: 'Add Product' }
+                ]
+              : [
+                  { label: 'Dashboard', to: '/admin' },
+                  { label: 'Product', to: '/admin/products' },
+                  { label: 'Add Product' }
+                ]
+          }
+        />
         <Typography 
           variant="h4" 
             sx={{ 
@@ -197,80 +279,97 @@ const AddProduct: React.FC = () => {
                 </Typography>
 
                 {/* Brand Name */}
-                <FormControl 
-                  fullWidth 
-                  size="small" 
-                  sx={{ mb: { xs: 1.5, sm: 2 } }}
-                  disabled={brandsLoading}
-                >
-                  <InputLabel>Brand</InputLabel>
-                  <Select
-                    value={formik.values.brandId}
-                    onChange={handleSelectChange('brandId')}
+                {isBrandLocked ? (
+                  <TextField
+                    fullWidth
+                    size="small"
                     label="Brand"
-                    sx={selectSx}
-                    error={formik.touched.brandId && Boolean(formik.errors.brandId)}
-                    MenuProps={{
-                      PaperProps: {
-                        sx: {
-                          backgroundColor: colors.menu.background,
-                          border: `1px solid ${colors.menu.border}`,
-                          boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-                          '& .MuiMenuItem-root': {
-                            color: `${colors.menu.text} !important`,
+                    value={brandInfo.name}
+                    disabled
+                    sx={{
+                      ...fieldSx,
+                      mb: { xs: 1.5, sm: 2 },
+                      '& .MuiInputBase-input.Mui-disabled': {
+                        WebkitTextFillColor: colors.text.primary,
+                      },
+                    }}
+                  />
+                ) : (
+                  <FormControl 
+                    fullWidth 
+                    size="small" 
+                    sx={{ mb: { xs: 1.5, sm: 2 } }}
+                    disabled={brandsLoading}
+                  >
+                    <InputLabel>Brand</InputLabel>
+                    <Select
+                      value={formik.values.brandId}
+                      onChange={handleSelectChange('brandId')}
+                      label="Brand"
+                      sx={selectSx}
+                      error={formik.touched.brandId && Boolean(formik.errors.brandId)}
+                      MenuProps={{
+                        PaperProps: {
+                          sx: {
                             backgroundColor: colors.menu.background,
-                            fontSize: '14px',
-                            fontWeight: '400',
-                            padding: '8px 16px',
-                            '&:hover': {
-                              backgroundColor: `${colors.menu.hover} !important`,
+                            border: `1px solid ${colors.menu.border}`,
+                            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+                            '& .MuiMenuItem-root': {
                               color: `${colors.menu.text} !important`,
-                            },
-                            '&.Mui-selected': {
-                              backgroundColor: `${colors.menu.selected} !important`,
-                              color: `${colors.menu.text} !important`,
+                              backgroundColor: colors.menu.background,
+                              fontSize: '14px',
+                              fontWeight: '400',
+                              padding: '8px 16px',
                               '&:hover': {
-                                backgroundColor: `${colors.menu.selectedHover} !important`,
+                                backgroundColor: `${colors.menu.hover} !important`,
                                 color: `${colors.menu.text} !important`,
                               },
-                            },
-                            '& em': {
-                              color: `${colors.menu.textSecondary} !important`,
+                              '&.Mui-selected': {
+                                backgroundColor: `${colors.menu.selected} !important`,
+                                color: `${colors.menu.text} !important`,
+                                '&:hover': {
+                                  backgroundColor: `${colors.menu.selectedHover} !important`,
+                                  color: `${colors.menu.text} !important`,
+                                },
+                              },
+                              '& em': {
+                                color: `${colors.menu.textSecondary} !important`,
+                              },
                             },
                           },
                         },
-                      },
-                    }}
-                  >
-                    <MenuItem value="">
-                      <em>Select Brand</em>
-                    </MenuItem>
-                    {brands && brands.length > 0 ? (
-                      brands.map((brand) => (
-                        <MenuItem key={brand.id} value={brand.id}>
-                          {brand.brandName || brand.name || `Brand ${brand.id}`}
-                        </MenuItem>
-                      ))
-                    ) : (
-                      <MenuItem disabled>
-                        <em>No brands available</em>
+                      }}
+                    >
+                      <MenuItem value="">
+                        <em>Select Brand</em>
                       </MenuItem>
+                      {brands && brands.length > 0 ? (
+                        brands.map((brand) => (
+                          <MenuItem key={brand.id} value={brand.id}>
+                            {brand.brandName || brand.name || `Brand ${brand.id}`}
+                          </MenuItem>
+                        ))
+                      ) : (
+                        <MenuItem disabled>
+                          <em>No brands available</em>
+                        </MenuItem>
+                      )}
+                    </Select>
+                    {brandsLoading && (
+                      <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
+                        <CircularProgress size={16} sx={{ mr: 1 }} />
+                        <Typography sx={{ fontSize: '0.75rem', color: colors.text.secondary }}>
+                          Loading brands...
+                        </Typography>
+                      </Box>
                     )}
-                  </Select>
-                  {brandsLoading && (
-                    <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
-                      <CircularProgress size={16} sx={{ mr: 1 }} />
-                      <Typography sx={{ fontSize: '0.75rem', color: colors.text.secondary }}>
-                        Loading brands...
+                    {formik.touched.brandId && formik.errors.brandId && (
+                      <Typography sx={{ color: colors.status.error, fontSize: '0.75rem', mt: 0.5 }}>
+                        {formik.errors.brandId}
                       </Typography>
-                    </Box>
-                  )}
-                  {formik.touched.brandId && formik.errors.brandId && (
-                    <Typography sx={{ color: colors.status.error, fontSize: '0.75rem', mt: 0.5 }}>
-                      {formik.errors.brandId}
-                    </Typography>
-                  )}
-                </FormControl>
+                    )}
+                  </FormControl>
+                )}
 
                 {/* Product Name */}
                 <TextField
@@ -405,23 +504,14 @@ const AddProduct: React.FC = () => {
                 />
               </Box>
 
-              {/* Image URL Info */}
+              {/* Image Upload Section */}
               <Box>
-                <Typography 
-                  variant="h6" 
-                  sx={{ 
-                    fontWeight: 600, 
-                    mb: 2, 
-                    color: colors.text.primary,
-                    fontSize: { xs: '1rem', sm: '1.1rem', md: '1.25rem' }
-                  }}
-                >
-                  Product Image
-                </Typography>
-
-                <Alert severity="info" sx={{ mb: 2 }}>
-                  Image URL is currently hardcoded: {HARDCODED_IMAGE_URL}
-                </Alert>
+                <ImageUpload
+                  value={formik.values.imageUrl}
+                  onChange={(url) => formik.setFieldValue('imageUrl', url)}
+                  error={formik.touched.imageUrl && Boolean(formik.errors.imageUrl)}
+                  helperText={formik.touched.imageUrl ? formik.errors.imageUrl : undefined}
+                />
               </Box>
 
               {/* Action Buttons */}

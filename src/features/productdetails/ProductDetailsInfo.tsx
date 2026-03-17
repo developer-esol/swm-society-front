@@ -59,13 +59,6 @@ export const ProductDetailsInfo: React.FC<ProductDetailsInfoProps> = ({ onViewRe
           View return policy
         </MuiLink>
       </Box>
-
-      <Divider sx={{ my: 2 }} />
-
-      {/* Collection Info */}
-      <Typography variant="caption" sx={{ color: colors.text.gray }}>
-        Part of the collection.
-      </Typography>
     </Box>
   );
 };

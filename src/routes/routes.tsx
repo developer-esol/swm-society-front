@@ -36,6 +36,8 @@ import AdminRoles from '../pages/Admin/AdminRoles'
 import PermissionLevels from '../pages/Admin/PermissionLevels'
 import RoleCreation from '../pages/Admin/RoleCreation'
 import AdminProfilePage from '../pages/Admin/AdminProfilePage'
+import ProfilePage from '../pages/ProfilePage'
+import ResetPasswordPage from '../pages/ResetPasswordPage'
 import NotFoundPage from '../pages/NotFoundPage';
 
 
@@ -53,7 +55,7 @@ export const routes: RouteObject[] = [
         element: <Shop />,
       },
       {
-        path: 'product/:productId',
+        path: 'product',
         element: <ProductDetailsPage />,
       },
       {
@@ -92,8 +94,20 @@ export const routes: RouteObject[] = [
         element: <GoogleAuthCallback />,
       },
       {
+        path: 'oauth2/redirect',
+        element: <GoogleAuthCallback />,
+      },
+      {
         path: 'register',
         element: <RegisterPage />,
+      },
+      {
+        path: 'reset-password',
+        element: <ResetPasswordPage />,
+      },
+      {
+        path: 'api/auth/reset-password',
+        element: <ResetPasswordPage />,
       },
       {
         path: 'cart',
@@ -128,6 +142,10 @@ export const routes: RouteObject[] = [
         element: <YourPostsPage />,
       },
       {
+        path: 'profile',
+        element: <ProfilePage />,
+      },
+      {
         path: '*',
         element: <NotFoundPage />,
       },
@@ -150,11 +168,15 @@ export const routes: RouteObject[] = [
         element: <AddProduct />,
       },
       {
-        path: 'stock',
+        path: ':brandSlug/add-product',
+        element: <AddProduct />,
+      },
+      {
+        path: ':brandSlug/stock',
         element: <AdminStock />,
       },
       {
-        path: 'add-stock',
+        path: ':brandSlug/add-stock',
         element: <AddStock />,
       },
       {

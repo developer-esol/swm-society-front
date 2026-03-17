@@ -8,6 +8,7 @@ import {
   IconButton,
   useMediaQuery,
   useTheme,
+  Collapse,
 } from '@mui/material';
 import {
   Dashboard as DashboardIcon,
@@ -26,24 +27,30 @@ import {
   ChevronRight as ChevronRightIcon,
   // Mobile Menu Icons
   Menu as MenuIcon,
+  ExpandLess,
+  ExpandMore,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
+import { useAuthStore } from '../../store/useAuthStore';
 import { colors } from '../../theme';
 import type { SidebarMenuItem } from '../../types/Admin/sidebar';
+import { Permission } from '../Permission';
+import { PERMISSIONS } from '../../configs/permissions';
 
 const DRAWER_WIDTH = 230;
+const COLLAPSED_WIDTH = 72;
 
-const menuItems: SidebarMenuItem[] = [
-  { id: 'dashboard', label: 'Dashboard', icon: 'dashboard', path: '/admin', badge: 0 },
-  { id: 'products', label: 'Products', icon: 'products', path: '/admin/products', badge: 0 },
-  { id: 'stock', label: 'Stock', icon: 'stock', path: '/admin/stock', badge: 0 },
-  { id: 'sales', label: 'Sales', icon: 'sales', path: '/admin/sales', badge: 0 },
-  { id: 'loyalty', label: 'Loyalty', icon: 'loyalty', path: '/admin/loyalty', badge: 0 },
-  { id: 'users', label: 'Users', icon: 'users', path: '/admin/users', badge: 0 },
-  { id: 'posts', label: 'Posts', icon: 'posts', path: '/admin/posts', badge: 0 },
-  { id: 'reviews', label: 'Reviews', icon: 'reviews', path: '/admin/reviews', badge: 0 },
-  { id: 'roles', label: 'Roles', icon: 'roles', path: '/admin/roles', badge: 0 },
-  { id: 'access', label: 'Access Control', icon: 'access', path: '/admin/access-control', badge: 0 },
+const menuItems: Array<SidebarMenuItem & { permission: string }> = [
+  { id: 'dashboard', label: 'Dashboard', icon: 'dashboard', path: '/admin', badge: 0, permission: PERMISSIONS.VIEW_DASHBOARD_MENU },
+  { id: 'products', label: 'Products', icon: 'products', path: '/admin/products', badge: 0, permission: PERMISSIONS.VIEW_PRODUCTS_MENU },
+  { id: 'stock', label: 'Stock', icon: 'stock', path: '/admin/stock', badge: 0, permission: PERMISSIONS.VIEW_STOCK_MENU },
+  { id: 'sales', label: 'Sales', icon: 'sales', path: '/admin/sales', badge: 0, permission: PERMISSIONS.VIEW_SALES_MENU },
+  { id: 'loyalty', label: 'Loyalty', icon: 'loyalty', path: '/admin/loyalty', badge: 0, permission: PERMISSIONS.VIEW_LOYALTY_MENU },
+  { id: 'users', label: 'Users', icon: 'users', path: '/admin/users', badge: 0, permission: PERMISSIONS.VIEW_USERS_MENU },
+  { id: 'posts', label: 'Posts', icon: 'posts', path: '/admin/posts', badge: 0, permission: PERMISSIONS.VIEW_POSTS_MENU },
+  { id: 'reviews', label: 'Reviews', icon: 'reviews', path: '/admin/reviews', badge: 0, permission: PERMISSIONS.VIEW_REVIEWS_MENU },
+  { id: 'roles', label: 'Roles', icon: 'roles', path: '/admin/roles', badge: 0, permission: PERMISSIONS.VIEW_ROLES_MENU },
+  // { id: 'access', label: 'Access Control', icon: 'access', path: '/admin/access-control', badge: 0, permission: PERMISSIONS.VIEW_USERS_MENU },
 ];
 
 interface AdminSidebarProps {
@@ -53,10 +60,13 @@ interface AdminSidebarProps {
 
 const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeMenu, onCollapseChange }) => {
   const navigate = useNavigate();
+  const { logout } = useAuthStore();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [productsExpanded, setProductsExpanded] = useState(false);
+  const [stockExpanded, setStockExpanded] = useState(false);
 
   // Debug: Log mobile status
   React.useEffect(() => {
@@ -79,10 +89,9 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeMenu, onCollapseChang
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('userEmail');
-    localStorage.removeItem('userName');
-    navigate('/login');
+    console.log('AdminSidebar: Logging out user')
+    logout() // Use auth store logout to properly clear state
+    navigate('/login')
   };
 
   const drawerContent = (
@@ -159,18 +168,306 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeMenu, onCollapseChang
 
       {/* Navigation Menu */}
       <List sx={{ flex: 1, overflow: 'auto', py: 1, px: 0.75, '&::-webkit-scrollbar': { width: '6px' }, '&::-webkit-scrollbar-track': { bgcolor: 'transparent' }, '&::-webkit-scrollbar-thumb': { bgcolor: colors.border.default, borderRadius: '3px', '&:hover': { bgcolor: colors.text.gray } } }}>
-        {menuItems.map((item) => (
+        {menuItems.map((item) => {
+          // Handle Products menu with submenu
+          if (item.id === 'products') {
+            return (
+              <Permission key={item.id} permission={item.permission}>
+                <Box>
+                  <Box
+                    onClick={() => {
+                      if (isCollapsed) {
+                        handleMenuClick(item.path);
+                      } else {
+                        setProductsExpanded(!productsExpanded);
+                      }
+                    }}
+                    component="li"
+                    sx={{
+                      px: isCollapsed ? 1 : 1.75,
+                      py: 1,
+                      my: 0.25,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: isCollapsed ? 'center' : 'flex-start',
+                      gap: isCollapsed ? 0 : 1.75,
+                      borderRadius: 0.75,
+                      cursor: 'pointer',
+                      color: activeMenu === item.id ? colors.button.primary : colors.text.gray,
+                      bgcolor: activeMenu === item.id ? colors.background.lighter : 'transparent',
+                      border: activeMenu === item.id ? `1px solid ${colors.border.default}` : '1px solid transparent',
+                      '&:hover': {
+                        bgcolor: colors.background.lighter,
+                        color: colors.text.primary,
+                      },
+                      transition: 'all 0.2s ease',
+                      listStyle: 'none',
+                      minHeight: '40px',
+                    }}
+                  >
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.15rem', minWidth: '22px' }}>
+                      <ProductsIcon sx={{ color: 'inherit', fontSize: '1.15rem' }} />
+                    </Box>
+                    {!isCollapsed && (
+                      <>
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            fontWeight: 600,
+                            fontSize: '0.925rem',
+                            flex: 1,
+                            letterSpacing: '0.3px',
+                          }}
+                        >
+                          {item.label}
+                        </Typography>
+                        {productsExpanded ? <ExpandLess /> : <ExpandMore />}
+                      </>
+                    )}
+                  </Box>
+                  {!isCollapsed && (
+                    <Collapse in={productsExpanded} timeout="auto" unmountOnExit>
+                      <List component="div" disablePadding>
+                        <Permission permission={PERMISSIONS.VIEW_PRODUCTS_PROJECT_ZERO}>
+                          <Box
+                            onClick={() => handleMenuClick('/admin/products?brand=project-zero')}
+                            sx={{
+                              pl: 5,
+                              pr: 1.75,
+                              py: 0.75,
+                              my: 0.25,
+                              display: 'flex',
+                              alignItems: 'center',
+                              borderRadius: 0.75,
+                              cursor: 'pointer',
+                              color: colors.text.gray,
+                              '&:hover': {
+                                bgcolor: colors.background.lighter,
+                                color: colors.text.primary,
+                              },
+                              transition: 'all 0.2s ease',
+                            }}
+                          >
+                            <Typography variant="body2" sx={{ fontSize: '0.875rem' }}>
+                              Project Zero
+                            </Typography>
+                          </Box>
+                        </Permission>
+                        <Permission permission={PERMISSIONS.VIEW_PRODUCTS_THOMAS_MUSHET}>
+                          <Box
+                            onClick={() => handleMenuClick('/admin/products?brand=thomas-mushet')}
+                            sx={{
+                              pl: 5,
+                              pr: 1.75,
+                              py: 0.75,
+                              my: 0.25,
+                              display: 'flex',
+                              alignItems: 'center',
+                              borderRadius: 0.75,
+                              cursor: 'pointer',
+                              color: colors.text.gray,
+                              '&:hover': {
+                                bgcolor: colors.background.lighter,
+                                color: colors.text.primary,
+                              },
+                              transition: 'all 0.2s ease',
+                            }}
+                          >
+                            <Typography variant="body2" sx={{ fontSize: '0.875rem' }}>
+                              Thomas Mushet
+                            </Typography>
+                          </Box>
+                        </Permission>
+                        <Permission permission={PERMISSIONS.VIEW_PRODUCTS_HEAR_MY_VOICE}>
+                          <Box
+                            onClick={() => handleMenuClick('/admin/products?brand=hear-my-voice')}
+                            sx={{
+                              pl: 5,
+                              pr: 1.75,
+                              py: 0.75,
+                              my: 0.25,
+                              display: 'flex',
+                              alignItems: 'center',
+                              borderRadius: 0.75,
+                              cursor: 'pointer',
+                              color: colors.text.gray,
+                              '&:hover': {
+                                bgcolor: colors.background.lighter,
+                                color: colors.text.primary,
+                              },
+                              transition: 'all 0.2s ease',
+                            }}
+                          >
+                            <Typography variant="body2" sx={{ fontSize: '0.875rem' }}>
+                              Hear My Voice
+                            </Typography>
+                          </Box>
+                        </Permission>
+                      </List>
+                    </Collapse>
+                  )}
+                </Box>
+              </Permission>
+            );
+          }
+          
+          // Handle Stock menu with submenu
+          if (item.id === 'stock') {
+            return (
+              <Permission key={item.id} permission={item.permission}>
+                <Box>
+                  <Box
+                    onClick={() => {
+                      if (isCollapsed) {
+                        handleMenuClick(item.path);
+                      } else {
+                        setStockExpanded(!stockExpanded);
+                      }
+                    }}
+                    component="li"
+                    sx={{
+                      px: isCollapsed ? 1 : 1.75,
+                      py: 1,
+                      my: 0.25,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: isCollapsed ? 'center' : 'flex-start',
+                      gap: isCollapsed ? 0 : 1.75,
+                      borderRadius: 0.75,
+                      cursor: 'pointer',
+                      color: activeMenu === item.id ? colors.button.primary : colors.text.gray,
+                      bgcolor: activeMenu === item.id ? colors.background.lighter : 'transparent',
+                      border: activeMenu === item.id ? `1px solid ${colors.border.default}` : '1px solid transparent',
+                      '&:hover': {
+                        bgcolor: colors.background.lighter,
+                        color: colors.text.primary,
+                      },
+                      transition: 'all 0.2s ease',
+                      listStyle: 'none',
+                      minHeight: '40px',
+                    }}
+                  >
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.15rem', minWidth: '22px' }}>
+                      <StockIcon sx={{ color: 'inherit', fontSize: '1.15rem' }} />
+                    </Box>
+                    {!isCollapsed && (
+                      <>
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            fontWeight: 600,
+                            fontSize: '0.925rem',
+                            flex: 1,
+                            letterSpacing: '0.3px',
+                          }}
+                        >
+                          {item.label}
+                        </Typography>
+                        {stockExpanded ? <ExpandLess /> : <ExpandMore />}
+                      </>
+                    )}
+                  </Box>
+                  {!isCollapsed && (
+                    <Collapse in={stockExpanded} timeout="auto" unmountOnExit>
+                      <List component="div" disablePadding>
+                        <Permission permission={PERMISSIONS.VIEW_STOCK_PROJECT_ZERO}>
+                          <Box
+                            onClick={() => handleMenuClick('/admin/project-zero/stock')}
+                            sx={{
+                              pl: 5,
+                              pr: 1.75,
+                              py: 0.75,
+                              my: 0.25,
+                              display: 'flex',
+                              alignItems: 'center',
+                              borderRadius: 0.75,
+                              cursor: 'pointer',
+                              color: colors.text.gray,
+                              '&:hover': {
+                                bgcolor: colors.background.lighter,
+                                color: colors.text.primary,
+                              },
+                              transition: 'all 0.2s ease',
+                            }}
+                          >
+                            <Typography variant="body2" sx={{ fontSize: '0.875rem' }}>
+                              Project Zero
+                            </Typography>
+                          </Box>
+                        </Permission>
+                        <Permission permission={PERMISSIONS.VIEW_STOCK_THOMAS_MUSHET}>
+                          <Box
+                            onClick={() => handleMenuClick('/admin/thomas-mushet/stock')}
+                            sx={{
+                              pl: 5,
+                              pr: 1.75,
+                              py: 0.75,
+                              my: 0.25,
+                              display: 'flex',
+                              alignItems: 'center',
+                              borderRadius: 0.75,
+                              cursor: 'pointer',
+                              color: colors.text.gray,
+                              '&:hover': {
+                                bgcolor: colors.background.lighter,
+                                color: colors.text.primary,
+                              },
+                              transition: 'all 0.2s ease',
+                            }}
+                          >
+                            <Typography variant="body2" sx={{ fontSize: '0.875rem' }}>
+                              Thomas Mushet
+                            </Typography>
+                          </Box>
+                        </Permission>
+                        <Permission permission={PERMISSIONS.VIEW_STOCK_HEAR_MY_VOICE}>
+                          <Box
+                            onClick={() => handleMenuClick('/admin/hear-my-voice/stock')}
+                            sx={{
+                              pl: 5,
+                              pr: 1.75,
+                              py: 0.75,
+                              my: 0.25,
+                              display: 'flex',
+                              alignItems: 'center',
+                              borderRadius: 0.75,
+                              cursor: 'pointer',
+                              color: colors.text.gray,
+                              '&:hover': {
+                                bgcolor: colors.background.lighter,
+                                color: colors.text.primary,
+                              },
+                              transition: 'all 0.2s ease',
+                            }}
+                          >
+                            <Typography variant="body2" sx={{ fontSize: '0.875rem' }}>
+                              Hear My Voice
+                            </Typography>
+                          </Box>
+                        </Permission>
+                      </List>
+                    </Collapse>
+                  )}
+                </Box>
+              </Permission>
+            );
+          }
+
+          // Handle other menu items normally
+          return (
+          <Permission key={item.id} permission={item.permission}>
           <Box
             key={item.id}
             onClick={() => handleMenuClick(item.path)}
             component="li"
             sx={{
-              px: 1.75,
+              px: isCollapsed ? 1 : 1.75,
               py: 1,
               my: 0.25,
               display: 'flex',
               alignItems: 'center',
-              gap: 1.75,
+              justifyContent: isCollapsed ? 'center' : 'flex-start',
+              gap: isCollapsed ? 0 : 1.75,
               borderRadius: 0.75,
               cursor: 'pointer',
               color: activeMenu === item.id ? colors.button.primary : colors.text.gray,
@@ -182,6 +479,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeMenu, onCollapseChang
               },
               transition: 'all 0.2s ease',
               listStyle: 'none',
+              minHeight: '40px',
             }}
           >
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.15rem', minWidth: '22px' }}>
@@ -196,18 +494,20 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeMenu, onCollapseChang
               {item.icon === 'roles' && <RolesIcon sx={{ color: 'inherit', fontSize: '1.15rem' }} />}
               {item.icon === 'access' && <AccessIcon sx={{ color: 'inherit', fontSize: '1.15rem' }} />}
             </Box>
-            <Typography
-              variant="body2"
-              sx={{
-                fontWeight: 600,
-                fontSize: '0.925rem',
-                flex: 1,
-                letterSpacing: '0.3px',
-              }}
-            >
-              {item.label}
-            </Typography>
-            {item.badge ? (
+            {!isCollapsed && (
+              <Typography
+                variant="body2"
+                sx={{
+                  fontWeight: 600,
+                  fontSize: '0.925rem',
+                  flex: 1,
+                  letterSpacing: '0.3px',
+                }}
+              >
+                {item.label}
+              </Typography>
+            )}
+            {!isCollapsed && item.badge ? (
               <Badge
                 badgeContent={item.badge}
                 sx={{
@@ -221,7 +521,9 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeMenu, onCollapseChang
               />
             ) : null}
           </Box>
-        ))}
+          </Permission>
+        );
+        })}
       </List>
 
       {/* Logout Button */}
@@ -230,14 +532,15 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeMenu, onCollapseChang
           onClick={handleLogout}
           component="button"
           sx={{
-            px: 1.75,
+            px: isCollapsed ? 1 : 1.75,
             py: 1,
             width: '100%',
             borderRadius: 0.75,
             border: 'none',
             display: 'flex',
             alignItems: 'center',
-            gap: 1.75,
+            justifyContent: isCollapsed ? 'center' : 'flex-start',
+            gap: isCollapsed ? 0 : 1.75,
             color: colors.button.primary,
             bgcolor: 'transparent',
             cursor: 'pointer',
@@ -250,16 +553,18 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeMenu, onCollapseChang
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.15rem' }}>
             <SecurityIcon sx={{ color: 'inherit', fontSize: '1.15rem' }} />
           </Box>
-          <Typography
-            variant="body2"
-            sx={{
-              fontWeight: 600,
-              fontSize: '0.925rem',
-              letterSpacing: '0.3px',
-            }}
-          >
-            Log out
-          </Typography>
+          {!isCollapsed && (
+            <Typography
+              variant="body2"
+              sx={{
+                fontWeight: 600,
+                fontSize: '0.925rem',
+                letterSpacing: '0.3px',
+              }}
+            >
+              Log out
+            </Typography>
+          )}
         </Box>
       </Box>
     </Box>
@@ -303,13 +608,15 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeMenu, onCollapseChang
         <Drawer
           variant="permanent"
           sx={{
-            width: DRAWER_WIDTH,
+            width: isCollapsed ? COLLAPSED_WIDTH : DRAWER_WIDTH,
             flexShrink: 0,
             '& .MuiDrawer-paper': {
-              width: DRAWER_WIDTH,
+              width: isCollapsed ? COLLAPSED_WIDTH : DRAWER_WIDTH,
               boxSizing: 'border-box',
               border: 'none',
               boxShadow: `2px 0 8px rgba(0, 0, 0, 0.1)`,
+              transition: 'width 0.3s ease',
+              overflowX: 'hidden',
             },
           }}
         >

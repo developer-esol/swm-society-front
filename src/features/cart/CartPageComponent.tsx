@@ -1,69 +1,23 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Box, Typography, Container, Button as MuiButton } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import { cartService } from '../../api/services/cartService';
 import { CartItems } from './CartItems';
 import { OrderSummary } from './OrderSummary';
 import type { CartItem } from '../../types/cart';
 import { colors } from '../../theme';
+import { useCart } from './useCart';
 
 export const CartPageComponent: React.FC = () => {
   const navigate = useNavigate();
-  const [cartItems, setCartItems] = useState<CartItem[]>([]);
-  const [quantities, setQuantities] = useState<Record<string, number>>({});
+  const { cartItems, isLoading: loading, isError: error, increaseQuantity, decreaseQuantity, removeItem } = useCart();
+  const [privacyWarning] = React.useState<string | null>(null);
 
-  useEffect(() => {
-    // Load cart items on component mount
-    const cart = cartService.getCart();
-    setCartItems(cart.items);
+  const handleRemove = (stockId: string) => removeItem(stockId);
+  const handleUpdateQuantity = (stockId: string, quantity: number) => {}; // noop - handled by hook methods
+  const handleDecreaseQuantity = (stockId: string) => decreaseQuantity(stockId);
+  const handleIncreaseQuantity = (stockId: string, maxQuantity?: number) => increaseQuantity(stockId, maxQuantity);
 
-    // Initialize quantities from cart items
-    const quantitiesMap: Record<string, number> = {};
-    cart.items.forEach((item: CartItem) => {
-      quantitiesMap[item.stockId] = item.quantity;
-    });
-    setQuantities(quantitiesMap);
-  }, []);
-
-  const handleRemove = (stockId: string) => {
-    cartService.removeItem(stockId);
-    const updatedCart = cartService.getCart();
-    setCartItems(updatedCart.items);
-
-    // Remove quantity entry
-    const newQuantities = { ...quantities };
-    delete newQuantities[stockId];
-    setQuantities(newQuantities);
-  };
-
-  const handleUpdateQuantity = (stockId: string, quantity: number) => {
-    cartService.updateItemQuantity(stockId, quantity);
-    setQuantities(prev => ({
-      ...prev,
-      [stockId]: quantity
-    }));
-  };
-
-  const handleDecreaseQuantity = (stockId: string) => {
-    const currentQty = quantities[stockId] || 1;
-    if (currentQty > 1) {
-      handleUpdateQuantity(stockId, currentQty - 1);
-    }
-  };
-
-  const handleIncreaseQuantity = (stockId: string, maxQuantity: number) => {
-    const currentQty = quantities[stockId] || 1;
-    if (currentQty < maxQuantity) {
-      handleUpdateQuantity(stockId, currentQty + 1);
-    }
-  };
-
-  const calculateTotal = () => {
-    return cartItems.reduce((total, item) => {
-      const qty = quantities[item.stockId] || 1;
-      return total + (item.price * qty);
-    }, 0);
-  };
+  const calculateTotal = () => cartItems.reduce((total, item) => total + (Number(item.price) * Number(item.quantity)), 0);
 
   const totalAmount = calculateTotal();
   const totalItems = cartItems.length;
@@ -85,7 +39,15 @@ export const CartPageComponent: React.FC = () => {
       </Box>
 
       {/* Content */}
-      {cartItems.length === 0 ? (
+      {loading ? (
+        <Box sx={{ textAlign: 'center', py: 6 }}>
+          <Typography>Loading cart...</Typography>
+        </Box>
+      ) : error ? (
+        <Box sx={{ textAlign: 'center', py: 6 }}>
+          <Typography sx={{ color: colors.status.error }}>{error}</Typography>
+        </Box>
+      ) : cartItems.length === 0 ? (
         <Box
           sx={{
             display: 'flex',
@@ -134,9 +96,13 @@ export const CartPageComponent: React.FC = () => {
         </Box>
       ) : (
         <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 350px', gap: 4 }}>
+          {privacyWarning && (
+            <Box sx={{ gridColumn: '1 / -1', mb: 2 }}>
+              <Typography sx={{ color: colors.status.processing }}>{privacyWarning}</Typography>
+            </Box>
+          )}
           <CartItems
             cartItems={cartItems}
-            quantities={quantities}
             onRemove={handleRemove}
             onDecreaseQuantity={handleDecreaseQuantity}
             onIncreaseQuantity={handleIncreaseQuantity}

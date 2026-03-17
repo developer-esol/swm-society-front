@@ -1,10 +1,18 @@
-import { Box, Container, Typography, Button, Dialog, DialogTitle, DialogContent, DialogActions, CircularProgress } from '@mui/material'
+import { Box, Container, Typography, Button, CircularProgress, TextField, IconButton } from '@mui/material'
 import { useState } from 'react'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { Search as SearchIcon } from '@mui/icons-material'
+import { rolesService } from '../../api/services/admin/rolesService'
+import { QUERY_KEYS } from '../../configs/queryKeys'
 import { useNavigate } from 'react-router-dom'
-import { RoleCard, RolesHeader } from '../../features/Admin/roles'
+import AdminBreadcrumbs from '../../components/Admin/AdminBreadcrumbs'
+import { RoleCard } from '../../features/Admin/roles'
 import { useAdminRoles } from '../../hooks/admin'
+import { ConfirmDeleteDialog } from '../../components'
 import { colors } from '../../theme'
 import type { Role } from '../../types/Admin/roles'
+import { Permission } from '../../components/Permission'
+import { PERMISSIONS } from '../../configs/permissions'
 
 const AdminRoles = () => {
   const navigate = useNavigate()
@@ -18,21 +26,40 @@ const AdminRoles = () => {
   console.log('AdminRoles - displayRoles.length:', displayRoles.length)
 
   const handleDeleteClick = (role: Role) => {
+    // Do not allow deleting Super Admin role
+    if ((role.name || '').toLowerCase().trim().includes('super admin')) {
+      console.warn('Attempt to delete Super Admin role blocked')
+      return
+    }
     setRoleToDelete(role)
     setDeleteDialogOpen(true)
   }
 
   const handleDeleteConfirm = async () => {
     if (roleToDelete) {
-      await handleDeleteRole(roleToDelete.id)
-      setDeleteDialogOpen(false)
-      setRoleToDelete(null)
+      try {
+        await deleteRoleMutation.mutateAsync(roleToDelete.id)
+      } catch (err) {
+        console.error('Failed to delete role:', err)
+      } finally {
+        setDeleteDialogOpen(false)
+        setRoleToDelete(null)
+      }
     }
   }
 
   const handleEditRole = (role: Role) => {
     navigate(`/admin/permission-levels/${role.id}`)
   }
+
+  const queryClient = useQueryClient()
+
+  const deleteRoleMutation = useMutation({
+    mutationFn: (id: string) => rolesService.delete(id),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: QUERY_KEYS.roles.admin })
+    },
+  })
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', bgcolor: colors.background.default }}>
@@ -46,7 +73,8 @@ const AdminRoles = () => {
         }}
       >
         {/* Header */}
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', mb: 4 }}>
+          <AdminBreadcrumbs items={[{ label: 'Admin', to: '/admin' }, { label: 'Roles', to: '/admin/roles' }]} />
           <Typography
             variant="h4"
             sx={{
@@ -57,27 +85,59 @@ const AdminRoles = () => {
           >
             Roles and Permission Management
           </Typography>
-          <Button
-            variant="contained"
-            onClick={() => navigate('/admin/role-creation')}
-            sx={{
-              bgcolor: colors.button.primary,
-              color: 'white',
-              textTransform: 'none',
-              fontWeight: 600,
-              px: 2.5,
-              py: 1,
-              '&:hover': {
-                bgcolor: colors.button.primaryHover,
-              },
-            }}
-          >
-            Create New Role
-          </Button>
         </Box>
 
-        {/* Search Header */}
-        <RolesHeader searchQuery={searchQuery} onSearch={handleSearch} />
+        {/* Search Bar and Create Button aligned */}
+        <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 2 }}>
+          <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+            <TextField
+              placeholder="Search roles..."
+              value={searchQuery}
+              onChange={(e) => handleSearch(e.target.value)}
+              size="small"
+              sx={{
+                width: 250,
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: 1,
+                  bgcolor: colors.background.default,
+                },
+              }}
+            />
+            <IconButton
+              sx={{
+                bgcolor: colors.button.new,
+                color: colors.text.secondary,
+                borderRadius: 1,
+                p: 1,
+                '&:hover': { bgcolor: colors.button.dark },
+              }}
+            >
+              <SearchIcon />
+            </IconButton>
+          </Box>
+          <Permission permission={PERMISSIONS.CREATE_ROLES}>
+            <Button
+              variant="contained"
+              onClick={() => navigate('/admin/role-creation')}
+              sx={{
+                bgcolor: colors.button.primary,
+                color: 'white',
+                textTransform: 'none',
+                fontWeight: 600,
+                px: 2.5,
+                py: 1,
+                borderRadius: 1,
+                minWidth: 140,
+                boxShadow: 1,
+                '&:hover': {
+                  bgcolor: colors.button.primaryHover,
+                },
+              }}
+            >
+              Create New Role
+            </Button>
+          </Permission>
+        </Box>
 
         {/* Roles List */}
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -105,33 +165,23 @@ const AdminRoles = () => {
         </Box>
       </Container>
 
-      {/* Delete Confirmation Dialog */}
-      <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle sx={{ fontWeight: 600, color: colors.text.primary }}>Delete Role</DialogTitle>
-        <DialogContent sx={{ pt: 2 }}>
-          <Typography sx={{ color: colors.text.primary }}>
-            Are you sure you want to delete the role "{roleToDelete?.name}"? This action cannot be undone.
-          </Typography>
-        </DialogContent>
-        <DialogActions sx={{ p: 2 }}>
-          <Button onClick={() => setDeleteDialogOpen(false)} sx={{ color: colors.text.primary }}>
-            Cancel
-          </Button>
-          <Button
-            onClick={handleDeleteConfirm}
-            variant="contained"
-            sx={{
-              bgcolor: '#dc2626',
-              color: 'white',
-              '&:hover': {
-                bgcolor: '#b91c1c',
-              },
-            }}
-          >
-            Delete
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <ConfirmDeleteDialog
+        open={deleteDialogOpen}
+        title="Delete Role"
+        message={`Are you sure you want to delete the role "${roleToDelete?.name}"? This action cannot be undone.`}
+        onConfirm={async () => {
+          if (!roleToDelete) return
+          await handleDeleteRole(roleToDelete.id)
+          setDeleteDialogOpen(false)
+          setRoleToDelete(null)
+        }}
+        onCancel={() => {
+          setDeleteDialogOpen(false)
+          setRoleToDelete(null)
+        }}
+        confirmText="Delete"
+        cancelText="Cancel"
+      />
     </Box>
   )
 }

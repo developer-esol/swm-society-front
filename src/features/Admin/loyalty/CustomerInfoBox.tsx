@@ -47,7 +47,7 @@ const StatBox: React.FC<{
       <Typography
         sx={{
           fontSize: '0.75rem',
-          color: '#3d3939ff',
+          color: colors.danger.info,
           fontWeight: 600,
           textAlign: 'center',
         }}
@@ -72,25 +72,26 @@ const StatBox: React.FC<{
 const CustomerInfoBox: React.FC<CustomerInfoBoxProps> = ({ customerData }) => {
   return (
     <Box>
-      {/* Customer Name and ID - Outside Box */}
+      {/* Customer Name and ID - Outside Box on separate lines */}
       <Box sx={{ mb: 2 }}>
         <Typography
           sx={{
             fontSize: '1.25rem',
             fontWeight: 700,
             color: colors.text.primary,
-            mb: 0.25,
+            lineHeight: 1.3,
           }}
         >
           {customerData.customerName}
         </Typography>
         <Typography
           sx={{
-            fontSize: '0.9rem',
-            color: colors.text.primary,
+            fontSize: '0.875rem',
+            color: colors.text.secondary,
+            mt: 0.5,
           }}
         >
-          {customerData.customerId}
+          User ID: {customerData.customerId}
         </Typography>
       </Box>
 

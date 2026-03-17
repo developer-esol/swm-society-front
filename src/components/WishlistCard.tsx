@@ -6,9 +6,13 @@ import {
   Button as MuiButton,
   IconButton,
 } from '@mui/material';
-import { Delete as TrashIcon, Add as AddIcon, Remove as RemoveIcon } from '@mui/icons-material';
-import { Link } from 'react-router-dom';
+import { Add as AddIcon, Remove as RemoveIcon } from '@mui/icons-material';
+import { Trash2 as DeleteIcon } from 'lucide-react';
+import { authService } from '../api/services/authService';
+import { ConfirmDeleteDialog } from './ConfirmDeleteDialog';
+import { useNavigate } from 'react-router-dom';
 import { colors } from '../theme';
+import { productsService } from '../api/services/products';
 import type { WishlistItem } from '../types/wishlist';
 
 interface WishlistCardProps {
@@ -24,6 +28,7 @@ const WishlistCard: React.FC<WishlistCardProps> = ({
   onAddToCart,
   onUpdateQuantity,
 }) => {
+  const navigate = useNavigate();
   const [isDeleting, setIsDeleting] = useState(false);
   
   // Check if item is out of stock
@@ -36,16 +41,47 @@ const WishlistCard: React.FC<WishlistCardProps> = ({
   const initialQuantity = Math.min(item.quantity, effectiveMaxQuantity);
   const [localQuantity, setLocalQuantity] = useState(initialQuantity);
 
+  const [confirmOpen, setConfirmOpen] = useState(false);
+
   const handleDelete = () => {
+    // open confirmation dialog
+    setConfirmOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
     setIsDeleting(true);
     if (onRemove) {
-      onRemove(item.stockId);
+      const idToRemove = (authService && authService.isAuthenticated && authService.isAuthenticated() && item.productId)
+        ? item.productId
+        : (item.stockId || item.id || item.productId || '');
+      try {
+        onRemove(idToRemove);
+      } catch {}
     }
+    setConfirmOpen(false);
+    // isDeleting will be reset if parent re-renders item removed; keep until unmount
+  };
+
+  const handleCancelDelete = () => {
+    setConfirmOpen(false);
   };
 
   const handleAddToCart = () => {
     if (onAddToCart) {
       onAddToCart(item);
+    }
+  };
+
+  // Handle product click - fetch and navigate with product data
+  const handleProductClick = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    try {
+      const product = await productsService.getProductById(item.productId);
+      if (product) {
+        navigate('/product', { state: { product } });
+      }
+    } catch (error) {
+      console.error('[WishlistCard] Error fetching product:', error);
     }
   };
 
@@ -86,83 +122,100 @@ const WishlistCard: React.FC<WishlistCardProps> = ({
         },
       }}
     >
-      {/* Product Image - Clickable Link */}
-      <Link to={`/product/${item.productId}`} style={{ textDecoration: 'none' }}>
-        <CardMedia
-          component="img"
-          image={item.productImage}
-          alt={item.productName}
-          sx={{
-            width: 120,
-            height: 120,
-            objectFit: 'cover',
-            borderRadius: '4px',
-            backgroundColor: colors.background.light,
-            cursor: 'pointer',
-            '&:hover': {
-              opacity: 0.8,
-              transition: 'opacity 0.2s',
-            },
-          }}
-        />
-      </Link>
+      {/* Product Image - Clickable */}
+      <CardMedia
+        component="img"
+        image={item.productImage}
+        alt={item.productName}
+        onClick={handleProductClick}
+        sx={{
+          width: 120,
+          height: 120,
+          objectFit: 'cover',
+          borderRadius: '4px',
+          backgroundColor: colors.background.light,
+          cursor: 'pointer',
+          '&:hover': {
+            opacity: 0.8,
+            transition: 'opacity 0.2s',
+          },
+        }}
+      />
 
       {/* Product Info */}
       <Box>
-        {/* Product Name - Clickable Link */}
-        <Link to={`/product/${item.productId}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-          <Typography
-            sx={{
-              fontWeight: 600,
-              color: 'black',
-              mb: 1,
-              fontSize: '0.95rem',
-              cursor: 'pointer',
-              '&:hover': {
-                color: '#dc2626',
-                transition: 'color 0.2s',
-              },
-            }}
-          >
-            {item.productName}
-          </Typography>
-        </Link>
+        {/* Product Name - Clickable */}
+        <Typography
+          onClick={handleProductClick}
+          sx={{
+            fontWeight: 600,
+            color: colors.text.primary,
+            mb: 1,
+            fontSize: '0.95rem',
+            cursor: 'pointer',
+            '&:hover': {
+              color: colors.danger.primary,
+              transition: 'color 0.2s',
+            },
+          }}
+        >
+          {item.productName}
+        </Typography>
 
         {/* Price Per Item - Only show when in stock */}
         {!isOutOfStock && (
           <Typography
             sx={{
               fontWeight: 600,
-              color: 'black',
+              color: colors.text.primary,
               mb: 1.5,
               fontSize: '0.9rem',
             }}
           >
-            £{item.price.toFixed(2)}
+            £{Number(item.price).toFixed(2)}
           </Typography>
         )}
 
         {/* Color and Size in one row */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
           {/* Color */}
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-            <Box
-              sx={{
-                width: 16,
-                height: 16,
-                borderRadius: '50%',
-                backgroundColor: item.color.toLowerCase(),
-                border: `2px solid ${colors.border.default}`,
-              }}
-            />
-            <Typography sx={{ color: 'black', fontSize: '0.85rem', fontWeight: 500 }}>
-              {item.color}
-            </Typography>
+                  {/* color swatch - be resilient to missing/invalid color values */}
+                  {(() => {
+                    const raw = item.color || '';
+                    let swatchColor = '#ddd';
+                    try {
+                      if (typeof (CSS as any) !== 'undefined' && (CSS as any).supports && raw.trim() !== '') {
+                        // CSS.supports('color', raw) returns true for valid color keywords and values
+                        if ((CSS as any).supports('color', raw)) swatchColor = raw;
+                      } else if (raw.trim() !== '') {
+                        swatchColor = raw;
+                      }
+                    } catch {
+                      // ignore - keep fallback
+                    }
+
+                    return (
+                      <Box
+                        sx={{
+                          width: 16,
+                          height: 16,
+                          borderRadius: '50%',
+                          backgroundColor: swatchColor,
+                          border: `2px solid ${colors.border.default}`,
+                        }}
+                      />
+                    );
+                  })()}
+
+                  <Typography sx={{ color: colors.text.primary, fontSize: '0.85rem', fontWeight: 500 }}>
+                    {item.color || '—'}
+                  </Typography>
           </Box>
 
           {/* Size */}
-          <Typography sx={{ color: 'black', fontSize: '0.85rem', fontWeight: 500 }}>
-            Size: {item.size}
+          <Typography sx={{ color: colors.text.primary, fontSize: '0.85rem', fontWeight: 500 }}>
+            Size: {item.size || '—'}
           </Typography>
         </Box>
 
@@ -176,14 +229,14 @@ const WishlistCard: React.FC<WishlistCardProps> = ({
             onClick={decreaseQuantity}
             disabled={isOutOfStock || localQuantity <= 1}
             sx={{
-              border: isOutOfStock ? '1px solid #f0f0f0' : '1px solid #e0e0e0',
+              border: isOutOfStock ? `1px solid ${colors.background.new}` : `1px solid ${colors.border.light}`,
               borderRadius: '4px',
               padding: '4px',
               '&:hover': {
-                backgroundColor: '#f5f5f5',
+                backgroundColor: colors.card.imagePlaceholder,
               },
               '&:disabled': {
-                backgroundColor: '#f0f0f0',
+                backgroundColor: colors.background.new,
                 color: '#ccc',
               },
             }}
@@ -198,14 +251,14 @@ const WishlistCard: React.FC<WishlistCardProps> = ({
             onClick={increaseQuantity}
             disabled={isOutOfStock || localQuantity >= effectiveMaxQuantity}
             sx={{
-              border: isOutOfStock ? '1px solid #f0f0f0' : '1px solid #e0e0e0',
+              border: isOutOfStock ? `1px solid ${colors.background.new}` : `1px solid ${colors.border.light}`,
               borderRadius: '4px',
               padding: '4px',
               '&:hover': {
-                backgroundColor: '#f5f5f5',
+                backgroundColor: colors.card.imagePlaceholder,
               },
               '&:disabled': {
-                backgroundColor: '#f0f0f0',
+                backgroundColor: colors.background.new,
                 color: '#ccc',
               },
             }}
@@ -215,14 +268,14 @@ const WishlistCard: React.FC<WishlistCardProps> = ({
         </Box>
 
         {/* Subtotal */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 2, pt: 1.5, borderTop: '1px solid #f0f0f0' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 2, pt: 1.5, borderTop: `1px solid ${colors.background.new}` }}>
           {!isOutOfStock && (
             <Typography sx={{ fontSize: '0.85rem', color: 'grey.600', fontWeight: 500 }}>
               Item Total:
             </Typography>
           )}
           <Typography sx={{ fontWeight: 700, color: isOutOfStock ? '#ccc' : colors.button.primary, fontSize: '1.1rem' }}>
-            £{(item.price * localQuantity).toFixed(2)}
+            £{(Number(item.price) * localQuantity).toFixed(2)}
           </Typography>
         </Box>
       </Box>
@@ -243,16 +296,33 @@ const WishlistCard: React.FC<WishlistCardProps> = ({
           onClick={handleDelete}
           disabled={isDeleting}
           sx={{
-            color: colors.button.primary,
-            padding: '6px',
+            minWidth: '40px',
+            width: '40px',
+            height: '40px',
+            p: 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            border: `1px solid ${colors.border.default}`,
+            borderRadius: '6px',
+            color: colors.danger.primary,
+            bgcolor: 'transparent',
             alignSelf: 'flex-end',
             '&:hover': {
-              backgroundColor: `rgba(${parseInt(colors.button.primary.slice(1,3), 16)}, ${parseInt(colors.button.primary.slice(3,5), 16)}, ${parseInt(colors.button.primary.slice(5,7), 16)}, 0.1)`,
+              bgcolor: colors.danger.background,
             },
           }}
+          aria-label="remove wishlist item"
         >
-          <TrashIcon sx={{ fontSize: 20 }} />
+          <DeleteIcon size={18} />
         </IconButton>
+        <ConfirmDeleteDialog
+          open={confirmOpen}
+          title="Remove from Wishlist"
+          message={`Are you sure you want to remove "${item.productName || 'this item'}" from your wishlist?`}
+          onConfirm={handleConfirmDelete}
+          onCancel={handleCancelDelete}
+        />
 
         {/* Add to Cart Button - Aligned with Item Total */}
         <MuiButton
@@ -261,8 +331,8 @@ const WishlistCard: React.FC<WishlistCardProps> = ({
           disabled={isDeleting || isOutOfStock}
           onClick={handleAddToCart}
           sx={{
-            backgroundColor: isOutOfStock ? '#f0f0f0' : 'black',
-            color: isOutOfStock ? '#ccc' : 'white',
+            backgroundColor: isOutOfStock ? colors.background.lighter : colors.text.primary,
+            color: isOutOfStock ? '#ccc' : colors.text.secondary,
             textTransform: 'none',
             fontSize: '0.8rem',
             px: 2.5,
@@ -271,11 +341,11 @@ const WishlistCard: React.FC<WishlistCardProps> = ({
             alignSelf: 'flex-end',
             mt: 4.2,
             '&:hover': {
-              backgroundColor: isOutOfStock ? '#f0f0f0' : '#333',
+              backgroundColor: isOutOfStock ? colors.background.new : '#333',
             },
             '&:disabled': {
-              backgroundColor: '#f0f0f0',
-              color: '#ccc',
+              backgroundColor: colors.background.new,
+              color:'#ccc',
             },
           }}
           title={isOutOfStock ? 'Out of stock - cannot add to cart' : ''}

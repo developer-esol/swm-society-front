@@ -1,19 +1,20 @@
 import React from 'react';
 import { Box } from '@mui/material';
 import { CustomButton } from '../../components/CustomButton';
+import { colors } from '../../theme';
 
 export const HearMyVoiceShopButton: React.FC = () => (
   <Box sx={{ my: 5, textAlign: 'center' }}>
     <CustomButton
       text="Shop Now"
       sx={{
-        bgcolor: '#dc2626',
+        bgcolor: colors.button.primary,
         color: 'white',
         px: 4,
         py: 1.5,
         fontSize: '1rem',
         '&:hover': {
-          bgcolor: '#b91c1c',
+          bgcolor: colors.button.primaryHover,
         },
       }}
       width="auto"

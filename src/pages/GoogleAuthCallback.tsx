@@ -14,87 +14,82 @@ const GoogleAuthCallback: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(true);
 
-      useEffect(() => {
+  useEffect(() => {
     const processGoogleAuth = async () => {
       try {
-        // Get the authorization code from URL
+        // Check for token in query params (backend should send: ?token=xxx)
+        const token = searchParams.get('token');
+        const email = searchParams.get('email');
+        const name = searchParams.get('name');
+        const userId = searchParams.get('userId');
+        const role = searchParams.get('role');
+        
+        // Also check URL hash for token (in case backend uses #token=xxx)
+        const hash = window.location.hash.substring(1);
+        const hashParams = new URLSearchParams(hash);
+        const hashToken = hashParams.get('token');
+        
+        const authToken = token || hashToken;
+        
+        // Check for error in params
+        const errorParam = searchParams.get('error');
+        
+        if (errorParam) {
+          setError(`Google authentication failed: ${errorParam}`);
+          setIsProcessing(false);
+          return;
+        }
+
+        if (authToken) {
+          // Store tokens from backend redirect
+          localStorage.setItem('authToken', authToken);
+          
+          if (email) localStorage.setItem('userEmail', email);
+          if (name) localStorage.setItem('userName', name);
+          if (userId) localStorage.setItem('userId', userId);
+          // Normalize role: if backend sends role name (e.g. "USER"), map to role ID to match regular login
+          if (role) {
+            const roleNormalized = role.toLowerCase() === 'user' ? '1'
+              : role.toLowerCase() === 'moderator' ? '2'
+              : role.toLowerCase() === 'admin' ? '3'
+              : role;
+            localStorage.setItem('userRole', roleNormalized);
+          }
+          
+          console.log('[GoogleAuth] Successfully authenticated with token');
+          
+          // Clear OAuth state
+          localStorage.removeItem('google_oauth_state');
+          
+          // Redirect to home
+          setTimeout(() => {
+            navigate('/');
+          }, 500);
+          return;
+        }
+
+        // Fallback: Check for authorization code (old flow)
         const authCode = searchParams.get('code');
         const state = searchParams.get('state');
-        const errorParam = searchParams.get('error');
 
-        // Check for errors
-        if (errorParam) {
-          // If error is invalid_client or access_denied, provide helpful message
-          if (errorParam === 'invalid_client' || errorParam === 'access_denied') {
-            setError(
-              'Google OAuth not configured yet. Using mock authentication instead. ' +
-              'To enable real Google OAuth: 1) Get Client ID from Google Cloud Console, ' +
-              '2) Add it to .env.local, 3) Add redirect URI to Google Console, ' +
-              '4) Implement backend endpoint'
-            );
-            // Still allow mock login
-            setTimeout(() => {
-              const mockToken = 'mock-google-jwt-' + Date.now();
-              localStorage.setItem('authToken', mockToken);
-              localStorage.setItem('userEmail', 'user@gmail.com');
-              localStorage.setItem('userName', 'Google User');
-              localStorage.removeItem('google_oauth_state');
-              navigate('/');
-            }, 2000);
-          } else {
-            setError(`Google authentication failed: ${errorParam}`);
+        if (authCode) {
+          // Verify state parameter (CSRF protection)
+          const savedState = localStorage.getItem('google_oauth_state');
+          if (state && state !== savedState) {
+            setError('Invalid state parameter - possible CSRF attack');
+            setIsProcessing(false);
+            return;
           }
-          return;
-        }
 
-        if (!authCode) {
-          setError('No authorization code received from Google');
+          // If we have a code but no token, backend didn't complete OAuth flow
+          setError('Backend OAuth configuration incomplete. Backend received code but did not generate token.');
           setIsProcessing(false);
           return;
         }
 
-        // Verify state parameter (CSRF protection)
-        const savedState = localStorage.getItem('google_oauth_state');
-        if (state !== savedState) {
-          setError('Invalid state parameter - possible CSRF attack');
-          setIsProcessing(false);
-          return;
-        }
-
-        // TODO: Send authorization code to your backend
-        // Backend should exchange the code for tokens
-        // Example endpoint: POST /api/auth/google/callback
-        // The backend will:
-        // 1. Exchange auth code for access token
-        // 2. Get user info from Google
-        // 3. Create/update user in database
-        // 4. Return JWT token and user info
-
-        // For now, use mock authentication
-        console.log('Google Auth Code:', authCode);
-
-        // Mock successful authentication
-        // Replace this with actual backend call
-        const mockResponse = {
-          token: 'mock-google-jwt-' + Date.now(),
-          user: {
-            id: 'google-' + Date.now(),
-            email: 'user@gmail.com',
-            name: 'Google User',
-            avatar: '',
-          },
-        };
-
-        // Store auth token
-        localStorage.setItem('authToken', mockResponse.token);
-        localStorage.setItem('userEmail', mockResponse.user.email);
-        localStorage.setItem('userName', mockResponse.user.name);
-
-        // Clear the state
-        localStorage.removeItem('google_oauth_state');
-
-        // Redirect to home page
-        navigate('/');
+        // No token or code found
+        setError('No authorization data received. Please try again.');
+        setIsProcessing(false);
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'Authentication failed';
         setError(errorMessage);

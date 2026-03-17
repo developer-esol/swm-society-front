@@ -31,7 +31,7 @@ const StatBoxes = ({ items }: StatBoxesProps) => {
               width: 56,
               height: 56,
               borderRadius: '50%',
-              bgcolor: '#E53935',
+              bgcolor: colors.status.box,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',

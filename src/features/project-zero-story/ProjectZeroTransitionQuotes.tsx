@@ -1,5 +1,6 @@
 import React from 'react';
 import { Box, Typography } from '@mui/material';
+import { colors } from '../../theme';
 
 const quotes = [
   {
@@ -19,7 +20,7 @@ const quotes = [
 export const ProjectZeroTransitionQuotes: React.FC = () => (
   <>
     {quotes.map((q, idx) => (
-      <Box key={idx} sx={{ bgcolor: '#f3f4f6', p: 3, my: 2 }}>
+      <Box key={idx} sx={{ bgcolor: colors.background.lighter, p: 3, my: 2 }}>
         <Typography sx={{ fontStyle: 'italic', mb: 1 }}>{q.text}</Typography>
         <Typography sx={{ fontWeight: 500 }}>{q.author}</Typography>
       </Box>

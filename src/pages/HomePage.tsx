@@ -13,19 +13,35 @@ const HomePage = () => {
     <>
       <Carousel />
       {activeBrands &&
-        activeBrands.map((brand, idx) => (
-          <BrandSection
-            key={brand.id}
-            name={brand.brandName}
-            description={brand.description}
-            image={brand.url}
-            shopLink={`/shop?collection=${encodeURIComponent(brand.brandName)}`}
-            storyLink={brand.route}
-            imagePosition={idx % 2 === 0 ? "left" : "right"}
-          />
-        ))}
+        activeBrands.map((brand, idx) => {
+          const name = brand.brandName || '';
+          const image = brand.url || '';
+          const lowerName = name.toLowerCase();
+          const cleanRoute = (brand.route || '').replace(/^\/+|\/+$/g, '');
+
+          // Explicit mappings for known brand pages
+          const storyLink = lowerName.includes('project zero')
+            ? '/project-zero-story'
+            : lowerName.includes('hear my voice')
+              ? '/hear-my-voice-story'
+              : lowerName.includes('thomas mushet')
+                ? '/thomas-mushet-story'
+                : `/${cleanRoute}-story`;
+
+          return (
+            <BrandSection
+              key={brand.id}
+              name={name}
+              description={brand.description || ''}
+              image={image}
+              shopLink={`/shop?collection=${encodeURIComponent(name)}`}
+              storyLink={storyLink}
+              imagePosition={idx % 2 === 0 ? 'left' : 'right'}
+            />
+          );
+        })}
     </>
-  )
+  );
 }
 
 export default HomePage

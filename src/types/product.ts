@@ -102,8 +102,17 @@ export interface Stock {
   color: string;
   quantity: number;
   price: number;
-  url: string;
+  imageUrl: string;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface CreateStockData {
+  productId: string;
+  size: string;
+  color: string;
+  quantity: number;
+  price: number;
+  imageUrl: string;
 }

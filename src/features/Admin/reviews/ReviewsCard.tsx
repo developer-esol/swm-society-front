@@ -1,135 +1,121 @@
-import { Box, Paper, Typography, IconButton, Tooltip, Rating } from '@mui/material'
-import { Visibility as ViewIcon, Delete as DeleteIcon } from '@mui/icons-material'
+import { Card, CardMedia, CardContent, Box, Typography, Button, Rating } from '@mui/material'
+import { useQuery } from '@tanstack/react-query'
+import { productsService } from '../../../api/services/products'
+import { Trash2 as DeleteIcon } from 'lucide-react'
 import { colors } from '../../../theme'
 import type { Review } from '../../../types/review'
+import { Permission } from '../../../components/Permission'
+import { PERMISSIONS } from '../../../configs/permissions'
 
 interface ReviewsCardProps {
   review: Review
-  onView?: (review: Review) => void
+  userName?: string | null
   onDelete?: (id: string) => void
 }
 
-const ReviewsCard = ({ review, onView, onDelete }: ReviewsCardProps) => {
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-    })
-  }
+const ReviewsCard = ({ review, userName, onDelete }: ReviewsCardProps) => {
+  // date formatting removed — not used in the compact layout
 
   return (
-    <Paper
+    <Card
       sx={{
-        p: { xs: 1, sm: 1.5 },
+        textDecoration: 'none',
         mb: 1.5,
-        bgcolor: colors.background.default,
-        border: `1px solid ${colors.border.default}`,
-        borderRadius: 1,
         display: 'flex',
-        flexDirection: { xs: 'column', sm: 'row' },
-        justifyContent: 'space-between',
-        alignItems: 'flex-start',
-        gap: { xs: 1, sm: 2 },
-        minHeight: 'auto',
+        flexDirection: { xs: 'column', sm: review.imageUrl ? 'row' : 'column' },
+        transition: 'transform 0.15s, box-shadow 0.15s',
+        position: 'relative',
+        overflow: 'hidden',
+        '&:hover': {
+          transform: 'translateY(-4px)',
+          boxShadow: '0 8px 20px rgba(0,0,0,0.08)',
+        },
       }}
     >
-      {/* Left Section: Content */}
-      <Box sx={{ flex: 1 }}>
-        {/* Reviewer Name */}
-        <Typography
+      {/* Left image column when present */}
+      {review.imageUrl && (
+        <CardMedia
+          component="img"
+          image={review.imageUrl}
+          alt="review image"
           sx={{
-            fontWeight: 600,
-            color: colors.text.primary,
-            fontSize: '0.9rem',
-            mb: 0.5,
+            width: { xs: '100%', sm: 200 },
+            height: { xs: 180, sm: '100%' },
+            objectFit: 'cover',
+            backgroundColor: colors.card.imagePlaceholder,
+            flexShrink: 0,
+          }}
+        />
+      )}
+
+      {/* Delete button positioned top-right (styled like admin community delete) */}
+      <Permission permission={PERMISSIONS.DELETE_REVIEWS}>
+      <Box sx={{ position: 'absolute', top: 8, right: 8, zIndex: 3 }}>
+        <Button
+          onClick={() => onDelete?.(review.id)}
+          sx={{
+            minWidth: '40px',
+            width: '40px',
+            height: '40px',
+            p: 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            border: `1px solid ${colors.border.default}`,
+            borderRadius: '6px',
+            color: colors.button.primary,
+            bgcolor: 'transparent',
+            '&:hover': {
+              bgcolor: colors.danger.background,
+            },
           }}
         >
-          {review.userName}
-        </Typography>
-
-        {/* Star Rating */}
-        <Box sx={{ mb: 0.5 }}>
-          <Rating value={review.rating} readOnly size="small" sx={{ color: '#FFC107' }} />
-        </Box>
-
-        {/* Review Comment */}
-        <Typography
-          sx={{
-            color: colors.text.primary,
-            fontSize: '0.85rem',
-            lineHeight: 1.4,
-          }}
-        >
-          {review.comment}
-        </Typography>
+          <DeleteIcon size={18} />
+        </Button>
       </Box>
+      </Permission>
 
-      {/* Right Section: ID, Date, and Action Buttons */}
-      <Box
-        sx={{
-          display: 'flex',
-          flexDirection: { xs: 'row', sm: 'column' },
-          alignItems: { xs: 'center', sm: 'flex-end' },
-          justifyContent: { xs: 'space-between', sm: 'flex-end' },
-          gap: { xs: 1, sm: 1 },
-          minWidth: { xs: '100%', sm: 'fit-content' },
-          width: { xs: '100%', sm: 'auto' },
-        }}
-      >
-        {/* User ID and Date */}
-        <Box sx={{ display: 'flex', flexDirection: { xs: 'row', sm: 'column' }, alignItems: { xs: 'center', sm: 'flex-end' }, gap: { xs: 1, sm: 0.2 } }}>
-          <Typography
-            sx={{
-              color: colors.text.disabled,
-              fontSize: { xs: '0.7rem', sm: '0.75rem' },
-              fontWeight: 500,
-            }}
-          >
-            User ID: {review.userId}
-          </Typography>
-          <Typography
-            sx={{
-              color: colors.text.disabled,
-              fontSize: { xs: '0.7rem', sm: '0.75rem' },
-            }}
-          >
-            {formatDate(review.createdAt)}
-          </Typography>
-        </Box>
+      <CardContent sx={{ p: 2, flex: 1 }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+          <Box>
+            <Typography sx={{ fontWeight: 700, color: colors.text.primary, fontSize: '0.95rem' }}>
+              @{userName ? userName : `user_${review.userId?.slice(0, 8)}`}
+            </Typography>
+            <Typography sx={{ color: colors.text.disabled, fontSize: '0.75rem' }}>User ID: {review.userId}</Typography>
+          </Box>
 
-        {/* Action Buttons */}
-        <Box sx={{ display: 'flex', gap: { xs: 0.5, sm: 0.4 } }}>
-          <Tooltip title="View">
-            <IconButton
-              size="small"
-              onClick={() => onView?.(review)}
-              sx={{
-                color: colors.text.primary,
-                p: 0.5,
-                '&:hover': { bgcolor: `${colors.text.primary}10` },
-              }}
-            >
-              <ViewIcon sx={{ fontSize: { xs: '1.1rem', sm: '1.3rem' } }} />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Delete">
-            <IconButton
-              size="small"
-              onClick={() => onDelete?.(review.id)}
-              sx={{
-                color: '#d32f2f',
-                p: 0.5,
-                '&:hover': { bgcolor: '#d32f2f10' },
-              }}
-            >
-              <DeleteIcon sx={{ fontSize: { xs: '1.1rem', sm: '1.3rem' } }} />
-            </IconButton>
-          </Tooltip>
+          {/* Product name and product id */}
+          <ProductInfo productId={review.productId} comment={review.comment} />
+
+          <Box sx={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'center', gap: 1 }}>
+            <Rating value={review.rating} readOnly size="small" sx={{ color: colors.danger.yellow }} />
+          </Box>
         </Box>
-      </Box>
-    </Paper>
+      </CardContent>
+    </Card>
   )
 }
 
 export default ReviewsCard
+
+// Small helper component to show product name and id; fetches product by id
+function ProductInfo({ productId, comment }: { productId?: string; comment: string }) {
+  const { data: product } = useQuery({
+    queryKey: ['product', productId],
+    queryFn: () => (productId ? productsService.getProductById(productId) : Promise.resolve(null)),
+    enabled: !!productId,
+    staleTime: 1000 * 60 * 5,
+  })
+
+  return (
+    <>
+      <Typography sx={{ fontWeight: 700, color: colors.text.primary, mt: 1, fontSize: '1rem' }}>
+        {product?.name || 'Unknown Product'}
+      </Typography>
+      <Typography sx={{ color: colors.text.disabled, mb: 1, fontSize: '0.8rem' }}>Product ID: {productId || 'N/A'}</Typography>
+      <Typography sx={{ color: colors.text.primary, mt: 1, fontSize: '0.95rem', lineHeight: 1.4 }}>
+        {comment}
+      </Typography>
+    </>
+  )
+}

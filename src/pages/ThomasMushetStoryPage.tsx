@@ -1,5 +1,6 @@
 import React from 'react';
 import { Box, Container } from '@mui/material';
+import { colors } from '../theme';
 import { ThomasMushetHero } from '../features/thomas-mushet-story/ThomasMushetHero';
 import { ThomasMushetIntro } from '../features/thomas-mushet-story/ThomasMushetIntro';
 import { ThomasMushetImage } from '../features/thomas-mushet-story/ThomasMushetImage';
@@ -9,7 +10,7 @@ import { ThomasMushetQualitySection } from '../features/thomas-mushet-story/Thom
 import { ThomasMushetShopButton } from '../features/thomas-mushet-story/ThomasMushetShopButton';
 
 export const ThomasMushetStoryPage: React.FC = () => (
-  <Box sx={{ bgcolor: 'white', width: '100%' }}>
+  <Box sx={{ bgcolor: colors.background.default, width: '100%' }}>
     <Container maxWidth="lg" sx={{ px: { xs: 3, md: 6 }, py: { xs: 6, md: 12 } }}>
       <ThomasMushetHero />
       <Box sx={{ maxWidth: 'none' }}>

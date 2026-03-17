@@ -1,27 +1,26 @@
 import { useState, useCallback, useEffect, useMemo } from 'react'
-import { adminSalesService } from '../../api/services/admin/salesService'
-import type { SalesTransaction } from '../../types/Admin/sales'
+import { orderService } from '../../api/services/orderService'
+import type { Order } from '../../types/order'
 
 export const useAdminSales = () => {
-  const [transactions, setTransactions] = useState<SalesTransaction[]>([])
+  const [orders, setOrders] = useState<Order[]>([])
   const [currentPage, setCurrentPage] = useState(1)
   const [isLoading, setIsLoading] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
-  const [filterStatus, setFilterStatus] = useState<'all' | SalesTransaction['status']>('all')
   const [fromDate, setFromDate] = useState('')
   const [toDate, setToDate] = useState('')
 
   const ITEMS_PER_PAGE = 5
 
-  // Load transactions on mount
+  // Load orders on mount
   useEffect(() => {
     const loadData = async () => {
       setIsLoading(true)
       try {
-        const data = await adminSalesService.getSalesTransactions()
-        setTransactions(data.transactions)
+        const data = await orderService.getAllOrders(1, 100) // Fetch all orders
+        setOrders(data.orders)
       } catch (error) {
-        console.error('Failed to load sales data:', error)
+        console.error('Failed to load orders:', error)
       } finally {
         setIsLoading(false)
       }
@@ -30,43 +29,39 @@ export const useAdminSales = () => {
     loadData()
   }, [])
 
-  // Filter and search transactions
+  // Filter and search orders
   const filteredTransactions = useMemo(() => {
-    let filtered = [...transactions]
+    let filtered = [...orders]
 
     // Apply search filter
     if (searchQuery.trim()) {
       filtered = filtered.filter(
-        (t) =>
-          t.orderId.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          t.userId.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          t.productId.toLowerCase().includes(searchQuery.toLowerCase())
+        (order) =>
+          order.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          order.userId.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          order.contactEmail?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          order.items.some(item => item.productName.toLowerCase().includes(searchQuery.toLowerCase()))
       )
-    }
-
-    // Apply status filter
-    if (filterStatus !== 'all') {
-      filtered = filtered.filter((t) => t.status === filterStatus)
     }
 
     // Apply date range filter
     if (fromDate || toDate) {
-      filtered = filtered.filter((t) => {
-        const transactionDate = new Date(t.date)
+      filtered = filtered.filter((order) => {
+        const orderDate = new Date(order.date || order.createdAt)
         if (fromDate) {
           const from = new Date(fromDate)
-          if (transactionDate < from) return false
+          if (orderDate < from) return false
         }
         if (toDate) {
           const to = new Date(toDate)
-          if (transactionDate > to) return false
+          if (orderDate > to) return false
         }
         return true
       })
     }
 
     return filtered
-  }, [transactions, searchQuery, filterStatus, fromDate, toDate])
+  }, [orders, searchQuery, fromDate, toDate])
 
   // Paginate transactions
   const totalPages = Math.ceil(filteredTransactions.length / ITEMS_PER_PAGE)
@@ -83,11 +78,6 @@ export const useAdminSales = () => {
     setCurrentPage(1) // Reset to first page when searching
   }, [])
 
-  const handleFilterChange = useCallback((status: 'all' | SalesTransaction['status']) => {
-    setFilterStatus(status)
-    setCurrentPage(1) // Reset to first page when filtering
-  }, [])
-
   const handleDateFilterChange = useCallback((from: string, to: string) => {
     setFromDate(from)
     setToDate(to)
@@ -99,14 +89,12 @@ export const useAdminSales = () => {
     filteredTransactions,
     currentPage,
     totalPages,
-    isLoading,
     searchQuery,
-    filterStatus,
     fromDate,
     toDate,
-    handlePageChange,
+    isLoading,
     handleSearch,
-    handleFilterChange,
+    handlePageChange,
     handleDateFilterChange,
   }
 }

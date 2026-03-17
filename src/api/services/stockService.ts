@@ -1,124 +1,111 @@
-﻿import type { Stock } from '../../types/product';
+import type { Stock, CreateStockData } from '../../types/product';
+import { apiClient } from '../apiClient';
+import { brandService } from './brandService';
+
+// Helper to map brand slug to brandId
+const getBrandIdFromSlug = async (brandSlug: string | null): Promise<string | null> => {
+  if (!brandSlug) return null
+  
+  try {
+    const brands = await brandService.getBrands()
+    
+    // Map slug to brand name variations
+    const slugToBrandMap: Record<string, string[]> = {
+      'project-zero': ['Project Zero', 'Project ZerO', 'Project ZerO\'s', 'Project Zeros'],
+      'thomas-mushet': ['Thomas Mushet', 'thomas mushet'],
+      'hear-my-voice': ['Hear My Voice', 'HMV']
+    }
+    
+    const brandNames = slugToBrandMap[brandSlug] || []
+    const matchingBrand = brands.find(brand => 
+      brandNames.some(name => brand.brandName.toLowerCase().includes(name.toLowerCase()))
+    )
+    
+    return matchingBrand?.id || null
+  } catch (error) {
+    console.error('Failed to get brandId from slug:', error)
+    return null
+  }
+}
 
 export const stockService = {
     async getStocksByProductId(productId: string): Promise<Stock[]> {
-        // Simulate backend response with comprehensive stock data
-        const allStocks: Stock[] = [
-            // Product 1 - Puffer Jacket
-            {
-                id: 'stock-1-1',
-                productId: '1',
-                size: 'S',
-                color: 'Red',
-                quantity: 15,
-                price: 89.99,
-                url: '/d1.jpg',
-                isActive: true,
-                createdAt: '2024-01-01T00:00:00Z',
-                updatedAt: '2024-01-01T00:00:00Z'
-            },
-            {
-                id: 'stock-1-2',
-                productId: '1',
-                size: 'M',
-                color: 'Red',
-                quantity: 20,
-                price: 89.99,
-                url: '/d1.jpg',
-                isActive: true,
-                createdAt: '2024-01-01T00:00:00Z',
-                updatedAt: '2024-01-01T00:00:00Z'
-            },
-            {
-                id: 'stock-1-3',
-                productId: '1',
-                size: 'L',
-                color: 'Red',
-                quantity: 12,
-                price: 89.99,
-                url: '/d1.jpg',
-                isActive: true,
-                createdAt: '2024-01-01T00:00:00Z',
-                updatedAt: '2024-01-01T00:00:00Z'
-            },
-            {
-                id: 'stock-1-4',
-                productId: '1',
-                size: 'S',
-                color: 'Black',
-                quantity: 18,
-                price: 89.99,
-                url: '/d1.jpg',
-                isActive: true,
-                createdAt: '2024-01-01T00:00:00Z',
-                updatedAt: '2024-01-01T00:00:00Z'
-            },
-            {
-                id: 'stock-1-5',
-                productId: '1',
-                size: 'M',
-                color: 'Black',
-                quantity: 16,
-                price: 89.99,
-                url: '/d1.jpg',
-                isActive: true,
-                createdAt: '2024-01-01T00:00:00Z',
-                updatedAt: '2024-01-01T00:00:00Z'
-            },
-            {
-                id: 'stock-1-6',
-                productId: '1',
-                size: 'L',
-                color: 'Black',
-                quantity: 14,
-                price: 89.99,
-                url: '/d1.jpg',
-                isActive: true,
-                createdAt: '2024-01-01T00:00:00Z',
-                updatedAt: '2024-01-01T00:00:00Z'
-            },
-            
-            // Product 2 - Project Zero's Jacket
-            {
-                id: 'stock-2-1',
-                productId: '2',
-                size: 'S',
-                color: 'White',
-                quantity: 18,
-                price: 120.00,
-                url: '/d2.jpg',
-                isActive: true,
-                createdAt: '2024-01-01T00:00:00Z',
-                updatedAt: '2024-01-01T00:00:00Z'
-            },
-            {
-                id: 'stock-2-2',
-                productId: '2',
-                size: 'M',
-                color: 'White',
-                quantity: 25,
-                price: 120.00,
-                url: '/d2.jpg',
-                isActive: true,
-                createdAt: '2024-01-01T00:00:00Z',
-                updatedAt: '2024-01-01T00:00:00Z'
-            },
-            {
-                id: 'stock-2-3',
-                productId: '2',
-                size: 'L',
-                color: 'Black',
-                quantity: 12,
-                price: 120.00,
-                url: '/d2.jpg',
-                isActive: true,
-                createdAt: '2024-01-01T00:00:00Z',
-                updatedAt: '2024-01-01T00:00:00Z'
+        console.log('Fetching stocks for product ID:', productId);
+        try {
+            // Get stocks filtered by productId from real API (request up to 100 items)
+            const stocks = await apiClient.get<Stock[]>('/stocks', { productId, limit: 100 });
+            console.log(`Found ${stocks.length} stocks for product ${productId}`);
+            return stocks;
+        } catch (error) {
+            console.error('Failed to fetch stocks for product:', error);
+            // Fallback: get all stocks and filter on frontend
+            try {
+                const allStocks = await this.getAllStocks();
+                const filtered = allStocks.filter(stock => stock.productId === productId);
+                console.log(`Fallback: Found ${filtered.length} stocks for product ${productId}`);
+                return filtered;
+            } catch (fallbackError) {
+                console.error('Fallback also failed:', fallbackError);
+                return [];
             }
-        ];
-        
-        // Filter stocks by productId (simulating backend filtering)
-        const filteredStocks = allStocks.filter(stock => stock.productId === productId);
-        return Promise.resolve(filteredStocks);
+        }
+    },
+
+    async getAllStocks(brandSlug?: string | null): Promise<Stock[]> {
+        console.log('Fetching stocks from database', brandSlug ? `for brand: ${brandSlug}` : '(all brands)');
+        try {
+            // Get brandId if brandSlug is provided
+            const brandId = brandSlug ? await getBrandIdFromSlug(brandSlug) : null
+            console.log('Brand slug:', brandSlug, 'Brand ID:', brandId)
+            
+            // Use brand-specific endpoint if brandId exists, otherwise fetch all
+            const endpoint = brandId ? `/stocks/brand/${brandId}` : '/stocks'
+            const params = brandId ? {} : { limit: 100 }
+            console.log('Fetching from endpoint:', endpoint)
+            
+            return await apiClient.get<Stock[]>(endpoint, params);
+        } catch (error) {
+            console.error('Failed to fetch all stocks:', error);
+            return [];
+        }
+    },
+
+    async getStockById(stockId: string): Promise<Stock | null> {
+        console.log('Fetching stock by ID:', stockId);
+        try {
+            return await apiClient.get<Stock>(`/stocks/${stockId}`);
+        } catch (error) {
+            console.error('Failed to fetch stock by ID:', error);
+            return null;
+        }
+    },
+
+    async createStock(data: CreateStockData): Promise<Stock> {
+        try {
+            console.log('Sending stock data to API:', data)
+            return await apiClient.post<Stock>('/stocks', data);
+        } catch (error) {
+            console.error('Failed to create stock:', error);
+            throw error;
+        }
+    },
+
+    async updateStock(id: string, data: Partial<CreateStockData>): Promise<Stock> {
+        try {
+            console.log('Updating stock with data:', data)
+            return await apiClient.put<Stock>(`/stocks/${id}`, data);
+        } catch (error) {
+            console.error('Failed to update stock:', error);
+            throw error;
+        }
+    },
+
+    async deleteStock(id: string): Promise<void> {
+        try {
+            await apiClient.delete(`/stocks/${id}`);
+        } catch (error) {
+            console.error('Failed to delete stock:', error);
+            throw error;
+        }
     }
 };

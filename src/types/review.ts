@@ -6,17 +6,14 @@ export interface Review {
   id: string;
   productId?: string;
   userId: string;
-  userName: string;
+  imageUrl?: string;
   rating: number;
-  title: string;
   comment: string;
   createdAt: string;
   updatedAt?: string;
-  verified?: boolean;
 }
 
 export interface ReviewInput {
-  title: string;
   comment: string;
   rating: number;
 }
@@ -30,14 +27,13 @@ export interface ReviewsResponse {
 
 export interface CreateReviewData {
   productId: string;
-  title: string;
   comment: string;
   rating: number;
+  imageUrl?: string;
 }
 
 export interface UpdateReviewData {
   id: string;
-  title?: string;
   comment?: string;
   rating?: number;
 }

@@ -3,6 +3,8 @@ import { Box, Button, Typography } from '@mui/material'
 import { Edit as EditIcon, Trash2 as DeleteIcon } from 'lucide-react'
 import { colors } from '../../../theme'
 import type { Role } from '../../../types/Admin/roles'
+import { Permission } from '../../../components/Permission'
+import { PERMISSIONS } from '../../../configs/permissions'
 
 interface RoleCardProps {
   role: Role
@@ -13,13 +15,13 @@ interface RoleCardProps {
 const getRoleColor = (roleName: string) => {
   switch (roleName) {
     case 'Super Admin':
-      return '#dc2626'
+      return colors.button.primary
     case 'Admin':
-      return '#3b82f6'
+      return colors.status.processing
     case 'Manager':
-      return '#10b981'
+      return colors.status.delivered
     case 'Support':
-      return '#f59e0b'
+      return colors.status.shipped
     default:
       return colors.button.primary
   }
@@ -73,67 +75,75 @@ const RoleCard: React.FC<RoleCardProps> = ({ role, onEdit, onDelete }) => {
                 fontWeight: 500,
               }}
             >
-              {role.usersCount} users
+              {role.usersCount || 0} users
             </Box>
             <Box
               sx={{
-                backgroundColor: '#e5e5e5',
-                color: '#666666',
+                backgroundColor: colors.danger.role,
+                color: colors.menu.textSecondary,
                 padding: '4px 12px',
                 borderRadius: '12px',
                 fontSize: '0.8rem',
                 fontWeight: 500,
               }}
             >
-              {role.permissionsCount} permissions
+              {role.permissions?.length || 0} permissions
             </Box>
           </Box>
         </Box>
       </Box>
 
       <Box sx={{ display: 'flex', gap: 1.5 }}>
-        <Button
-          onClick={() => onEdit(role)}
-          sx={{
-            minWidth: '40px',
-            width: '40px',
-            height: '40px',
-            p: 0,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            border: `1px solid ${colors.border.default}`,
-            borderRadius: '6px',
-            color: colors.text.primary,
-            bgcolor: 'transparent',
-            '&:hover': {
-              bgcolor: colors.background.lighter,
-            },
-          }}
-        >
-          <EditIcon size={18} />
-        </Button>
-        <Button
-          onClick={() => onDelete(role)}
-          sx={{
-            minWidth: '40px',
-            width: '40px',
-            height: '40px',
-            p: 0,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            border: `1px solid ${colors.border.default}`,
-            borderRadius: '6px',
-            color: '#dc2626',
-            bgcolor: 'transparent',
-            '&:hover': {
-              bgcolor: '#fee2e2',
-            },
-          }}
-        >
-          <DeleteIcon size={18} />
-        </Button>
+        {!(role.name || '').toLowerCase().trim().includes('admin') && (
+          <>
+            <Permission permission={PERMISSIONS.UPDATE_ROLES}>
+            <Button
+              onClick={() => onEdit(role)}
+              sx={{
+                minWidth: '40px',
+                width: '40px',
+                height: '40px',
+                p: 0,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                border: `1px solid ${colors.border.default}`,
+                borderRadius: '6px',
+                color: colors.text.primary,
+                bgcolor: 'transparent',
+                '&:hover': {
+                  bgcolor: colors.background.lighter,
+                },
+              }}
+            >
+              <EditIcon size={18} />
+            </Button>
+            </Permission>
+            <Permission permission={PERMISSIONS.DELETE_ROLES}>
+            <Button
+              onClick={() => onDelete(role)}
+              sx={{
+                minWidth: '40px',
+                width: '40px',
+                height: '40px',
+                p: 0,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                border: `1px solid ${colors.border.default}`,
+                borderRadius: '6px',
+                color: colors.button.primary,
+                bgcolor: 'transparent',
+                '&:hover': {
+                  bgcolor: colors.danger.background,
+                },
+              }}
+            >
+              <DeleteIcon size={18} />
+            </Button>
+            </Permission>
+          </>
+        )}
       </Box>
     </Box>
   )

@@ -23,6 +23,10 @@ export interface FormErrors {
   [key: string]: string;
 }
 
+export interface FormTouched {
+  [key: string]: boolean | undefined;
+}
+
 export interface CheckoutResponse {
   success: boolean;
   orderNumber: string;

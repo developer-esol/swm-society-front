@@ -7,17 +7,17 @@ export const getDashboardData = (): DashboardData => {
       {
         icon: 'shopping_bag',
         label: 'TOTAL PRODUCTS',
-        value: 3456,
+        value: 0, // Will be updated with real data
+      },
+      {
+        icon: 'trending_up',
+        label: 'TOTAL USERS',
+        value: 0, // Will be updated with real data
       },
       {
         icon: 'shopping_cart',
         label: 'ORDERS',
-        value: 3456,
-      },
-      {
-        icon: 'trending_up',
-        label: 'TOTAL SALES',
-        value: '$3456',
+        value: 125, // Dummy data for orders
       },
     ],
     salesRevenue: {

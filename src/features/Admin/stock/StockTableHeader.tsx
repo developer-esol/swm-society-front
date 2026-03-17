@@ -1,6 +1,10 @@
 import { Box, TextField, Button } from '@mui/material'
 import { Search as SearchIcon } from '@mui/icons-material'
 import { colors } from '../../../theme'
+import { Permission } from '../../../components/Permission'
+import { PERMISSIONS } from '../../../configs/permissions'
+import { usePermissionsStore } from '../../../store/usePermissionsStore'
+import { useAuthStore } from '../../../store/useAuthStore'
 
 interface StockTableHeaderProps {
   searchQuery: string
@@ -9,6 +13,18 @@ interface StockTableHeaderProps {
 }
 
 const StockTableHeader = ({ searchQuery, onSearch, onAddStock }: StockTableHeaderProps) => {
+  const { userPermissions, hasPermission } = usePermissionsStore()
+  const { user } = useAuthStore()
+  
+  // Debug logging
+  console.log('[StockTableHeader] Debug Info:', {
+    userRole: user?.role,
+    totalPermissions: userPermissions.length,
+    permissionNames: userPermissions.map(p => p.name),
+    hasCreateStock: hasPermission(PERMISSIONS.CREATE_STOCK),
+    createStockPermission: PERMISSIONS.CREATE_STOCK
+  })
+
   return (
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
       <TextField
@@ -35,37 +51,41 @@ const StockTableHeader = ({ searchQuery, onSearch, onAddStock }: StockTableHeade
       />
 
       <Box sx={{ display: 'flex', gap: 1.5 }}>
-        <Button
-          variant="outlined"
-          onClick={onAddStock}
-          sx={{
-            borderColor: colors.button.primary,
-            color: colors.button.primary,
-            px: 3,
-            borderRadius: '4px',
-            '&:hover': {
-              borderColor: colors.button.primaryHover,
-              bgcolor: `${colors.button.primary}10`,
-            },
-          }}
-        >
-          Add Bulk
-        </Button>
-        <Button
-          variant="contained"
-          onClick={onAddStock}
-          sx={{
-            bgcolor: colors.button.primary,
-            color: colors.text.secondary,
-            px: 3,
-            borderRadius: '4px',
-            '&:hover': {
-              bgcolor: colors.button.primaryHover,
-            },
-          }}
-        >
-          Add Stock
-        </Button>
+        <Permission permission={PERMISSIONS.CREATE_STOCK}>
+          <Button
+            variant="outlined"
+            onClick={onAddStock}
+            sx={{
+              borderColor: colors.button.primary,
+              color: colors.button.primary,
+              px: 3,
+              borderRadius: '4px',
+              '&:hover': {
+                borderColor: colors.button.primaryHover,
+                bgcolor: `${colors.button.primary}10`,
+              },
+            }}
+          >
+            Add Bulk
+          </Button>
+        </Permission>
+        <Permission permission={PERMISSIONS.CREATE_STOCK}>
+          <Button
+            variant="contained"
+            onClick={onAddStock}
+            sx={{
+              bgcolor: colors.button.primary,
+              color: colors.text.secondary,
+              px: 3,
+              borderRadius: '4px',
+              '&:hover': {
+                bgcolor: colors.button.primaryHover,
+              },
+            }}
+          >
+            Add Stock
+          </Button>
+        </Permission>
       </Box>
     </Box>
   )

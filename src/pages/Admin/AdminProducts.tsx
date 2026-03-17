@@ -1,17 +1,23 @@
-import { Box, Container, Typography, Pagination, Stack, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Button } from '@mui/material'
+import { Box, Container, Typography, Pagination, Stack, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Button, TextField, IconButton } from '@mui/material'
 import { useState, useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { ProductsTable, ProductTableHeader, ProductViewModal, ProductEditModal } from '../../features/Admin/products'
+import { useNavigate, useSearchParams } from 'react-router-dom'
+import { Search as SearchIcon } from '@mui/icons-material'
+import { ProductsTable, ProductViewModal, ProductEditModal } from '../../features/Admin/products'
 import { useAdminProducts } from '../../hooks/useProducts'
 import { colors } from '../../theme'
+import AdminBreadcrumbs from '../../components/Admin/AdminBreadcrumbs'
 import type { AdminProduct } from '../../types/Admin'
 import { useQueryClient } from '@tanstack/react-query'
 import { QUERY_KEYS } from '../../configs/queryKeys'
 import { deleteProduct } from '../../api/services/admin/productsService'
+import { Permission } from '../../components/Permission'
+import { PERMISSIONS } from '../../configs/permissions'
 
 const AdminProducts = () => {
   const navigate = useNavigate()
-  const { data: products = [], isLoading, error } = useAdminProducts()
+  const [searchParams] = useSearchParams()
+  const brandFilter = searchParams.get('brand') // Get brand from query params
+  const { data: products = [], isLoading, error } = useAdminProducts(brandFilter)
   const [viewModalOpen, setViewModalOpen] = useState(false)
   const [editModalOpen, setEditModalOpen] = useState(false)
   const [selectedProduct, setSelectedProduct] = useState<AdminProduct | null>(null)
@@ -27,16 +33,62 @@ const AdminProducts = () => {
 
   const ITEMS_PER_PAGE = 5
 
-  // Filter products based on search query
+  // Get display name for page title
+  const getBrandDisplayName = (slug: string | null) => {
+    if (!slug) return null
+    const displayMap: Record<string, string> = {
+      'project-zero': 'Project Zero',
+      'thomas-mushet': 'Thomas Mushet',
+      'hear-my-voice': 'Hear My Voice'
+    }
+    return displayMap[slug] || null
+  }
+
+  // Map brand slugs to brand names for filtering
+  const getBrandName = (slug: string | null) => {
+    if (!slug) return null
+    const brandMap: Record<string, string[]> = {
+      'project-zero': ['Project Zero', 'Project ZerO', "Project ZerO's", 'Project Zeros'],
+      'thomas-mushet': ['Thomas Mushet'],
+      'hear-my-voice': ['Hear My Voice', 'HMV']
+    }
+    return brandMap[slug] || null
+  }
+
+  // Filter products based on brand name and search query
   const filteredProducts = useMemo(() => {
-    if (!searchQuery.trim()) return products
-    return products.filter(
-      (product) =>
-        product.productName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        product.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        product.id.toLowerCase().includes(searchQuery.toLowerCase())
-    )
-  }, [searchQuery, products])
+    console.log('All products:', products)
+    console.log('Brand filter slug:', brandFilter)
+    let filtered = products
+
+    // Filter by brand if brand query param exists
+    const brandNames = getBrandName(brandFilter)
+    console.log('Brand names to filter by:', brandNames)
+    if (brandNames) {
+      filtered = filtered.filter(product => {
+        const productBrandName = product.brandName?.toLowerCase() || ''
+        console.log('Checking product:', product.productName, 'Brand:', productBrandName)
+        const matches = brandNames.some(brandName => 
+          productBrandName.includes(brandName.toLowerCase())
+        )
+        console.log('Matches:', matches)
+        return matches
+      })
+      console.log('Filtered products after brand filter:', filtered)
+    }
+
+    // Filter by search query
+    if (searchQuery.trim()) {
+      filtered = filtered.filter(
+        (product) =>
+          product.productName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          product.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          product.id.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    }
+
+    return filtered
+  }, [searchQuery, products, brandFilter])
 
   // Paginate products
   const totalPages = Math.ceil(filteredProducts.length / ITEMS_PER_PAGE)
@@ -48,8 +100,8 @@ const AdminProducts = () => {
     setCurrentPage(page)
   }
 
-  const handleSearch = (query: string) => {
-    setSearchQuery(query)
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value)
     setCurrentPage(1) // Reset to first page when searching
   }
 
@@ -95,6 +147,7 @@ const AdminProducts = () => {
       await deleteProduct(deleteConfirm.productId)
       // Invalidate and refetch products
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.admin })
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.all })
       setDeleteConfirm({ open: false, productId: '', productName: '' })
     } catch (error) {
       console.error('Error deleting product:', error)
@@ -109,7 +162,11 @@ const AdminProducts = () => {
   }
 
   const handleAddProduct = () => {
-    navigate('/admin/add-product')
+    if (brandFilter) {
+      navigate(`/admin/${brandFilter}/add-product`)
+    } else {
+      navigate('/admin/add-product')
+    }
   }
 
   // Show loading state
@@ -141,29 +198,91 @@ const AdminProducts = () => {
           width: '100%'
         }}
       >
-        <Typography 
-          variant="h4" 
-          sx={{ 
-            mb: { xs: 3, sm: 4 }, 
-            fontWeight: 700, 
+        {/* Header */}
+        <AdminBreadcrumbs items={[{ label: 'Admin', to: '/admin' }, { label: 'Products', to: '/admin/products' }]} />
+        <Typography
+          variant="h4"
+          sx={{
+            mb: 3,
+            fontWeight: 700,
             color: colors.text.primary,
             fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' }
           }}
         >
-          All Products
+          {getBrandDisplayName(brandFilter) ? `${getBrandDisplayName(brandFilter)} Products` : 'All Products'}
         </Typography>
 
-        <ProductTableHeader
-          searchQuery={searchQuery}
-          onSearch={handleSearch}
-          onAddProduct={handleAddProduct}
-        />
+        {/* Search Box with Add Button */}
+        <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Box
+            sx={{
+              display: 'flex',
+              gap: 1,
+              alignItems: 'center',
+            }}
+          >
+            <TextField
+              placeholder="Search Products..."
+              value={searchQuery}
+              onChange={handleSearch}
+              size="small"
+              sx={{
+                width: 250,
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: 1,
+                  bgcolor: colors.background.default,
+                },
+              }}
+            />
+            <IconButton
+              sx={{
+                bgcolor: '#C62C2B',
+                color: 'white',
+                borderRadius: 1,
+                p: 1,
+                '&:hover': { bgcolor: '#A82421' },
+              }}
+            >
+              <SearchIcon />
+            </IconButton>
+          </Box>
+          
+          <Permission permission={(() => {
+            if (!brandFilter) return PERMISSIONS.CREATE_PRODUCTS
+            const brandPermissionMap: Record<string, string> = {
+              'project-zero': 'CREATE_PRODUCTS_PROJECT_ZERO',
+              'thomas-mushet': 'CREATE_PRODUCTS_THOMAS_MUSHET',
+              'hear-my-voice': 'CREATE_PRODUCTS_HEAR_MY_VOICE'
+            }
+            const permissionKey = brandPermissionMap[brandFilter]
+            return permissionKey ? PERMISSIONS[permissionKey as keyof typeof PERMISSIONS] : PERMISSIONS.CREATE_PRODUCTS
+          })()}>
+            <Button
+              variant="contained"
+              onClick={handleAddProduct}
+              sx={{
+                bgcolor: colors.button.primary,
+                color: colors.text.secondary,
+                textTransform: 'none',
+                fontWeight: 600,
+                px: 2.5,
+                py: 1,
+                '&:hover': {
+                  bgcolor: colors.button.primaryHover,
+                },
+              }}
+            >
+              Add Product
+            </Button>
+          </Permission>
+        </Box>
 
         <ProductsTable
           products={paginatedProducts}
           onView={handleView}
           onEdit={handleEdit}
           onDelete={handleDeleteProduct}
+          brandFilter={brandFilter}
         />
 
         {/* Pagination and Info */}
@@ -182,8 +301,8 @@ const AdminProducts = () => {
                     color: colors.text.primary,
                     borderColor: colors.border.default,
                     '&.Mui-selected': {
-                      backgroundColor: '#dc2626',
-                      color: 'white',
+                      backgroundColor: colors.button.primary,
+                      color: colors.text.secondary,
                     },
                   },
                 }}
@@ -253,13 +372,13 @@ const AdminProducts = () => {
               variant="contained"
               disabled={isDeleting}
               sx={{
-                backgroundColor: '#dc2626',
-                color: 'white',
+                backgroundColor: colors.danger.primary,
+                color: colors.text.secondary,
                 '&:hover': {
-                  backgroundColor: '#b91c1c',
+                  backgroundColor: colors.button.primaryHover,
                 },
                 '&:disabled': {
-                  backgroundColor: '#9ca3af',
+                  backgroundColor: colors.button.primaryDisabled,
                 },
               }}
             >

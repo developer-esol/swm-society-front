@@ -1,26 +1,41 @@
 import React from 'react';
 import { Box, Typography, IconButton } from '@mui/material';
-import { Delete as TrashIcon, Add as AddIcon, Remove as RemoveIcon } from '@mui/icons-material';
+import { Add as AddIcon, Remove as RemoveIcon } from '@mui/icons-material';
+import { Trash2 as DeleteIcon } from 'lucide-react';
+import { ConfirmDeleteDialog } from '../../components/ConfirmDeleteDialog';
+import { authService } from '../../api/services/authService';
 import { useNavigate } from 'react-router-dom';
 import { colors } from '../../theme';
 import type { CartItem } from '../../types/cart';
+import { productsService } from '../../api/services/products';
 
 interface CartItemsProps {
   cartItems: CartItem[];
-  quantities: Record<string, number>;
   onRemove: (stockId: string) => void;
   onDecreaseQuantity: (stockId: string) => void;
-  onIncreaseQuantity: (stockId: string, maxQuantity: number) => void;
+  onIncreaseQuantity: (stockId: string, maxQuantity?: number) => void;
 }
 
 export const CartItems: React.FC<CartItemsProps> = ({
   cartItems,
-  quantities,
   onRemove,
   onDecreaseQuantity,
   onIncreaseQuantity,
 }) => {
   const navigate = useNavigate();
+  const [confirmOpen, setConfirmOpen] = React.useState(false);
+  const [selected, setSelected] = React.useState<CartItem | null>(null);
+
+  const handleProductClick = async (productId: string) => {
+    try {
+      const product = await productsService.getProductById(productId);
+      if (product) {
+        navigate('/product', { state: { product } });
+      }
+    } catch (error) {
+      console.error('Failed to fetch product:', error);
+    }
+  };
 
   return (
     <Box>
@@ -66,7 +81,7 @@ export const CartItems: React.FC<CartItemsProps> = ({
                   opacity: 0.8,
                 },
               }}
-              onClick={() => navigate(`/product/${item.productId}`)}
+              onClick={() => handleProductClick(item.productId)}
             />
             <Box sx={{ flex: 1 }}>
               <Typography
@@ -79,8 +94,12 @@ export const CartItems: React.FC<CartItemsProps> = ({
                   '&:hover': {
                     color: colors.button.primary,
                   },
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
                 }}
-                onClick={() => navigate(`/product/${item.productId}`)}
+                onClick={() => handleProductClick(item.productId)}
+                title={item.productName}
               >
                 {item.productName}
               </Typography>
@@ -100,24 +119,31 @@ export const CartItems: React.FC<CartItemsProps> = ({
                 />
                 {item.color}
               </Typography>
-              {/* Remove Button */}
+              {/* Remove Button (bordered trash like admin) */}
               <Box sx={{ mt: 1 }}>
-                <Typography
-                  onClick={() => onRemove(item.stockId)}
+                <IconButton
+                  size="small"
+                  onClick={() => { setSelected(item); setConfirmOpen(true); }}
                   sx={{
-                    fontSize: '0.8rem',
-                    color: colors.button.primary,
-                    cursor: 'pointer',
+                    minWidth: '40px',
+                    width: '40px',
+                    height: '40px',
+                    p: 0,
                     display: 'flex',
                     alignItems: 'center',
-                    gap: 0.5,
+                    justifyContent: 'center',
+                    border: `1px solid ${colors.border.default}`,
+                    borderRadius: '6px',
+                    color: '#dc2626',
+                    bgcolor: 'transparent',
                     '&:hover': {
-                      textDecoration: 'underline',
+                      bgcolor: colors.danger.background,
                     },
                   }}
+                  aria-label="remove cart item"
                 >
-                  <TrashIcon sx={{ fontSize: 14 }} /> Remove
-                </Typography>
+                  <DeleteIcon size={18} />
+                </IconButton>
               </Box>
             </Box>
           </Box>
@@ -125,7 +151,7 @@ export const CartItems: React.FC<CartItemsProps> = ({
           {/* Price */}
           <Box sx={{ textAlign: 'center' }}>
             <Typography sx={{ fontWeight: 600, color: colors.text.primary, fontSize: '0.9rem' }}>
-              £{item.price.toFixed(2)}
+              £{Number(item.price).toFixed(2)}
             </Typography>
           </Box>
 
@@ -134,6 +160,7 @@ export const CartItems: React.FC<CartItemsProps> = ({
             <IconButton
               size="small"
               onClick={() => onDecreaseQuantity(item.stockId)}
+              disabled={Number(item.quantity) <= 1}
               sx={{
                 border: `1px solid ${colors.border.light}`,
                 borderRadius: '4px',
@@ -146,11 +173,17 @@ export const CartItems: React.FC<CartItemsProps> = ({
               <RemoveIcon sx={{ fontSize: 14 }} />
             </IconButton>
             <Typography sx={{ minWidth: '25px', textAlign: 'center', fontWeight: 600, fontSize: '0.9rem', color: colors.text.primary }}>
-              {quantities[item.stockId] || item.quantity}
+              {Number(item.quantity)}
             </Typography>
             <IconButton
               size="small"
               onClick={() => onIncreaseQuantity(item.stockId, item.maxQuantity)}
+              disabled={
+                // Only disable when maxQuantity is a positive number and current >= max
+                typeof item.maxQuantity === 'number' && Number(item.maxQuantity) > 0
+                  ? Number(item.quantity) >= Number(item.maxQuantity)
+                  : false
+              }
               sx={{
                 border: `1px solid ${colors.border.light}`,
                 borderRadius: '4px',
@@ -167,11 +200,31 @@ export const CartItems: React.FC<CartItemsProps> = ({
           {/* Total */}
           <Box sx={{ textAlign: 'right' }}>
             <Typography sx={{ fontWeight: 700, color: colors.button.primary, fontSize: '0.95rem' }}>
-              £{(item.price * (quantities[item.stockId] || item.quantity)).toFixed(2)}
+              £{(Number(item.price) * Number(item.quantity)).toFixed(2)}
             </Typography>
           </Box>
         </Box>
       ))}
+      <ConfirmDeleteDialog
+        open={confirmOpen}
+        title="Remove from Cart"
+        message={
+          selected
+            ? `Are you sure you want to remove "${selected.productName || 'this item'}" from your cart?`
+            : 'Are you sure you want to remove this item from your cart?'
+        }
+        onConfirm={() => {
+          if (!selected) return setConfirmOpen(false);
+          // If authenticated prefer to delete by productId so server endpoint /carts/user/{userId}/product/{productId} is used
+          const idToRemove = (authService && authService.isAuthenticated && authService.isAuthenticated() && selected.productId)
+            ? selected.productId
+            : selected.stockId;
+          onRemove(idToRemove);
+          setConfirmOpen(false);
+          setSelected(null);
+        }}
+        onCancel={() => { setConfirmOpen(false); setSelected(null); }}
+      />
     </Box>
   );
 };

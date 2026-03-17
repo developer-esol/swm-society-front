@@ -1,77 +1,107 @@
-import { useState, useEffect } from 'react'
-import { Box, TextField, IconButton, Typography, Button as MuiButton } from '@mui/material'
+import { useState, useMemo, type ChangeEvent } from 'react'
+import { Box, TextField, IconButton, Typography, Pagination, Stack } from '@mui/material'
 import { Search as SearchIcon } from '@mui/icons-material'
+import { useQuery, useQueryClient, useQueries } from '@tanstack/react-query'
 import { colors } from '../../theme'
+import AdminBreadcrumbs from '../../components/Admin/AdminBreadcrumbs'
 import { reviewService } from '../../api/services/reviewService'
+import { userService } from '../../api/services/admin/userService'
+import { ConfirmDeleteDialog } from '../../components'
 import type { Review } from '../../types/review'
 import ReviewsCard from '../../features/Admin/reviews/ReviewsCard'
 
 const AdminReviews = () => {
-  const [reviews, setReviews] = useState<Review[]>([])
-  const [filteredReviews, setFilteredReviews] = useState<Review[]>([])
   const [searchQuery, setSearchQuery] = useState('')
-  const [showAll, setShowAll] = useState(false)
-  const [loading, setLoading] = useState(true)
+  const queryClient = useQueryClient()
+  const [/*userNamesState*/, /*setUserNames*/] = useState<Record<string, string>>({})
+  const [currentPage, setCurrentPage] = useState(1)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [reviewToDelete, setReviewToDelete] = useState<Review | null>(null)
 
-  const ITEMS_PER_PAGE = 3
+  const ITEMS_PER_PAGE = 5
 
-  // Fetch reviews on mount
-  useEffect(() => {
-    const loadReviews = async () => {
-      try {
-        setLoading(true)
-        const mockReviews = reviewService.getMockReviews()
-        setReviews(mockReviews)
-        setFilteredReviews(mockReviews)
-      } catch (error) {
-        console.error('Error loading reviews:', error)
-      } finally {
-        setLoading(false)
-      }
-    }
+  // Use React Query so devtools see the API requests
+  const { data: reviews = [], isLoading: loading } = useQuery({
+    queryKey: ['admin', 'reviews', 1, 100],
+    queryFn: () => reviewService.getAllReviews(1, 100),
+    staleTime: 1000 * 60 * 2,
+  })
 
-    loadReviews()
-  }, [])
+  // Derive unique user IDs from reviews
+  const uniqueUserIds = useMemo(() => Array.from(new Set(reviews.map((r) => r.userId).filter(Boolean))) as string[], [reviews])
+
+  // Use useQueries to fetch user details for each unique id (no useEffect)
+  const userQueries = useQueries({
+    queries: uniqueUserIds.map((id) => ({
+      queryKey: ['user', id],
+      queryFn: () => userService.getById(id),
+      enabled: !!id,
+      staleTime: 1000 * 60 * 5,
+    })),
+  })
+
+  // Map results to a simple id->name map for rendering
+  const userNames = useMemo(() => {
+    const map: Record<string, string> = {}
+    userQueries.forEach((q, idx) => {
+      const id = uniqueUserIds[idx]
+      if (q.data && id) map[id] = q.data.name || q.data.email || ''
+    })
+    return map
+  }, [userQueries, uniqueUserIds])
 
   // Handle search filter
-  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleSearch = (e: ChangeEvent<HTMLInputElement>) => {
     const query = e.target.value.toLowerCase()
     setSearchQuery(query)
-
-    if (query.trim() === '') {
-      setFilteredReviews(reviews)
-    } else {
-      const filtered = reviews.filter(
-        (review) =>
-          review.userName.toLowerCase().includes(query) ||
-          review.comment.toLowerCase().includes(query) ||
-          review.title.toLowerCase().includes(query)
-      )
-      setFilteredReviews(filtered)
-    }
   }
 
-  // Handle delete review
-  const handleDelete = async (reviewId: string) => {
+  // Request delete: open dialog
+  const requestDelete = (reviewId: string) => {
+    const r = reviews.find((x) => x.id === reviewId) || null
+    setReviewToDelete(r)
+    setDeleteDialogOpen(true)
+  }
+
+  // Confirm delete: call API and invalidate
+  const handleConfirmDelete = async () => {
+    if (!reviewToDelete) return
     try {
-      await reviewService.deleteReview(reviewId)
-      const updatedReviews = reviews.filter((r) => r.id !== reviewId)
-      setReviews(updatedReviews)
-      setFilteredReviews(updatedReviews)
+      await reviewService.deleteReview(reviewToDelete.id)
+      await queryClient.invalidateQueries({ queryKey: ['admin', 'reviews'] })
     } catch (error) {
       console.error('Error deleting review:', error)
+      window.alert('Failed to delete review. See console for details.')
+    } finally {
+      setDeleteDialogOpen(false)
+      setReviewToDelete(null)
     }
   }
 
-  // Handle view review (can be extended for modal)
-  const handleView = (review: Review) => {
-    console.log('View review:', review)
-    // Can add modal view here if needed
+  const handleCancelDelete = () => {
+    setDeleteDialogOpen(false)
+    setReviewToDelete(null)
   }
 
-  // Get reviews to display
-  const displayedReviews = showAll ? filteredReviews : filteredReviews.slice(0, ITEMS_PER_PAGE)
-  const hasMoreReviews = filteredReviews.length > ITEMS_PER_PAGE
+  // (view handler removed — not used)
+
+  // Calculate pagination
+  const filteredReviews = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase()
+    if (!q) return reviews
+    return reviews.filter(
+      (review) => (review.userId || '').toLowerCase().includes(q) || (review.comment || '').toLowerCase().includes(q)
+    )
+  }, [reviews, searchQuery])
+
+  const totalPages = Math.ceil(filteredReviews.length / ITEMS_PER_PAGE)
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE
+  const endIndex = startIndex + ITEMS_PER_PAGE
+  const paginatedReviews = filteredReviews.slice(startIndex, endIndex)
+
+  const handlePageChange = (_event: React.ChangeEvent<unknown>, page: number) => {
+    setCurrentPage(page)
+  }
 
   if (loading) {
     return (
@@ -83,22 +113,14 @@ const AdminReviews = () => {
 
   return (
     <Box sx={{ p: 3 }}>
-      {/* Header with Title and Search */}
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          mb: 3,
-          gap: 2,
-          flexWrap: 'wrap',
-        }}
-      >
-        <Typography variant="h4" sx={{ fontWeight: 700, color: colors.text.primary }}>
-          Customer Reviews
+      {/* Header with Title */}
+        <AdminBreadcrumbs items={[{ label: 'Admin', to: '/admin' }, { label: 'Reviews', to: '/admin/reviews' }]} />
+        <Typography variant="h4" sx={{ fontWeight: 700, color: colors.text.primary, mb: 3 }}>
+          Reviews
         </Typography>
 
-        {/* Search Box */}
+      {/* Search Box */}
+      <Box sx={{ mb: 3, display: 'flex', justifyContent: 'flex-start' }}>
         <Box
           sx={{
             display: 'flex',
@@ -121,11 +143,11 @@ const AdminReviews = () => {
           />
           <IconButton
             sx={{
-              bgcolor: '#C62C2B',
+              bgcolor: colors.button.new,
               color: 'white',
               borderRadius: 1,
               p: 1,
-              '&:hover': { bgcolor: '#A82421' },
+              '&:hover': { bgcolor: colors.button.dark },
             }}
           >
             <SearchIcon />
@@ -134,38 +156,40 @@ const AdminReviews = () => {
       </Box>
 
       {/* Reviews List */}
-      <Box>
-        {filteredReviews.length > 0 ? (
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr' }, gap: 2, mb: 3 }}>        {filteredReviews.length > 0 ? (
           <>
-            {displayedReviews.map((review) => (
+            {paginatedReviews.map((review) => (
               <ReviewsCard
                 key={review.id}
                 review={review}
-                onView={handleView}
-                onDelete={handleDelete}
+                userName={userNames[review.userId]}
+                onDelete={requestDelete}
               />
             ))}
 
-            {/* View More Button */}
-            {hasMoreReviews && !showAll && (
-              <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3, mb: 2 }}>
-                <MuiButton
-                  variant="text"
-                  sx={{
-                    color: colors.text.primary,
-                    textTransform: 'none',
-                    fontSize: '1rem',
-                    px: 4,
-                    py: 1.5,
-                    '&:hover': {
-                      color: colors.button.primary,
-                      bgcolor: 'transparent',
-                    },
-                  }}
-                  onClick={() => setShowAll(true)}
-                >
-                  View More
-                </MuiButton>
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 4 }}>
+                <Typography sx={{ color: colors.text.secondary, fontSize: '0.9rem' }}>
+                  {(currentPage - 1) * ITEMS_PER_PAGE + 1}-{Math.min(currentPage * ITEMS_PER_PAGE, filteredReviews.length)} of {filteredReviews.length} reviews
+                </Typography>
+                <Stack spacing={2} direction="row">
+                  <Pagination
+                    count={totalPages}
+                    page={currentPage}
+                    onChange={handlePageChange}
+                    sx={{
+                      '& .MuiPaginationItem-root': {
+                        color: colors.text.primary,
+                        borderColor: colors.border.default,
+                        '&.Mui-selected': {
+                          backgroundColor: colors.button.primary,
+                          color: colors.text.secondary,
+                        },
+                      },
+                    }}
+                  />
+                </Stack>
               </Box>
             )}
           </>
@@ -183,6 +207,15 @@ const AdminReviews = () => {
           </Box>
         )}
       </Box>
+      <ConfirmDeleteDialog
+        open={deleteDialogOpen}
+        title="Delete Review"
+        message={`Are you sure you want to delete this review by "${reviewToDelete?.userId?.slice(0,8) || ''}"? This action will soft-delete the review.`}
+        onConfirm={handleConfirmDelete}
+        onCancel={handleCancelDelete}
+        confirmText="Delete"
+        cancelText="Cancel"
+      />
     </Box>
   )
 }

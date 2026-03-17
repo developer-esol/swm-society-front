@@ -92,13 +92,6 @@ export const ProductDetails: React.FC<ProductDetailsProps> = ({ currentStock, on
           </Box>
         </Box>
       )}
-
-      <Divider sx={{ my: 2 }} />
-
-      {/* Collection Info */}
-      <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-        Part of the Hear My Voice collection.
-      </Typography>
     </Box>
   );
 };

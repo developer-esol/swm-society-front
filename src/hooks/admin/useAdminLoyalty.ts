@@ -8,13 +8,39 @@ export const useAdminLoyalty = () => {
   const [currentPage, setCurrentPage] = useState(1)
   const [filterType, setFilterType] = useState<LoyaltyTransactionType | 'all'>('all')
   const [isLoading, setIsLoading] = useState(false)
-  const [selectedCustomerId, setSelectedCustomerId] = useState<string>('#CUS-001234')
+  const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null)
+  const [allTransactions, setAllTransactions] = useState<LoyaltyTransaction[]>([])
 
   const ITEMS_PER_PAGE = 5
 
-  // Load customer loyalty data on mount or when customer changes
+  // Load all transactions on mount
+  useEffect(() => {
+    const loadAllTransactions = async () => {
+      setIsLoading(true)
+      try {
+        const data = await adminLoyaltyService.getAllLoyaltyTransactions()
+        setAllTransactions(data)
+        setTransactions(data)
+        console.log('Loaded all transactions:', data.length)
+      } catch (error) {
+        console.error('Failed to load all transactions:', error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    loadAllTransactions()
+  }, [])
+
+  // Load customer loyalty data when customer is selected
   useEffect(() => {
     const loadData = async () => {
+      if (!selectedCustomerId) {
+        // Show all transactions when no customer selected
+        setCustomerData(null)
+        setTransactions(allTransactions)
+        return
+      }
+
       setIsLoading(true)
       try {
         const data = await adminLoyaltyService.getCustomerLoyalty(selectedCustomerId)
@@ -23,13 +49,15 @@ export const useAdminLoyalty = () => {
         setCurrentPage(1)
       } catch (error) {
         console.error('Failed to load loyalty data:', error)
+        setCustomerData(null)
+        setTransactions(allTransactions)
       } finally {
         setIsLoading(false)
       }
     }
 
     loadData()
-  }, [selectedCustomerId])
+  }, [selectedCustomerId, allTransactions])
 
   // Filter transactions based on type
   const filteredTransactions = useMemo(() => {
@@ -78,9 +106,25 @@ export const useAdminLoyalty = () => {
     [customerData]
   )
 
-  const handleSelectCustomer = useCallback((customerId: string) => {
+  const handleSelectCustomer = useCallback((customerId: string | null) => {
     setSelectedCustomerId(customerId)
   }, [])
+
+  // Calculate aggregated stats for all transactions
+  const aggregatedStats = useMemo(() => {
+    const earnedTransactions = allTransactions.filter(t => t.type === 'earned')
+    const redeemedTransactions = allTransactions.filter(t => t.type === 'redeemed')
+    
+    const totalEarned = earnedTransactions.reduce((sum, t) => sum + t.points, 0)
+    const totalRedeemed = redeemedTransactions.reduce((sum, t) => sum + t.points, 0)
+    const remaining = totalEarned - totalRedeemed
+
+    return {
+      totalEarned,
+      totalRedeemed,
+      remaining,
+    }
+  }, [allTransactions])
 
   return {
     customerData,
@@ -90,6 +134,7 @@ export const useAdminLoyalty = () => {
     totalPages,
     filterType,
     isLoading,
+    aggregatedStats,
     handlePageChange,
     handleFilterChange,
     handleAddPoints,

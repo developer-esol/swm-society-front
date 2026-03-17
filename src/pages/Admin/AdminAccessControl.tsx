@@ -100,7 +100,7 @@ const AdminAccessControl = () => {
             onClick={() => navigate('/admin/add-access-control-user')}
             sx={{
               bgcolor: colors.button.primary,
-              color: 'white',
+              color: colors.text.secondary,
               textTransform: 'none',
               fontWeight: 600,
               px: 3,
@@ -148,7 +148,7 @@ const AdminAccessControl = () => {
                       },
                       '& .MuiPaginationItem-page.Mui-selected': {
                         bgcolor: colors.button.primary,
-                        color: 'white'
+                        color: colors.text.secondary,
                       }
                     }}
                   />

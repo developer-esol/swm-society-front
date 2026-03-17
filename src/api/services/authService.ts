@@ -6,11 +6,22 @@ interface LoginRequest {
 }
 
 interface LoginResponse {
-  token: string;
-  user: {
-    id: string;
-    email: string;
-    fullName: string;
+  success: boolean;
+  message: string;
+  data: {
+    accessToken?: string;
+    refreshToken?: string;
+    tokenType?: string;
+    expiresIn?: number;
+    user?: {
+      id?: number;
+      email?: string;
+      fullName?: string;
+      role?: {
+        id?: number;
+        name?: string;
+      };
+    };
   };
 }
 
@@ -29,99 +40,52 @@ interface RegisterResponse {
   };
 }
 
-interface MockUser {
-  id: string;
-  email: string;
-  fullName: string;
-  password: string;
-}
-
-// Mock database stored in localStorage (for development without backend)
-const getMockUsers = (): MockUser[] => {
-  const stored = localStorage.getItem('mock_users');
-  return stored ? JSON.parse(stored) : [];
-};
-
-const saveMockUser = (user: MockUser): void => {
-  const users = getMockUsers();
-  users.push(user);
-  localStorage.setItem('mock_users', JSON.stringify(users));
-};
-
 export const authService = {
   login: async (data: LoginRequest): Promise<LoginResponse> => {
-    try {
-      // Try to call backend API
-      return await apiClient.post<LoginResponse>('/auth/login', data);
-    } catch {
-      // Fallback to mock authentication if backend is not available
-      console.warn('Backend not available, using mock authentication');
-      
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 500));
+    console.log('Attempting login with:', { email: data.email });
+    
+    // Clear cart and wishlist cache BEFORE login to prevent showing previous user's data
+    localStorage.removeItem('swm_cart');
+    localStorage.removeItem('swm_wishlist');
+    localStorage.removeItem('lastServerCartRaw');
+    
+    const AUTH_BASE = import.meta.env.VITE_AUTH_BASE || 'http://localhost:8080';
 
-      // Check mock database
-      const users = getMockUsers();
-      const user = users.find((u: MockUser) => u.email === data.email);
-
-      if (!user || user.password !== data.password) {
-        throw new Error('Invalid email or password');
-      }
-
-      // Return mock response
-      return {
-        token: 'mock-jwt-' + Date.now(),
-        user: {
-          id: user.id,
-          email: user.email,
-          fullName: user.fullName,
-        },
-      };
-    }
+    const response = await apiClient.post<LoginResponse>(`${AUTH_BASE.replace(/\/$/, '')}/api/auth/login`, data);
+    
+    console.log('[AuthService] ===== LOGIN RESPONSE =====');
+    console.log('[AuthService] Full Response:', response);
+    console.log('[AuthService] Access Token:', response.data?.accessToken);
+    console.log('[AuthService] User Data:', response.data?.user);
+    console.log('[AuthService] User ID:', response.data?.user?.id);
+    console.log('[AuthService] User Email:', response.data?.user?.email);
+    console.log('[AuthService] User Name:', response.data?.user?.fullName);
+    console.log('[AuthService] ============================');
+    
+    return response;
   },
 
   register: async (data: RegisterRequest): Promise<RegisterResponse> => {
-    try {
-      // Try to call backend API
-      return await apiClient.post<RegisterResponse>('/auth/register', data);
-    } catch {
-      // Fallback to mock registration if backend is not available
-      console.warn('Backend not available, using mock registration');
-      
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 500));
+    console.log('Attempting registration with:', { fullName: data.fullName, email: data.email });
+    const AUTH_BASE = import.meta.env.VITE_AUTH_BASE || 'http://localhost:8080';
 
-      // Check if user already exists
-      const users = getMockUsers();
-      if (users.find((u: MockUser) => u.email === data.email)) {
-        throw new Error('Email already registered');
-      }
-
-      // Create new user
-      const newUser: MockUser = {
-        id: 'user-' + Date.now(),
-        email: data.email,
-        fullName: data.fullName,
-        password: data.password, // ⚠️ In production, this should be hashed on backend!
-      };
-
-      saveMockUser(newUser);
-
-      return {
-        message: 'Registration successful',
-        user: {
-          id: newUser.id,
-          email: newUser.email,
-          fullName: newUser.fullName,
-        },
-      };
-    }
+    const response = await apiClient.post<RegisterResponse>(`${AUTH_BASE.replace(/\/$/, '')}/api/auth/register`, data);
+    console.log('Registration successful:', response);
+    return response;
   },
 
   logout: () => {
+    // Clear all stored authentication data
     localStorage.removeItem('authToken');
+    localStorage.removeItem('refreshToken');
     localStorage.removeItem('userEmail');
     localStorage.removeItem('userName');
+    localStorage.removeItem('userId');
+    localStorage.removeItem('userRole');
+    // Clear cached wishlist and cart data
+    localStorage.removeItem('swm_wishlist');
+    localStorage.removeItem('swm_cart');
+    console.log('User logged out, credentials and cached data cleared');
   },
 
   getAuthToken: () => {
@@ -129,6 +93,72 @@ export const authService = {
   },
 
   isAuthenticated: () => {
-    return !!localStorage.getItem('authToken');
+    const token = localStorage.getItem('authToken');
+    const isAuth = !!token;
+    console.log('Authentication check:', isAuth);
+    return isAuth;
+  },
+
+  /**
+   * Request password reset - sends email with reset link
+   * POST /api/auth/password-reset/request
+   */
+  requestPasswordReset: async (email: string): Promise<{ success: boolean; message: string }> => {
+    try {
+      const AUTH_BASE = import.meta.env.VITE_AUTH_BASE || 'http://localhost:8080';
+      const response = await apiClient.post<{ success: boolean; message: string }>(
+        `${AUTH_BASE.replace(/\/$/, '')}/api/auth/password-reset/request`,
+        { email }
+      );
+      return response;
+    } catch (error: any) {
+      console.error('Password reset request failed:', error);
+      throw error;
+    }
+  },
+
+  getCurrentUser: () => {
+    return {
+      id: localStorage.getItem('userId'),
+      email: localStorage.getItem('userEmail'),
+      name: localStorage.getItem('userName'),
+      role: localStorage.getItem('userRole'),
+    };
+  },
+
+  storeUserCredentials: (response: LoginResponse) => {
+    console.log('[AuthService] ===== STORING USER CREDENTIALS =====');
+    console.log('[AuthService] Full login response data:', response.data);
+    
+    // Clear any cached wishlist/cart data from previous sessions
+    localStorage.removeItem('swm_wishlist');
+    localStorage.removeItem('swm_cart');
+    console.log('[AuthService] Cleared previous user cache');
+
+    // Store authentication token and user data for API operations
+    const token = response.data?.accessToken || response.data?.token || '';
+    const refreshToken = response.data?.refreshToken || '';
+    const userId = response.data?.user?.id ? response.data.user.id.toString() : '';
+    const email = response.data?.user?.email || '';
+    const fullName = response.data?.user?.fullName || '';
+    const roleId = response.data?.user?.role?.id ? response.data.user.role.id.toString() : '1';
+
+    console.log('[AuthService] Extracted values:');
+    console.log('  - Token:', token ? `${token.substring(0, 30)}... (${token.length} chars)` : 'MISSING!');
+    console.log('  - RefreshToken:', refreshToken ? `${refreshToken.substring(0, 20)}...` : 'MISSING!');
+    console.log('  - UserId:', userId, '(Type:', typeof userId, ')');
+    console.log('  - Email:', email);
+    console.log('  - Name:', fullName);
+    console.log('  - RoleId:', roleId);
+
+    localStorage.setItem('authToken', token);
+    localStorage.setItem('refreshToken', refreshToken);
+    localStorage.setItem('userId', userId);
+    localStorage.setItem('userEmail', email);
+    localStorage.setItem('userName', fullName);
+    localStorage.setItem('userRole', roleId);
+
+    console.log('[AuthService] ✅ Credentials stored in localStorage');
+    console.log('[AuthService] ====================================');
   },
 };

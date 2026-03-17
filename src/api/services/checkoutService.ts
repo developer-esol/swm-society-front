@@ -1,4 +1,6 @@
 import type { CheckoutFormData, CheckoutResponse } from '../../types/checkout';
+import type { CartItem } from '../../types/cart';
+import { apiClient } from '../apiClient';
 
 // Validation Patterns
 const PATTERNS = {
@@ -21,31 +23,239 @@ const MESSAGES = {
 
 export const checkoutService = {
   /**
+   * Create PENDING order for PayPal payment
+   * @param formData - Checkout form data with customer information
+   * @param cartItems - Items in the cart
+   * @param subtotal - Subtotal amount
+   * @param total - Total amount after discounts
+   * @returns Promise with orderId
+   */
+  async createPendingOrder(
+    formData: CheckoutFormData,
+    cartItems: CartItem[],
+    subtotal: number,
+    total: number
+  ): Promise<{ success: boolean; orderId: string; message: string }> {
+    try {
+      // Get the NestJS user UUID
+      const springBootUserId = localStorage.getItem('userId');
+      
+      if (!springBootUserId) {
+        throw new Error('User not authenticated');
+      }
+
+      // Convert Spring Boot ID to NestJS UUID
+      let nestJsUserId: string;
+      
+      if (springBootUserId.includes('-')) {
+        nestJsUserId = springBootUserId;
+      } else {
+        try {
+          const users = await fetch(`http://localhost:3000/users?externalId=${springBootUserId}`).then(r => r.json());
+          if (users && users.length > 0 && users[0].id) {
+            nestJsUserId = users[0].id;
+          } else {
+            throw new Error('User not found in NestJS database');
+          }
+        } catch (error) {
+          console.error('[CheckoutService] Failed to get NestJS UUID:', error);
+          throw new Error('Failed to process checkout. Please try again.');
+        }
+      }
+
+      // Map cart items to order items format
+      const items = cartItems.map(item => ({
+        productId: item.productId,
+        brandName: item.brandName || 'Unknown',
+        productName: item.productName,
+        quantity: item.quantity,
+        price: Number(item.price),
+        size: item.size,
+        color: item.color,
+        imageUrl: item.productImage,
+      }));
+
+      // Prepare checkout payload
+      const checkoutPayload = {
+        userId: nestJsUserId,
+        contactEmail: formData.email,
+        deliveryAddress: {
+          houseNumber: formData.houseNumber,
+          apartmentName: formData.apartmentName || '',
+          streetName: formData.streetName,
+          city: formData.city,
+          postalCode: formData.postalCode,
+        },
+        items,
+        subtotal,
+        total,
+      };
+
+      console.log('[CheckoutService] Creating PENDING order:', checkoutPayload);
+
+      // Call the checkout API
+      const authToken = localStorage.getItem('authToken');
+      const response = await fetch('http://localhost:3000/orders/checkout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(authToken ? { 'Authorization': `Bearer ${authToken}` } : {}),
+        },
+        body: JSON.stringify(checkoutPayload),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Checkout failed');
+      }
+
+      const data = await response.json();
+
+      console.log('[CheckoutService] PENDING order created:', data);
+      
+      // Backend returns: { success: true, data: { order: { id: "..." } } }
+      const orderId = data.data?.order?.id || data.order?.id || data.orderId || data.id;
+      console.log('[CheckoutService] Extracted orderId:', orderId);
+
+      return {
+        success: true,
+        orderId: orderId,
+        message: data.message || 'Order created successfully',
+      };
+    } catch (error) {
+      console.error('[CheckoutService] Failed to create PENDING order:', error);
+      
+      const errorMessage = (error as any)?.response?.data?.message || 
+                          (error as any)?.message || 
+                          'Failed to create order. Please try again.';
+
+      return {
+        success: false,
+        orderId: '',
+        message: errorMessage,
+      };
+    }
+  },
+
+  /**
    * Process payment and create order
    * @param formData - Checkout form data with customer and payment information
+   * @param cartItems - Items in the cart to checkout
+   * @param subtotal - Subtotal amount
+   * @param shippingCost - Shipping cost
+   * @param total - Total amount
    * @returns Promise with order confirmation
    */
-  async processPayment(formData: CheckoutFormData): Promise<CheckoutResponse> {
-    // Simulate payment API call with delay
-    await new Promise(resolve => setTimeout(resolve, 1500));
+  async processPayment(
+    formData: CheckoutFormData,
+    cartItems: CartItem[],
+    subtotal: number,
+    shippingCost: number,
+    total: number
+  ): Promise<CheckoutResponse> {
+    try {
+      // Get the NestJS user UUID (not Spring Boot externalId)
+      const springBootUserId = localStorage.getItem('userId');
+      
+      if (!springBootUserId) {
+        throw new Error('User not authenticated');
+      }
 
-    // Mock validation
-    if (!formData.email || !formData.firstName || !formData.cardNumber) {
+      // Convert Spring Boot ID to NestJS UUID
+      let nestJsUserId: string;
+      
+      // Check if userId is already a UUID format (contains hyphens)
+      if (springBootUserId.includes('-')) {
+        nestJsUserId = springBootUserId;
+      } else {
+        // Fetch NestJS user UUID from Spring Boot externalId
+        try {
+          const users = await fetch(`http://localhost:3000/users?externalId=${springBootUserId}`).then(r => r.json());
+          if (users && users.length > 0 && users[0].id) {
+            nestJsUserId = users[0].id;
+          } else {
+            throw new Error('User not found in NestJS database');
+          }
+        } catch (error) {
+          console.error('[CheckoutService] Failed to get NestJS UUID:', error);
+          throw new Error('Failed to process checkout. Please try again.');
+        }
+      }
+
+      console.log('[CheckoutService] Using NestJS UUID:', nestJsUserId);
+
+      // Map cart items to order items format
+      const items = cartItems.map(item => ({
+        productId: item.productId,  // ✅ Required for stock reduction
+        brandName: item.brandName || 'Unknown',
+        productName: item.productName,
+        quantity: item.quantity,
+        price: Number(item.price),
+        size: item.size,
+        color: item.color,
+        imageUrl: item.productImage,
+      }));
+
+      // Calculate subtotal and total
+      const calculatedSubtotal = cartItems.reduce((sum, item) => sum + (Number(item.price) * item.quantity), 0);
+      const calculatedTotal = calculatedSubtotal; // No shipping cost
+
+      // Prepare checkout payload with subtotal and total
+      const checkoutPayload = {
+        userId: nestJsUserId,
+        contactEmail: formData.email,
+        deliveryAddress: {
+          houseNumber: formData.houseNumber,
+          apartmentName: formData.apartmentName || '',
+          streetName: formData.streetName,
+          city: formData.city,
+          postalCode: formData.postalCode,
+        },
+        items,
+        subtotal: calculatedSubtotal,
+        total: calculatedTotal,
+      };
+
+      console.log('[CheckoutService] Processing checkout:', checkoutPayload);
+
+      // Call the checkout API directly (NestJS on port 3000)
+      const authToken = localStorage.getItem('authToken');
+      const response = await fetch('http://localhost:3000/orders/checkout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(authToken ? { 'Authorization': `Bearer ${authToken}` } : {}),
+        },
+        body: JSON.stringify(checkoutPayload),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Checkout failed');
+      }
+
+      const data = await response.json();
+
+      console.log('[CheckoutService] Checkout successful:', data);
+
+      return {
+        success: true,
+        orderNumber: data.orderId || `ORD-${Date.now()}`,
+        message: data.message || 'Order placed successfully!',
+      };
+    } catch (error) {
+      console.error('[CheckoutService] Checkout failed:', error);
+      
+      const errorMessage = (error as any)?.response?.data?.message || 
+                          (error as any)?.message || 
+                          'Payment failed. Please try again.';
+
       return {
         success: false,
         orderNumber: '',
-        message: 'Payment failed. Please check your information.',
+        message: errorMessage,
       };
     }
-
-    // Mock successful payment
-    const orderNumber = `ORD-${Date.now()}`;
-    
-    return {
-      success: true,
-      orderNumber,
-      message: `Order ${orderNumber} placed successfully! You will receive a confirmation email shortly.`,
-    };
   },
 
   /**

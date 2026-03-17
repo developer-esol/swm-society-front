@@ -1,4 +1,11 @@
-import type { LoyaltyTransaction } from '../../types/loyalty';
+import type {
+  LoyaltyTransaction,
+  LoyaltyBalance,
+  MaxRedeemableCalculation,
+  RedeemPointsRequest,
+  RedeemPointsResponse,
+} from '../../types/loyalty';
+import { apiClient } from '../apiClient';
 
 // Dummy loyalty data
 const dummyLoyaltyData = {
@@ -82,16 +89,80 @@ export const loyaltyService = {
 
   /**
    * Get loyalty transaction history
+   * GET /loyalty-points/user/:userId/history
    */
-  async getTransactionHistory(userId: string, limit: number = 50) {
+  async getTransactionHistory(userId: string | number) {
     try {
-      await new Promise(resolve => setTimeout(resolve, 300));
-      
-      return {
-        userId,
-        transactions: dummyLoyaltyData.transactions.slice(0, limit),
-        total: dummyLoyaltyData.transactions.length,
-      };
+      const raw = await apiClient.get<any>(`/loyalty-points/user/${userId}/history`);
+
+      // Normalize response shapes: API may return { transactions: [...] } or { data: { transactions: [...] } } or the array directly
+      let items: any[] = [];
+      if (Array.isArray(raw)) {
+        items = raw;
+      } else if (raw.transactions && Array.isArray(raw.transactions)) {
+        items = raw.transactions;
+      } else if (raw.data && raw.data.transactions && Array.isArray(raw.data.transactions)) {
+        items = raw.data.transactions;
+      } else if (raw.data && Array.isArray(raw.data)) {
+        items = raw.data;
+      }
+
+      // Coerce into LoyaltyTransaction shape and normalize date fields
+      const transactions: LoyaltyTransaction[] = items.map((t: any) => {
+        const id = t.id || t.transactionId || `${t.type}_${Date.now()}`;
+        const type = t.type || (t.points && Number(t.points) < 0 ? 'redeemed' : 'earned');
+        const points = Number(t.points ?? t.amount ?? 0);
+        const orderId = t.orderId || t.order_id || t.reference || t.source || '';
+        // Create meaningful description based on order info
+        let description = t.description || t.note || '';
+        if (!description && orderId) {
+          description = points > 0 ? `Points earned from order ${orderId}` : `Points redeemed for order ${orderId}`;
+        } else if (!description) {
+          description = points > 0 ? 'Points Earned' : 'Points Redeemed';
+        }
+
+        // Normalize date: prioritize earnedAt field from database
+        let dateVal = t.earnedAt || t.createdAt || t.created_at || t.date || t.timestamp || t.time || null;
+        
+        // Log which date field was used (for debugging)
+        if (t.earnedAt) {
+          console.log(`Transaction ${id}: Using earnedAt date:`, t.earnedAt);
+        } else if (t.createdAt) {
+          console.log(`Transaction ${id}: Using createdAt date:`, t.createdAt);
+        }
+        
+        if (dateVal) {
+          if (typeof dateVal === 'number' || (typeof dateVal === 'string' && /^[0-9]+$/.test(dateVal))) {
+            // numeric timestamp in seconds or ms
+            const n = Number(dateVal);
+            // If seconds (10 digits) convert to ms
+            const ms = String(n).length === 10 ? n * 1000 : n;
+            dateVal = new Date(ms).toISOString();
+          } else if (typeof dateVal === 'string') {
+            // Ensure it's a valid date string (handles "2026-01-08 11:19:11.068" format)
+            const testDate = new Date(dateVal);
+            if (!isNaN(testDate.getTime())) {
+              dateVal = testDate.toISOString();
+            }
+          }
+        }
+
+        const date = dateVal || new Date().toISOString();
+        const balance = Number(t.balance ?? t.newBalance ?? t.runningBalance ?? 0);
+
+        return {
+          id,
+          userId: t.userId || t.user_id || t.user || '',
+          type,
+          points,
+          orderId,
+          description,
+          date,
+          balance,
+        } as LoyaltyTransaction;
+      });
+
+      return { transactions };
     } catch (error) {
       console.error('Failed to fetch transaction history:', error);
       throw error;
@@ -167,6 +238,91 @@ export const loyaltyService = {
     } catch (error) {
       console.error('Failed to redeem points:', error);
       throw error;
+    }
+  },
+
+  /**
+   * Get user's loyalty points balance
+   * GET /loyalty-points/user/:userId/balance
+   */
+  async getUserBalance(userId: number | string): Promise<LoyaltyBalance> {
+    try {
+      const raw = await apiClient.get<any>(`/loyalty-points/user/${userId}/balance`);
+
+      // Normalize possible response shapes
+      const source = raw?.data || raw;
+
+      const balance: LoyaltyBalance = {
+        availablePoints: Number(source?.availablePoints ?? source?.available ?? 0),
+        totalEarned: Number(source?.totalEarned ?? source?.earned ?? 0),
+        totalRedeemed: Number(source?.totalRedeemed ?? source?.redeemed ?? 0),
+        totalExpired: Number(source?.totalExpired ?? source?.expired ?? 0),
+        availableValue: Number(source?.availableValue ?? 0),
+      };
+
+      return balance;
+    } catch (error) {
+      console.error('Failed to fetch loyalty balance:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Calculate maximum redeemable points for a basket total
+   * GET /loyalty-points/calculate-max-redeemable/:basketTotal
+   */
+  async calculateMaxRedeemable(basketTotal: number): Promise<MaxRedeemableCalculation> {
+    try {
+      const response = await apiClient.get<MaxRedeemableCalculation>(
+        `/loyalty-points/calculate-max-redeemable/${basketTotal}`
+      );
+      return response;
+    } catch (error) {
+      console.error('Failed to calculate max redeemable:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Redeem loyalty points during checkout
+   * POST /loyalty-points/redeem
+   */
+  async redeemLoyaltyPoints(request: RedeemPointsRequest): Promise<RedeemPointsResponse> {
+    try {
+      const response = await apiClient.post<RedeemPointsResponse>(
+        '/loyalty-points/redeem',
+        request
+      );
+      return response;
+    } catch (error) {
+      console.error('Failed to redeem loyalty points:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Get top users by total earned points (leaderboard)
+   * GET /loyalty-points/leaderboard?limit=5
+   */
+  async getLeaderboard(limit: number = 5): Promise<any[]> {
+    try {
+      const response = await apiClient.get<any>(`/loyalty-points/leaderboard?limit=${limit}`);
+      const data = response?.data || response;
+      
+      // Map the response to include rank
+      const leaderboard = Array.isArray(data) ? data : [];
+      return leaderboard.map((user: any, index: number) => ({
+        userId: user.userId || user.id,
+        userName: user.userName || user.name || user.email || 'Unknown User',
+        email: user.email,
+        profileUrl: user.profileUrl,
+        totalEarned: Number(user.totalEarned || 0),
+        availablePoints: Number(user.availablePoints || 0),
+        rank: index + 1,
+      }));
+    } catch (error) {
+      console.error('Failed to fetch leaderboard:', error);
+      return [];
     }
   },
 };

@@ -1,140 +1,112 @@
-import type { Role, Permission } from '../../../types/Admin/roles'
-
-// Mock permissions data
-const mockPermissions: Permission[] = [
-  { id: '1', name: 'View Dashboard Analytics', category: 'Dashboard', enabled: true },
-  { id: '2', name: 'User Top Selling Products', category: 'Dashboard', enabled: true },
-  { id: '3', name: 'Search Products', category: 'Products Management', enabled: true },
-  { id: '4', name: 'Create new products', category: 'Products Management', enabled: true },
-  { id: '5', name: 'Update existing products', category: 'Products Management', enabled: true },
-  { id: '6', name: 'Remove existing products', category: 'Products Management', enabled: true },
-  { id: '7', name: 'View available stock', category: 'Stock Management', enabled: true },
-  { id: '8', name: 'Change stock price', category: 'Stock Management', enabled: true },
-  { id: '9', name: 'Remove existing stock', category: 'Stock Management', enabled: true },
-  { id: '10', name: 'Change stock quantity', category: 'Stock Management', enabled: true },
-  { id: '11', name: 'Add new stock', category: 'Stock Management', enabled: true },
-  { id: '12', name: 'Adjust loyalty points of customers', category: 'Loyalty Points Management', enabled: true },
-  { id: '13', name: 'View Sales Information', category: 'Sales', enabled: true },
-  { id: '14', name: 'Update delivery status', category: 'Sales', enabled: true },
-  { id: '15', name: 'View existing customers', category: 'Users', enabled: true },
-  { id: '16', name: 'Deactivate Accounts', category: 'Users', enabled: true },
-]
+import type { Role, Permission, CreateRoleRequest } from '../../../types/Admin/roles'
+import { authApiClient } from '../../apiClient'
 
 class RolesService {
-  private mockRoles: Role[] = [
-    {
-      id: '1',
-      name: 'Super Admin',
-      description: 'Full system access and control',
-      icon: '🔴',
-      usersCount: 2,
-      permissionsCount: 16,
-      status: 'Active',
-      permissions: mockPermissions,
-    },
-    {
-      id: '2',
-      name: 'Admin',
-      description: 'Administrative access to most features',
-      icon: '🔵',
-      usersCount: 3,
-      permissionsCount: 14,
-      status: 'Active',
-      permissions: mockPermissions.slice(0, 14),
-    },
-    {
-      id: '3',
-      name: 'Manager',
-      description: 'Manage products, orders and customers',
-      icon: '🟢',
-      usersCount: 12,
-      permissionsCount: 12,
-      status: 'Active',
-      permissions: mockPermissions.slice(0, 12),
-    },
-    {
-      id: '4',
-      name: 'Support',
-      description: 'Customer support and order management',
-      icon: '🟡',
-      usersCount: 8,
-      permissionsCount: 8,
-      status: 'Active',
-      permissions: mockPermissions.slice(0, 8),
-    },
-  ]
+  /**
+   * Get all permissions from backend
+   */
+  async getAllPermissions(): Promise<Permission[]> {
+    try {
+      const response = await authApiClient.get<any>('/api/admin/permissions')
+      console.log('[RolesService] Fetched permissions:', response)
+      // If response has data property, unwrap it
+      if (response && typeof response === 'object' && 'data' in response) {
+        return Array.isArray(response.data) ? response.data : []
+      }
+      // If response is already an array, return it
+      return Array.isArray(response) ? response : []
+    } catch (error) {
+      console.error('[RolesService] Error fetching permissions:', error)
+      throw error
+    }
+  }
 
+  /**
+   * Get all roles from backend
+   */
   async getAll(): Promise<Role[]> {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        console.log('rolesService.getAll() - returning roles:', this.mockRoles)
-        resolve(this.mockRoles)
-      }, 300)
-    })
+    try {
+      const response = await authApiClient.get<any>('/api/admin/roles')
+      console.log('[RolesService] Fetched roles:', response)
+      // If response has data property, unwrap it
+      if (response && typeof response === 'object' && 'data' in response) {
+        return Array.isArray(response.data) ? response.data : []
+      }
+      // If response is already an array, return it
+      return Array.isArray(response) ? response : []
+    } catch (error) {
+      console.error('[RolesService] Error fetching roles:', error)
+      throw error
+    }
   }
 
-  async getById(id: string): Promise<Role | undefined> {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve(this.mockRoles.find((role) => role.id === id))
-      }, 300)
-    })
+  /**
+   * Get role by ID
+   */
+  async getById(id: string): Promise<Role | null> {
+    try {
+      const response = await authApiClient.get<any>(`/api/admin/roles/${id}`)
+      console.log('[RolesService] Fetched role by ID:', response)
+      // If response has data property, unwrap it
+      if (response && typeof response === 'object' && 'data' in response) {
+        return response.data || null
+      }
+      // If response is the role object itself, return it
+      return response || null
+    } catch (error) {
+      console.error('[RolesService] Error fetching role:', error)
+      return null
+    }
   }
 
-  async create(role: Omit<Role, 'id'>): Promise<Role> {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const newRole: Role = {
-          ...role,
-          id: String(this.mockRoles.length + 1),
-        }
-        this.mockRoles.push(newRole)
-        resolve(newRole)
-      }, 300)
-    })
+  /**
+   * Create a new role
+   */
+  async create(data: CreateRoleRequest): Promise<Role> {
+    try {
+      const response = await authApiClient.post<{ success: boolean; message: string; data: Role }>(
+        '/api/admin/roles',
+        data
+      )
+      console.log('[RolesService] Role created:', response)
+      return response.data
+    } catch (error) {
+      console.error('[RolesService] Error creating role:', error)
+      throw error
+    }
   }
 
-  async update(id: string, role: Partial<Role>): Promise<Role | undefined> {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const index = this.mockRoles.findIndex((r) => r.id === id)
-        if (index > -1) {
-          this.mockRoles[index] = { ...this.mockRoles[index], ...role }
-          resolve(this.mockRoles[index])
-        } else {
-          resolve(undefined)
-        }
-      }, 300)
-    })
+  /**
+   * Update an existing role
+   */
+  async update(id: string, data: Partial<CreateRoleRequest>): Promise<Role> {
+    try {
+      const response = await authApiClient.put<{ success: boolean; message: string; data: Role }>(
+        `/api/admin/roles/${id}`,
+        data
+      )
+      console.log('[RolesService] Role updated:', response)
+      return response.data
+    } catch (error) {
+      console.error('[RolesService] Error updating role:', error)
+      throw error
+    }
   }
 
+  /**
+   * Delete a role
+   */
   async delete(id: string): Promise<boolean> {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const index = this.mockRoles.findIndex((r) => r.id === id)
-        if (index > -1) {
-          this.mockRoles.splice(index, 1)
-          resolve(true)
-        } else {
-          resolve(false)
-        }
-      }, 300)
-    })
-  }
-
-  async search(query: string): Promise<Role[]> {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const filtered = this.mockRoles.filter(
-          (role) =>
-            role.name.toLowerCase().includes(query.toLowerCase()) ||
-            role.description.toLowerCase().includes(query.toLowerCase())
-        )
-        resolve(filtered)
-      }, 300)
-    })
+    try {
+      await authApiClient.delete(`/api/admin/roles/${id}`)
+      console.log('[RolesService] Role deleted:', id)
+      return true
+    } catch (error) {
+      console.error('[RolesService] Error deleting role:', error)
+      return false
+    }
   }
 }
 
 export const rolesService = new RolesService()
-export { mockPermissions }
+export { rolesService as default }

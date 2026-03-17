@@ -16,13 +16,13 @@ export const brandService = {
         const brandName = brand.brandName || brand.name || brand.brand_name || '';
         
         if (brandName.toLowerCase().includes('project zero') || brandName.toLowerCase().includes('project zeros')) {
-          imageUrl = '/d4.jpg'; // Project ZerO's red collection image
+          imageUrl = 'https://res.cloudinary.com/dmjacs0c9/image/upload/v1768294993/d4_bfcxcd.jpg'; // Project ZerO's red collection image
         } else if (brandName.toLowerCase().includes('hear my voice') || brandName.toLowerCase().includes('hmv')) {
-          imageUrl = '/b3.jpg'; // Denim collection image  
+          imageUrl = 'https://res.cloudinary.com/dmjacs0c9/image/upload/v1768294940/b3_copy_elzd6c.jpg'; // Denim collection image  
         } else if (brandName.toLowerCase().includes('thomas mushet') || brandName.toLowerCase().includes('thomas')) {
-          imageUrl = '/B2.webp'; // Basketball/sports collection image
+          imageUrl = 'https://res.cloudinary.com/dmjacs0c9/image/upload/v1768294900/B2_copy_zlgtot.webp'; // Basketball/sports collection image
         } else {
-          imageUrl = brand.url || brand.imageUrl || '/thumbnail.jpg'; // Fallback image
+          imageUrl = brand.url || brand.imageUrl || 'https://res.cloudinary.com/dmjacs0c9/image/upload/v1768294857/SWM3_ko58b3.jpg'; // Fallback image
         }
 
         return {

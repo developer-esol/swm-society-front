@@ -1,217 +1,199 @@
-import type { CommunityPost } from '../../types/community';
+import { apiClient } from '../apiClient';
+import type { CommunityPost, CreateCommunityPostData, CommunityPostResponse } from '../../types/community';
 
-// Mock/Dummy community post data
-const mockCommunityPosts: CommunityPost[] = [
-  {
-    id: '1',
-    userId: '1',
-    userName: 'Alex Style',
-    userHandle: 'alex_style',
-    userAvatar: 'https://i.pravatar.cc/150?img=1',
-    image: '/d2.jpg',
-    caption: 'Loving my new Project Zero\'s jacket, so comfortable and stylish. #SWMSOCIETY',
-    description: 'Amazing quality and perfect fit for everyday wear. Highly recommend!',
-    productId: '1',
-    products: [
-      {
-        name: 'Project Zero Puffer Jacket',
-        collection: 'SWMSOCIETY x PROJECT ZERO',
-      },
-    ],
-    likes: 124,
-    isLiked: false,
-    createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-    hashtags: ['#SWMSOCIETY', '#ProjectZero', '#style'],
-  },
-  {
-    id: '2',
-    userId: '2',
-    userName: 'Thomas Beaumont',
-    userHandle: 'thomas_beaumont',
-    userAvatar: 'https://i.pravatar.cc/150?img=2',
-    image: '/d4.jpg',
-    caption: 'The quality and craftsmanship is unmatched. Every detail matters! #craftsmanship',
-    description: 'Exceptional craftsmanship and attention to detail in every stitch.',
-    productId: '5',
-    products: [
-      {
-        name: 'Thomas Mushet Premium Collection',
-        collection: 'SWMSOCIETY x THOMAS MUSHET',
-      },
-    ],
-    likes: 89,
-    isLiked: false,
-    createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-    hashtags: ['#craftsmanship', '#quality', '#mushet'],
-  },
-  {
-    id: '3',
-    userId: '3',
-    userName: 'Aria Rose',
-    userHandle: 'aria_rose',
-    userAvatar: 'https://i.pravatar.cc/150?img=3',
-    image: '/d1.jpg',
-    caption: 'Styling my Hear My Voice collection for the weekend. Perfect vibe! ✨',
-    description: 'The perfect piece for empowerment and self-expression.',
-    productId: '7',
-    products: [
-      {
-        name: 'Hear My Voice Hoodie',
-        collection: 'SWMSOCIETY x HEAR MY VOICE',
-      },
-    ],
-    likes: 156,
-    isLiked: true,
-    createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-    hashtags: ['#hearMyVoice', '#hoodies', '#weekend'],
-  },
-  {
-    id: '4',
-    userId: '4',
-    userName: 'Marcus JP',
-    userHandle: 'marcus_jp',
-    userAvatar: 'https://i.pravatar.cc/150?img=4',
-    image: '/b3.jpg',
-    caption: 'Supporting local artists and designers. Love what SWMSOCIETY stands for! 💯',
-    description: 'Proud to support a brand that makes a real difference in the community.',
-    productId: '3',
-    products: [
-      {
-        name: 'Limited Edition T-Shirt',
-        collection: 'SWMSOCIETY Collaboration',
-      },
-    ],
-    likes: 203,
-    isLiked: false,
-    createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-    hashtags: ['#supportlocal', '#community', '#design'],
-  },
-  {
-    id: '5',
-    userId: '5',
-    userName: 'Sophie Adams',
-    userHandle: 'sophie_adams',
-    userAvatar: 'https://i.pravatar.cc/150?img=5',
-    image: '/B2.webp',
-    caption: 'Finally got my hands on the exclusive drop. Worth the wait! 🔥',
-    description: 'Exclusive quality that justifies the wait time. Absolutely stunning.',
-    productId: '6',
-    products: [
-      {
-        name: 'Exclusive Collection Jacket',
-        collection: 'SWMSOCIETY Limited',
-      },
-    ],
-    likes: 178,
-    isLiked: false,
-    createdAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(),
-    hashtags: ['#exclusive', '#limitededition', '#swm'],
-  },
-  {
-    id: '6',
-    userId: '6',
-    userName: 'Jordan Parker',
-    userHandle: 'jordan_parker',
-    userAvatar: 'https://i.pravatar.cc/150?img=6',
-    image: '/d4.jpg',
-    caption: 'The Hear My Voice mission resonates with me. Empowering through fashion! 🙌',
-    description: 'A collection that truly empowers and inspires. Love the mission!',
-    productId: '8',
-    products: [
-      {
-        name: 'Hear My Voice Collection',
-        collection: 'SWMSOCIETY x HEAR MY VOICE',
-      },
-    ],
-    likes: 142,
-    isLiked: false,
-    createdAt: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString(),
-    hashtags: ['#empowerment', '#hearMyVoice', '#fashion'],
-  },
-];
+/**
+ * Helper function to get NestJS user UUID from Spring Boot externalId
+ * Caches the result in sessionStorage to avoid repeated API calls
+ */
+async function getNestJsUserUuid(externalId: string): Promise<string> {
+  // Check cache first
+  const cacheKey = 'nestjs_user_uuid';
+  const cached = sessionStorage.getItem(cacheKey);
+  if (cached) {
+    try {
+      const parsed = JSON.parse(cached);
+      if (parsed.externalId === externalId && parsed.uuid) {
+        console.log('[CommunityService] Using cached UUID:', parsed.uuid);
+        return parsed.uuid;
+      }
+    } catch (e) {
+      // Invalid cache, continue to fetch
+    }
+  }
+
+  // Fetch from API
+  console.log('[CommunityService] Fetching UUID for externalId:', externalId);
+  const response = await apiClient.get<any[]>(`/users?externalId=${externalId}`);
+  if (!response || response.length === 0) {
+    throw new Error(`No user found with externalId: ${externalId}`);
+  }
+  
+  const uuid = response[0].id;
+  console.log('[CommunityService] Mapped externalId', externalId, '→ UUID:', uuid);
+  
+  // Cache the result
+  sessionStorage.setItem(cacheKey, JSON.stringify({ externalId, uuid }));
+  
+  return uuid;
+}
 
 export const communityService = {
   /**
    * Get all community posts
-   * @returns Array of community posts
+   * @returns Array of all community posts
    */
-  getAll: (): Promise<CommunityPost[]> => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve([...mockCommunityPosts]);
-      }, 300);
-    });
-  },
-
-  /**
-   * Get community posts with pagination
-   * @param page - Page number (1-indexed)
-   * @param limit - Number of posts per page
-   * @returns Array of community posts
-   */
-  getPaginated: (page: number = 1, limit: number = 6): Promise<CommunityPost[]> => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const startIndex = (page - 1) * limit;
-        const endIndex = startIndex + limit;
-        resolve([...mockCommunityPosts.slice(startIndex, endIndex)]);
-      }, 300);
-    });
-  },
-
-  /**
-   * Like a community post
-   * @param postId - Post ID
-   * @returns Updated post
-   */
-  likePost: (postId: string): Promise<CommunityPost | null> => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const post = mockCommunityPosts.find((p) => p.id === postId);
-        if (post) {
-          post.isLiked = !post.isLiked;
-          post.likes = post.isLiked ? post.likes + 1 : post.likes - 1;
-          resolve({ ...post });
+  getAll: async (): Promise<CommunityPost[]> => {
+    try {
+      console.log('Fetching all community posts from API');
+      
+      const response = await apiClient.get<CommunityPostResponse[]>('/community-posts');
+      
+      // Get current user ID to check like status
+      const currentUserId = localStorage.getItem('userId');
+      let nestJsUserId: string | null = null;
+      
+      if (currentUserId) {
+        try {
+          nestJsUserId = await getNestJsUserUuid(currentUserId);
+        } catch (error) {
+          console.warn('Failed to get NestJS user UUID, isLiked will be false for all posts');
         }
-        resolve(null);
-      }, 300);
-    });
-  },
-
-  /**
-   * Get a single community post by ID
-   * @param postId - Post ID
-   * @returns Community post or null
-   */
-  getById: (postId: string): Promise<CommunityPost | null> => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const post = mockCommunityPosts.find((p) => p.id === postId);
-        resolve(post ? { ...post } : null);
-      }, 300);
-    });
-  },
-
-  /**
-   * Get mock community posts (for initial load)
-   * @returns Array of mock posts
-   */
-  getMockPosts: (): CommunityPost[] => {
-    return [...mockCommunityPosts];
+      }
+      
+      // Transform API response to match frontend types
+      const posts: CommunityPost[] = await Promise.all(response.map(async post => {
+        let isLiked = false;
+        
+        // Check if current user has liked this post
+        if (nestJsUserId) {
+          try {
+            const likeStatus = await communityService.checkLikedStatus(post.id, currentUserId!);
+            isLiked = likeStatus;
+          } catch (error) {
+            console.warn(`Failed to check like status for post ${post.id}`);
+          }
+        }
+        
+        return {
+          id: post.id,
+          userId: post.userId,
+          userName: 'Community User', // Will be populated by user lookup
+          userHandle: `user_${post.userId.substring(0, 8)}`,
+          userAvatar: 'https://i.pravatar.cc/150?img=1',
+          image: post.imageUrl,
+          caption: post.description,
+          description: post.description,
+          productId: '', // Not in current API response
+          products: [], // Will be populated if needed
+          likes: post.noOfLikes || 0,
+          isLiked: isLiked,
+          createdAt: post.createdAt || post.date,
+          hashtags: [], // Extract from description if needed
+        };
+      }));
+      
+      console.log(`Fetched ${posts.length} community posts with like status`);
+      return posts;
+    } catch (error) {
+      console.error('Failed to fetch community posts:', error);
+      throw new Error('Failed to load community posts');
+    }
   },
 
   /**
    * Get community posts by user ID
-   * @param userId - User ID
+   * @param userId - User ID (Spring Boot numeric ID or NestJS UUID)
    * @returns Array of community posts for the user
    */
-  getByUserId: (userId: string): Promise<CommunityPost[]> => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const userPosts = mockCommunityPosts.filter((p) => p.userId === userId);
-        resolve([...userPosts]);
-      }, 300);
-    });
+  getByUserId: async (userId: string): Promise<CommunityPost[]> => {
+    try {
+      console.log('[CommunityService] Fetching community posts for user:', userId);
+      
+      // Convert Spring Boot numeric ID to NestJS UUID if needed
+      let nestJsUserId = userId;
+      if (!userId.includes('-')) {
+        // This is a Spring Boot numeric ID, convert to UUID
+        nestJsUserId = await getNestJsUserUuid(userId);
+        console.log('[CommunityService] Converted externalId', userId, '→ UUID:', nestJsUserId);
+      }
+      
+      // Get all posts and filter by nestJsUserId
+      const allPosts = await communityService.getAll();
+      const userPosts = allPosts.filter(post => String(post.userId) === String(nestJsUserId));
+      
+      console.log(`[CommunityService] Found ${userPosts.length} posts for user ${nestJsUserId}`);
+      return userPosts;
+    } catch (error) {
+      console.error('[CommunityService] Failed to fetch user community posts:', error);
+      throw new Error('Failed to load your posts');
+    }
+  },
+
+  /**
+   * Create a new community post
+   * @param postData - Community post data
+   * @returns Created community post
+   */
+  create: async (postData: CreateCommunityPostData): Promise<CommunityPost> => {
+    try {
+      const token = localStorage.getItem('authToken');
+      const externalId = postData.userId || localStorage.getItem('userId');
+      
+      console.log('[CommunityService] Creating community post...');
+      console.log('[CommunityService] Spring Boot externalId:', externalId);
+      console.log('[CommunityService] Token:', token ? '✅ Present' : '❌ MISSING');
+      console.log('[CommunityService] PostData:', postData);
+      
+      if (!externalId) {
+        throw new Error('User ID is required to create a post. Please log in again.');
+      }
+      
+      if (!token) {
+        throw new Error('Authentication token is missing. Please log in again.');
+      }
+      
+      // Convert Spring Boot numeric ID to NestJS UUID
+      const nestJsUserId = await getNestJsUserUuid(externalId);
+      console.log('[CommunityService] Using NestJS UUID:', nestJsUserId);
+      
+      // Send UUID to backend
+      const response = await apiClient.post<CommunityPostResponse>('/community-posts', {
+        userId: nestJsUserId,
+        description: postData.description,
+        imageUrl: postData.imageUrl,
+      });
+      
+      console.log('[CommunityService] ✅ Post created successfully:', response);
+      
+      // Transform response to frontend type
+      const post: CommunityPost = {
+        id: response.id,
+        userId: response.userId,
+        userName: 'You', // Current user
+        userHandle: `user_${response.userId.substring(0, 8)}`,
+        userAvatar: 'https://i.pravatar.cc/150?img=1',
+        image: response.imageUrl,
+        caption: response.description,
+        description: response.description,
+        productId: '',
+        products: [],
+        likes: response.noOfLikes || 0,
+        isLiked: false,
+        createdAt: response.createdAt,
+        hashtags: [],
+      };
+      
+      return post;
+    } catch (error) {
+      console.error('[CommunityService] ❌ Failed to create community post:', error);
+      
+      // Provide more specific error messages
+      if (error instanceof Error) {
+        throw new Error(`Failed to create post: ${error.message}`);
+      }
+      
+      throw new Error('Failed to create post. Please check your connection and try again.');
+    }
   },
 
   /**
@@ -219,16 +201,140 @@ export const communityService = {
    * @param postId - Post ID
    * @returns Success status
    */
-  deletePost: (postId: string): Promise<boolean> => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const index = mockCommunityPosts.findIndex((p) => p.id === postId);
-        if (index > -1) {
-          mockCommunityPosts.splice(index, 1);
-          resolve(true);
-        }
-        resolve(false);
-      }, 300);
-    });
+  deletePost: async (postId: string): Promise<boolean> => {
+    try {
+      console.log('Deleting community post:', postId);
+      
+      await apiClient.delete(`/community-posts/${postId}`);
+      
+      console.log('Community post deleted successfully');
+      return true;
+    } catch (error) {
+      console.error('Failed to delete community post:', error);
+      return false;
+    }
+  },
+
+  /**
+   * Update likes for a community post
+   * @param postId - Post ID
+   * @param likes - New like count
+   * @returns Updated post
+   */
+  updateLikes: async (postId: string, likes: number): Promise<boolean> => {
+    try {
+      console.log('Updating likes for post:', postId, 'to:', likes);
+      
+      await apiClient.put(`/community-posts/${postId}`, {
+        noOfLikes: likes,
+      });
+      
+      console.log('Post likes updated successfully');
+      return true;
+    } catch (error) {
+      console.error('Failed to update post likes:', error);
+      return false;
+    }
+  },
+
+  /**
+   * Toggle like/unlike a community post using new API
+   * @param postId - Post ID
+   * @param userId - User ID (Spring Boot externalId)
+   * @returns Like status and count
+   */
+  toggleLike: async (postId: string, userId: string): Promise<{ liked: boolean; noOfLikes: number } | null> => {
+    try {
+      console.log('[CommunityService] Toggling like for post:', postId, 'user:', userId);
+      
+      // Convert Spring Boot numeric ID to NestJS UUID if needed
+      let nestJsUserId = userId;
+      if (!userId.includes('-')) {
+        nestJsUserId = await getNestJsUserUuid(userId);
+        console.log('[CommunityService] Converted userId', userId, '→ UUID:', nestJsUserId);
+      }
+      
+      const response = await apiClient.post<{ liked: boolean; noOfLikes: number }>(
+        `/community-posts/${postId}/like`,
+        { userId: nestJsUserId }
+      );
+      
+      console.log('[CommunityService] Like toggled:', response);
+      return response;
+    } catch (error) {
+      console.error('[CommunityService] Failed to toggle like:', error);
+      return null;
+    }
+  },
+
+  /**
+   * Check if user has liked a post
+   * @param postId - Post ID
+   * @param userId - User ID (Spring Boot externalId)
+   * @returns Like status
+   */
+  checkLikedStatus: async (postId: string, userId: string): Promise<boolean> => {
+    try {
+      console.log('[CommunityService] Checking like status for post:', postId, 'user:', userId);
+      
+      // Convert Spring Boot numeric ID to NestJS UUID if needed
+      let nestJsUserId = userId;
+      if (!userId.includes('-')) {
+        nestJsUserId = await getNestJsUserUuid(userId);
+      }
+      
+      const response = await apiClient.get<{ liked: boolean }>(
+        `/community-posts/${postId}/liked-by/${nestJsUserId}`
+      );
+      
+      console.log('[CommunityService] Like status:', response.liked);
+      return response.liked;
+    } catch (error) {
+      console.error('[CommunityService] Failed to check like status:', error);
+      return false;
+    }
+  },
+
+  /**
+   * Get featured community posts (top liked posts)
+   * @param limit - Number of posts to return
+   * @returns Array of featured community posts
+   */
+  getFeatured: async (limit: number = 6): Promise<CommunityPost[]> => {
+    try {
+      const allPosts = await communityService.getAll();
+      const featured = allPosts
+        .sort((a, b) => b.likes - a.likes)
+        .slice(0, limit);
+      
+      return featured;
+    } catch (error) {
+      console.error('Failed to fetch featured posts:', error);
+      return [];
+    }
+  },
+
+  /**
+   * Get recent community posts
+   * @param limit - Number of posts to return
+   * @returns Array of recent community posts
+   */
+  getRecent: async (limit: number = 10): Promise<CommunityPost[]> => {
+    try {
+      const allPosts = await communityService.getAll();
+      const recent = allPosts
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        .slice(0, limit);
+      
+      return recent;
+    } catch (error) {
+      console.error('Failed to fetch recent posts:', error);
+      return [];
+    }
+  },
+
+  // Legacy method aliases for backward compatibility
+  getAllPosts: async (): Promise<CommunityPost[]> => {
+    return communityService.getAll();
   },
 };

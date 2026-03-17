@@ -57,12 +57,12 @@ const ProductEditModal = ({ open, product, onClose, onSave }: ProductEditModalPr
       },
     },
     '& .MuiInputLabel-root': {
-      color: '#000000ff !important',
+      color: colors.text.primary,
     },
   }
 
   const selectSx = {
-    bgcolor: colors.input.bg || '#ffffff',
+    bgcolor: colors.input.bg || colors.background.default,
     color: colors.text.primary,
     '& .MuiOutlinedInput-notchedOutline': {
       borderColor: colors.border.default,
@@ -123,6 +123,7 @@ const ProductEditModal = ({ open, product, onClose, onSave }: ProductEditModalPr
       
       // Invalidate and refetch products
       await queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.admin })
+      await queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.all })
       
       setSuccess(`Product "${updatedProduct.productName}" updated successfully!`)
       onSave(updatedProduct)
@@ -197,7 +198,7 @@ const ProductEditModal = ({ open, product, onClose, onSave }: ProductEditModalPr
                 label="Brand Name"
                 displayEmpty
                 sx={{
-                  bgcolor: '#ffffff',
+                  bgcolor: colors.background.default,
                   color: colors.text.primary,
                   '& .MuiOutlinedInput-notchedOutline': {
                     borderColor: colors.border.default,

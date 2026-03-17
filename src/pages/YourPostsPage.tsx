@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Container,
   Box,
@@ -12,7 +13,10 @@ import {
 } from '@mui/material';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import FavoriteIcon from '@mui/icons-material/Favorite';
+import { Trash2 as DeleteIcon } from 'lucide-react';
 import { communityService } from '../api/services/communityService';
+import { useAuthStore } from '../store/useAuthStore';
+import { ConfirmDeleteDialog } from '../components';
 import { colors } from '../theme';
 import type { CommunityPost } from '../types/community';
 
@@ -20,16 +24,26 @@ const YourPostsPage: React.FC = () => {
   const [posts, setPosts] = useState<CommunityPost[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [likedPosts, setLikedPosts] = useState<Set<string>>(new Set());
-  // Demo user ID - in a real app, this would come from auth context
-  const currentUserId = 'user_thomas';
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [postToDelete, setPostToDelete] = useState<{ id: string; caption: string } | null>(null);
+  const { user, isAuthenticated } = useAuthStore();
+  const navigate = useNavigate();
+  const currentUserId = user?.id || '';
 
   // Load user posts on mount
   useEffect(() => {
     const loadUserPosts = async () => {
+      if (!isAuthenticated || !currentUserId) {
+        console.log('User not authenticated, skipping posts load');
+        setIsLoading(false);
+        return;
+      }
+      
       try {
         setIsLoading(true);
         const userPosts = await communityService.getByUserId(currentUserId);
         setPosts(userPosts);
+        console.log(`Loaded ${userPosts.length} posts for user ${currentUserId}`);
       } catch (error) {
         console.error('Failed to load user posts:', error);
       } finally {
@@ -38,7 +52,7 @@ const YourPostsPage: React.FC = () => {
     };
 
     loadUserPosts();
-  }, [currentUserId]);
+  }, [currentUserId, isAuthenticated]);
 
   const handleLikePost = (postId: string) => {
     setLikedPosts(prev => {
@@ -52,13 +66,27 @@ const YourPostsPage: React.FC = () => {
     });
   };
 
-  const handleRemovePost = async (postId: string) => {
+  const handleRemovePost = (post: CommunityPost) => {
+    setPostToDelete({ id: post.id, caption: post.caption });
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDeletePost = async () => {
+    if (!postToDelete) return;
+    
     try {
-      await communityService.deletePost(postId);
-      setPosts(posts.filter((post) => post.id !== postId));
+      await communityService.deletePost(postToDelete.id);
+      setPosts(posts.filter((post) => post.id !== postToDelete.id));
+      setDeleteDialogOpen(false);
+      setPostToDelete(null);
     } catch (error) {
       console.error('Failed to delete post:', error);
     }
+  };
+
+  const cancelDelete = () => {
+    setDeleteDialogOpen(false);
+    setPostToDelete(null);
   };
 
   if (isLoading) {
@@ -94,7 +122,7 @@ const YourPostsPage: React.FC = () => {
             mb: 4,
           }}
         >
-          Your Posts
+          My Posts
         </Typography>
 
         {/* Posts List */}
@@ -228,23 +256,26 @@ const YourPostsPage: React.FC = () => {
 
                     {/* Remove Button */}
                     <MuiButton
-                      variant="contained"
-                      size="small"
-                      onClick={() => handleRemovePost(post.id)}
+                      onClick={() => handleRemovePost(post)}
                       sx={{
-                        bgcolor: colors.text.primary,
-                        color: colors.text.secondary,
-                        textTransform: 'none',
-                        fontSize: '0.875rem',
-                        fontWeight: '500',
-                        py: 0.75,
-                        px: 2,
+                        minWidth: '40px',
+                        width: '40px',
+                        height: '40px',
+                        p: 0,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        border: `1px solid ${colors.border.default}`,
+                        borderRadius: '6px',
+                        color: colors.danger.primary,
+                        bgcolor: 'transparent',
                         '&:hover': {
-                          bgcolor: colors.text.dark,
+                          bgcolor: colors.danger.background,
                         },
                       }}
+                      aria-label="delete post"
                     >
-                      Remove
+                      <DeleteIcon size={18} />
                     </MuiButton>
                   </Box>
                 </CardContent>
@@ -269,6 +300,7 @@ const YourPostsPage: React.FC = () => {
             </Typography>
             <MuiButton
               variant="contained"
+              onClick={() => navigate('/community#share-your-style')}
               sx={{
                 bgcolor: colors.button.primary,
                 color: colors.text.secondary,
@@ -286,6 +318,14 @@ const YourPostsPage: React.FC = () => {
           </Box>
         )}
       </Container>
+
+      {/* Confirmation Dialog */}
+      <ConfirmDeleteDialog
+        open={deleteDialogOpen}
+        message={`Are you sure you want to delete "${postToDelete?.caption}"? This action cannot be undone.`}
+        onConfirm={confirmDeletePost}
+        onCancel={cancelDelete}
+      />
     </Box>
   );
 };

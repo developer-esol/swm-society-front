@@ -21,6 +21,7 @@ interface ProductOptionsProps {
   inWishlist: boolean;
   onAddToCart: () => void;
   onToggleWishlist: () => void;
+  wishlistProcessing?: boolean;
 }
 
 export const ProductOptions: React.FC<ProductOptionsProps> = ({
@@ -37,6 +38,7 @@ export const ProductOptions: React.FC<ProductOptionsProps> = ({
   inWishlist,
   onAddToCart,
   onToggleWishlist,
+  wishlistProcessing = false,
 }) => {
   if (!product) return null;
 
@@ -44,6 +46,12 @@ export const ProductOptions: React.FC<ProductOptionsProps> = ({
 
   return (
     <Box sx={{ mb: 4, borderTop: `1px solid ${colors.border.default}`, pt: 3 }}>
+      {/* Current Price (updates with selected variant) */}
+      <Box sx={{ mb: 3 }}>
+        <Typography variant="h6" sx={{ fontWeight: 700 }}>
+          £{currentStock && currentStock.price ? Number(currentStock.price).toFixed(2) : product.price ? Number(product.price).toFixed(2) : '0.00'}
+        </Typography>
+      </Box>
       {/* Size Selection */}
       <Box sx={{ mb: 4 }}>
         <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>
@@ -89,8 +97,8 @@ export const ProductOptions: React.FC<ProductOptionsProps> = ({
                 borderRadius: 1,
                 cursor: 'pointer',
                 fontWeight: selectedColor === color ? 600 : 500,
-                bgcolor: selectedColor === color ? '#000000' : 'transparent',
-                color: selectedColor === color ? '#ffffff' : colors.text.primary,
+                bgcolor: selectedColor === color ? colors.text.primary : 'transparent',
+                color: selectedColor === color ? colors.text.secondary : colors.text.primary,
                 transition: 'all 0.2s',
               }}
             >
@@ -153,6 +161,7 @@ export const ProductOptions: React.FC<ProductOptionsProps> = ({
           variant="outlined"
           onClick={onToggleWishlist}
           startIcon={inWishlist ? <Favorite /> : <FavoriteBorder />}
+          disabled={wishlistProcessing}
           sx={{
             borderColor: colors.button.primary,
             color: colors.button.primary,
@@ -161,7 +170,7 @@ export const ProductOptions: React.FC<ProductOptionsProps> = ({
             '&:hover': { bgcolor: 'rgba(220, 38, 38, 0.05)' },
           }}
         >
-          {inWishlist ? 'REMOVE FROM WISHLIST' : 'ADD TO WISHLIST'}
+          {inWishlist ? (wishlistProcessing ? 'REMOVING...' : 'REMOVE FROM WISHLIST') : (wishlistProcessing ? 'PROCESSING...' : 'ADD TO WISHLIST')}
         </Button>
       </Box>
     </Box>
