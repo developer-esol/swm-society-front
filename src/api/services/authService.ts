@@ -1,4 +1,5 @@
 import { apiClient } from '../apiClient';
+import { AUTH_BASE_URL } from '../config';
 
 interface LoginRequest {
   email: string;
@@ -49,9 +50,7 @@ export const authService = {
     localStorage.removeItem('swm_wishlist');
     localStorage.removeItem('lastServerCartRaw');
     
-    const AUTH_BASE = import.meta.env.VITE_AUTH_BASE || 'http://localhost:8080';
-
-    const response = await apiClient.post<LoginResponse>(`${AUTH_BASE.replace(/\/$/, '')}/api/auth/login`, data);
+    const response = await apiClient.post<LoginResponse>(`${AUTH_BASE_URL.replace(/\/$/, '')}/api/auth/login`, data);
     
     console.log('[AuthService] ===== LOGIN RESPONSE =====');
     console.log('[AuthService] Full Response:', response);
@@ -67,9 +66,8 @@ export const authService = {
 
   register: async (data: RegisterRequest): Promise<RegisterResponse> => {
     console.log('Attempting registration with:', { fullName: data.fullName, email: data.email });
-    const AUTH_BASE = import.meta.env.VITE_AUTH_BASE || 'http://localhost:8080';
 
-    const response = await apiClient.post<RegisterResponse>(`${AUTH_BASE.replace(/\/$/, '')}/api/auth/register`, data);
+    const response = await apiClient.post<RegisterResponse>(`${AUTH_BASE_URL.replace(/\/$/, '')}/api/auth/register`, data);
     console.log('Registration successful:', response);
     return response;
   },
@@ -105,9 +103,8 @@ export const authService = {
    */
   requestPasswordReset: async (email: string): Promise<{ success: boolean; message: string }> => {
     try {
-      const AUTH_BASE = import.meta.env.VITE_AUTH_BASE || 'http://localhost:8080';
       const response = await apiClient.post<{ success: boolean; message: string }>(
-        `${AUTH_BASE.replace(/\/$/, '')}/api/auth/password-reset/request`,
+        `${AUTH_BASE_URL.replace(/\/$/, '')}/api/auth/password-reset/request`,
         { email }
       );
       return response;

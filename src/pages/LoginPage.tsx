@@ -16,6 +16,7 @@ import { useNavigate } from 'react-router-dom';
 import { colors } from '../theme';
 import { useAuthStore } from '../store/useAuthStore';
 import { authService } from '../api/services';
+import { AUTH_BASE_URL } from '../api/config';
 
 // Validation Schema using Yup
 const loginValidationSchema = Yup.object().shape({
@@ -81,8 +82,7 @@ const LoginPage: React.FC = () => {
   };
 
   const handleGoogleLogin = () => {
-    const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8080';
-    window.location.href = `${BACKEND_URL.replace(/\/$/, '')}/oauth2/authorization/google`;
+    window.location.href = `${AUTH_BASE_URL.replace(/\/$/, '')}/oauth2/authorization/google`;
   };
 
   return (

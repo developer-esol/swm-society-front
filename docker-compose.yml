@@ -1,0 +1,11 @@
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE: ${VITE_API_BASE:-http://178.128.92.125:4001}
+        VITE_AUTH_BASE: ${VITE_AUTH_BASE:-http://178.128.92.125:8081}
+    ports:
+      - "80:80"
+    restart: unless-stopped

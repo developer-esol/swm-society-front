@@ -1,6 +1,5 @@
 import type { Order, OrdersResponse } from '../../types/order';
-
-const API_BASE_URL = 'http://localhost:3000';
+import { API_BASE_URL } from '../config';
 
 // Helper to get NestJS UUID from Spring Boot userId
 async function getNestJsUserUuid(springBootUserId: string): Promise<string> {

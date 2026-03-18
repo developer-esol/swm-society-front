@@ -2,6 +2,7 @@
  * Periodic token refresh utility
  * Checks token expiration every minute and refreshes if needed
  */
+import { AUTH_BASE_URL } from '../api/config';
 
 let refreshIntervalId: number | null = null;
 
@@ -39,8 +40,6 @@ const refreshTokenIfNeeded = async (): Promise<void> => {
     console.log('[TokenRefresh] ⏰ Token expiring soon, refreshing in background...');
     
     try {
-      const AUTH_BASE_URL = import.meta.env.VITE_AUTH_BASE || 'http://localhost:8080';
-      
       const response = await fetch(`${AUTH_BASE_URL}/api/auth/refresh`, {
         method: 'POST',
         headers: {

@@ -1,6 +1,7 @@
 import type { CheckoutFormData, CheckoutResponse } from '../../types/checkout';
 import type { CartItem } from '../../types/cart';
 import { apiClient } from '../apiClient';
+import { API_BASE_URL } from '../config';
 
 // Validation Patterns
 const PATTERNS = {
@@ -51,7 +52,7 @@ export const checkoutService = {
         nestJsUserId = springBootUserId;
       } else {
         try {
-          const users = await fetch(`http://localhost:3000/users?externalId=${springBootUserId}`).then(r => r.json());
+          const users = await fetch(`${API_BASE_URL}/users?externalId=${springBootUserId}`).then(r => r.json());
           if (users && users.length > 0 && users[0].id) {
             nestJsUserId = users[0].id;
           } else {
@@ -95,7 +96,7 @@ export const checkoutService = {
 
       // Call the checkout API
       const authToken = localStorage.getItem('authToken');
-      const response = await fetch('http://localhost:3000/orders/checkout', {
+      const response = await fetch(`${API_BASE_URL}/orders/checkout`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -170,7 +171,7 @@ export const checkoutService = {
       } else {
         // Fetch NestJS user UUID from Spring Boot externalId
         try {
-          const users = await fetch(`http://localhost:3000/users?externalId=${springBootUserId}`).then(r => r.json());
+          const users = await fetch(`${API_BASE_URL}/users?externalId=${springBootUserId}`).then(r => r.json());
           if (users && users.length > 0 && users[0].id) {
             nestJsUserId = users[0].id;
           } else {
@@ -218,9 +219,9 @@ export const checkoutService = {
 
       console.log('[CheckoutService] Processing checkout:', checkoutPayload);
 
-      // Call the checkout API directly (NestJS on port 3000)
+      // Call the checkout API
       const authToken = localStorage.getItem('authToken');
-      const response = await fetch('http://localhost:3000/orders/checkout', {
+      const response = await fetch(`${API_BASE_URL}/orders/checkout`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

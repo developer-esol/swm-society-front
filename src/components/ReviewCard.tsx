@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useEffect } from 'react';
 import { userService } from '../api/services/admin/userService';
+import { API_BASE_URL } from '../api/config';
 import {
   Card,
   CardContent,
@@ -42,7 +43,7 @@ const ReviewCard: React.FC<ReviewCardProps> = ({
     const loadName = async () => {
       try {
         // Fetch user from NestJS (port 3000) since review.userId is a UUID
-        const response = await fetch(`http://localhost:3000/users/${review.userId}`);
+        const response = await fetch(`${API_BASE_URL}/users/${review.userId}`);
         if (response.ok) {
           const user = await response.json();
           if (mounted) setUserName(user?.fullName || user?.name || user?.email || null);

@@ -14,6 +14,7 @@ import * as Yup from 'yup';
 import { useNavigate } from 'react-router-dom';
 import { colors } from '../theme';
 import { authService } from '../api/services';
+import { AUTH_BASE_URL } from '../api/config';
 
 // Validation Schema using Yup
 const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[a-zA-Z\d@$!%*?&]{8,}$/;
@@ -91,8 +92,7 @@ const RegisterPage: React.FC = () => {
   };
 
   const handleGoogleSignUp = () => {
-    const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8080';
-    window.location.href = `${BACKEND_URL.replace(/\/$/, '')}/oauth2/authorization/google`;
+    window.location.href = `${AUTH_BASE_URL.replace(/\/$/, '')}/oauth2/authorization/google`;
   };
 
   return (
