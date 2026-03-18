@@ -38,7 +38,7 @@ const AdminRoles = () => {
   const handleDeleteConfirm = async () => {
     if (roleToDelete) {
       try {
-        await deleteRoleMutation.mutateAsync(roleToDelete.id)
+        await deleteRoleMutation.mutateAsync(String(roleToDelete.id))
       } catch (err) {
         console.error('Failed to delete role:', err)
       } finally {
@@ -171,7 +171,7 @@ const AdminRoles = () => {
         message={`Are you sure you want to delete the role "${roleToDelete?.name}"? This action cannot be undone.`}
         onConfirm={async () => {
           if (!roleToDelete) return
-          await handleDeleteRole(roleToDelete.id)
+          await handleDeleteRole(String(roleToDelete.id))
           setDeleteDialogOpen(false)
           setRoleToDelete(null)
         }}

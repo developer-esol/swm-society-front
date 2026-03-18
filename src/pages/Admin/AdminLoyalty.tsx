@@ -3,7 +3,7 @@ import { Box, Container, Typography, TextField, Select, MenuItem, FormControl, P
 import { Search as SearchIcon } from '@mui/icons-material'
 import { useAdminLoyalty } from '../../hooks/admin'
 import { adminLoyaltyService } from '../../api/services/admin/loyaltyService'
-import { EditPointsModal, LoyaltyTable, CustomerInfoBox, AddPointsModal } from '../../features/Admin/loyalty'
+import { EditPointsModal, LoyaltyTable, AddPointsModal } from '../../features/Admin/loyalty'
 import { colors } from '../../theme'
 import AdminBreadcrumbs from '../../components/Admin/AdminBreadcrumbs'
 import { Permission } from '../../components/Permission'

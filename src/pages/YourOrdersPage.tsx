@@ -286,9 +286,9 @@ const YourOrdersPage: React.FC = () => {
                       </Box>
                     </Box>
                     <Chip
-                      label={order.status || 'Processing'}
+                      label={(order as any).status || 'Processing'}
                       sx={{
-                        bgcolor: getStatusColor(order.status || 'Processing'),
+                        bgcolor: getStatusColor((order as any).status || 'Processing'),
                         color: 'white',
                         fontWeight: 600,
                         height: 32,

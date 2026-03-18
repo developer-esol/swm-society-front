@@ -18,7 +18,7 @@ export const LoyaltyWalletPageComponent: React.FC = () => {
   
   // Fetch leaderboard data
   const [leaderboardUsers, setLeaderboardUsers] = useState<any[]>([]);
-  const [isLoadingLeaderboard, setIsLoadingLeaderboard] = useState(true);
+  const [, setIsLoadingLeaderboard] = useState(true);
 
   useEffect(() => {
     const fetchLeaderboard = async () => {

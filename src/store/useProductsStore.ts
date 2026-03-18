@@ -27,7 +27,7 @@ export const useProductsStore = create<ProductsStore>((set, get) => ({
     set((state) => ({
       products: state.products.filter((p) => p.id !== id),
     })),
-  initializeProducts: () => set({ products: getAdminProducts() }),
+  initializeProducts: () => set({ products: [] }),
   getNextProductId: () => {
     const state = get()
     if (state.products.length === 0) return '001'

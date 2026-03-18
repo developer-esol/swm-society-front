@@ -39,7 +39,7 @@ const OrderEditModal = ({ open, order, onClose, onSave }: OrderEditModalProps) =
       borderColor: colors.border.default,
     },
     '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-      borderColor: colors.primary?.main || colors.border.default,
+      borderColor: colors.button.primary || colors.border.default,
       borderWidth: '2px',
     },
     '& .MuiSelect-select': {
@@ -120,7 +120,7 @@ const OrderEditModal = ({ open, order, onClose, onSave }: OrderEditModalProps) =
               sx={{ 
                 color: colors.text.primary,
                 '&.Mui-focused': {
-                  color: colors.primary?.main || colors.text.primary,
+                  color: colors.button.primary || colors.text.primary,
                 },
               }}
             >
@@ -171,7 +171,7 @@ const OrderEditModal = ({ open, order, onClose, onSave }: OrderEditModalProps) =
                   bgcolor: colors.button.primaryHover,
                 },
                 '&:disabled': {
-                  bgcolor: colors.button.disabled,
+                  bgcolor: colors.button.primaryDisabled,
                   color: 'white',
                 },
               }}

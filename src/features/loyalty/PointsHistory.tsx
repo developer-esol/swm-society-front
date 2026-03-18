@@ -281,8 +281,8 @@ const TransactionItem: React.FC<{ transaction: LoyaltyTransaction }> = ({ transa
                 const dateVal = transaction.date;
                 let dateObj: Date;
                 
-                if (dateVal instanceof Date) {
-                  dateObj = dateVal;
+                if ((dateVal as any) instanceof Date) {
+                  dateObj = dateVal as unknown as Date;
                 } else if (typeof dateVal === 'string') {
                   // Handle ISO date strings (e.g., "2026-01-08T11:19:11.068Z")
                   dateObj = new Date(dateVal);

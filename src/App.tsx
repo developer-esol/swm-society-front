@@ -27,6 +27,7 @@ const queryClient = new QueryClient({
 const paypalOptions = {
   // PayPal SDK expects the query param `client-id` (with a hyphen)
   'client-id': import.meta.env.VITE_PAYPAL_CLIENT_ID || 'test',
+  clientId: import.meta.env.VITE_PAYPAL_CLIENT_ID || 'test',
   currency: 'GBP',
   intent: 'capture',
   components: 'buttons',

@@ -96,7 +96,7 @@ const EditAccessControlUser: React.FC = () => {
           id: values.id,
           name: values.name,
           email: values.email,
-          role: values.role,
+          role: values.role as AccessControlUser['role'],
         }
 
         console.log('User updated:', updatedUser)

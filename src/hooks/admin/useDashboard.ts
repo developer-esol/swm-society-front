@@ -28,11 +28,12 @@ export const useDashboard = (): DashboardData => {
     const baseData = getDashboardData()
     
     // Calculate top selling products from orders
-    const productSales = new Map<string, { name: string; price: number; quantity: number; amount: number }>()
+    const productSales = new Map<string, { id: string; name: string; price: number; quantity: number; amount: number }>()
     
     orders.forEach(order => {
       order.items.forEach(item => {
         const existing = productSales.get(item.productName) || { 
+          id: item.productId,
           name: item.productName, 
           price: item.price, 
           quantity: 0, 

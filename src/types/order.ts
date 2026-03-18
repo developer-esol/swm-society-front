@@ -19,6 +19,16 @@ export interface Order {
   orderDate: string;
   createdAt: string;
   updatedAt: string;
+  status?: string;
+  contactEmail?: string;
+  date?: string;
+  deliveryAddress?: {
+    houseNumber?: string;
+    apartmentName?: string;
+    streetName?: string;
+    city?: string;
+    postalCode?: string;
+  };
 }
 
 export interface OrdersResponse {

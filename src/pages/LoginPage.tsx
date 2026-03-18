@@ -15,7 +15,6 @@ import * as Yup from 'yup';
 import { useNavigate } from 'react-router-dom';
 import { colors } from '../theme';
 import { useAuthStore } from '../store/useAuthStore';
-import { authService } from '../api/services';
 import { AUTH_BASE_URL } from '../api/config';
 
 // Validation Schema using Yup

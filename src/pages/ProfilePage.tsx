@@ -13,23 +13,17 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-
-  Grid,
 } from '@mui/material'
-import { Edit as EditIcon, Camera as CameraIcon, Lock as LockIcon, Save as SaveIcon, Cancel as CancelIcon } from '@mui/icons-material'
+import { Camera as CameraIcon, Lock as LockIcon } from '@mui/icons-material'
 import { useUserProfile } from '../hooks/useUserProfile'
 import { authService } from '../api/services/authService'
 import { colors } from '../theme'
 
 const ProfilePage: React.FC = () => {
-  const { profile, isLoading, error, updateProfile, updateProfilePicture, changePassword } = useUserProfile()
-  const [isEditing, setIsEditing] = useState(false)
+  const { profile, isLoading, error, updateProfile, updateProfilePicture } = useUserProfile()
   const [passwordDialogOpen, setPasswordDialogOpen] = useState(false)
   const [resetEmail, setResetEmail] = useState('')
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
-  const [currentPassword, setCurrentPassword] = useState('')
-  const [newPassword, setNewPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
 
   const [editData, setEditData] = useState({
     firstName: profile?.firstName || '',
@@ -57,19 +51,6 @@ const ProfilePage: React.FC = () => {
     }
   }, [profile])
 
-  const handleEditChange = (field: keyof typeof editData) => (e: React.ChangeEvent<HTMLInputElement>) => {
-    setEditData({ ...editData, [field]: e.target.value })
-  }
-
-  const handleSaveProfile = async () => {
-    const result = await updateProfile(editData)
-    if (result.success) {
-      setSuccessMessage('Profile updated successfully!')
-      setIsEditing(false)
-      setTimeout(() => setSuccessMessage(null), 3000)
-    }
-  }
-
   const handleProfilePictureChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
@@ -91,7 +72,7 @@ const ProfilePage: React.FC = () => {
       return
     }
     try {
-      const result = await authService.requestPasswordReset(resetEmail)
+      await authService.requestPasswordReset(resetEmail)
       setSuccessMessage('Password reset link sent to your email!')
       setPasswordDialogOpen(false)
       setResetEmail('')

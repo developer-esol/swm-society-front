@@ -64,7 +64,7 @@ export const useAuthStore = create<AuthState>((set) => ({
         console.log('[AuthStore] Loading permissions from login response');
         console.log('[AuthStore] User role:', user?.role);
         
-        const permissions = user?.role?.permissions;
+        const permissions = (user?.role as any)?.permissions;
         
         if (permissions && Array.isArray(permissions) && permissions.length > 0) {
           const { setUserPermissions } = usePermissionsStore.getState();

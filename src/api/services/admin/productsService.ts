@@ -18,7 +18,7 @@ const getBrandIdFromSlug = async (brandSlug: string | null): Promise<string | nu
     
     const brandNames = slugToBrandMap[brandSlug] || []
     const matchingBrand = brands.find(brand => 
-      brandNames.some(name => brand.brandName.toLowerCase().includes(name.toLowerCase()))
+      brandNames.some(name => (brand.brandName ?? '').toLowerCase().includes(name.toLowerCase()))
     )
     
     return matchingBrand?.id || null
@@ -39,7 +39,7 @@ export const getAdminProducts = async (brandSlug?: string | null): Promise<Admin
     // Create brandId -> brandName lookup map
     const brandMap = new Map<string, string>()
     brands.forEach(brand => {
-      brandMap.set(brand.id, brand.brandName)
+      brandMap.set(brand.id, brand.brandName ?? '')
     })
     console.log('Brand map:', Object.fromEntries(brandMap))
     

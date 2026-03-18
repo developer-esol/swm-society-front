@@ -187,7 +187,7 @@ const EditAccessControlUserModal: React.FC<EditAccessControlUserModalProps> = ({
               <InputLabel>Select Role</InputLabel>
               <Select
                 value={formData.role}
-                onChange={handleRoleChange as React.ChangeEventHandler<HTMLInputElement | { name?: string; value: unknown }>}
+                onChange={handleRoleChange as any}
                 label="Select Role"
                 sx={selectSx}
               >

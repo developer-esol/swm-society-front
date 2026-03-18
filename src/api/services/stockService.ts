@@ -18,7 +18,7 @@ const getBrandIdFromSlug = async (brandSlug: string | null): Promise<string | nu
     
     const brandNames = slugToBrandMap[brandSlug] || []
     const matchingBrand = brands.find(brand => 
-      brandNames.some(name => brand.brandName.toLowerCase().includes(name.toLowerCase()))
+      brandNames.some(name => (brand.brandName ?? '').toLowerCase().includes(name.toLowerCase()))
     )
     
     return matchingBrand?.id || null

@@ -3,8 +3,6 @@ import {
   Box,
   Typography,
   TextField,
-  Select,
-  MenuItem,
 } from '@mui/material';
 import { colors } from '../../theme';
 import type { CheckoutFormData, FormErrors } from '../../types/checkout';
@@ -30,7 +28,7 @@ const fieldSx = {
   }
 };
 
-const selectSx = {
+const _selectSx = {
   bgcolor: colors.input.bg,
   '& .MuiOutlinedInput-notchedOutline': {
     borderColor: colors.border.default

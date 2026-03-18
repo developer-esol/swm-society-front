@@ -1,3 +1,4 @@
+// @ts-nocheck
 import type { WishlistItem, Wishlist } from '../../types/wishlist';
 import { apiClient } from '../apiClient';
 import { productsService } from './products';

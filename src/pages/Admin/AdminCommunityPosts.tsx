@@ -1,4 +1,4 @@
-import { Box, Container, Typography, Button as MuiButton, TextField, IconButton, Pagination, Stack } from '@mui/material'
+import { Box, Container, Typography, TextField, IconButton, Pagination, Stack } from '@mui/material'
 import { useState, useEffect } from 'react'
 import { Search as SearchIcon } from '@mui/icons-material'
 import { useAdminCommunity } from '../../hooks/useCommunity'
@@ -14,7 +14,6 @@ import AdminCommunityPostCard from '../../components/Admin/AdminCommunityPostCar
 const AdminCommunityPosts = () => {
   const [filteredPosts, setFilteredPosts] = useState<CommunityPost[]>([])
   const [searchQuery, setSearchQuery] = useState('')
-  const [showAll, setShowAll] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [postToDelete, setPostToDelete] = useState<{ id: string; caption: string } | null>(null)
   const [currentPage, setCurrentPage] = useState(1)

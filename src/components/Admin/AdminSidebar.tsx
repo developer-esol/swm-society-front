@@ -35,12 +35,12 @@ import { useAuthStore } from '../../store/useAuthStore';
 import { colors } from '../../theme';
 import type { SidebarMenuItem } from '../../types/Admin/sidebar';
 import { Permission } from '../Permission';
-import { PERMISSIONS } from '../../configs/permissions';
+import { PERMISSIONS, type PermissionName } from '../../configs/permissions';
 
 const DRAWER_WIDTH = 230;
 const COLLAPSED_WIDTH = 72;
 
-const menuItems: Array<SidebarMenuItem & { permission: string }> = [
+const menuItems: Array<SidebarMenuItem & { permission: PermissionName }> = [
   { id: 'dashboard', label: 'Dashboard', icon: 'dashboard', path: '/admin', badge: 0, permission: PERMISSIONS.VIEW_DASHBOARD_MENU },
   { id: 'products', label: 'Products', icon: 'products', path: '/admin/products', badge: 0, permission: PERMISSIONS.VIEW_PRODUCTS_MENU },
   { id: 'stock', label: 'Stock', icon: 'stock', path: '/admin/stock', badge: 0, permission: PERMISSIONS.VIEW_STOCK_MENU },

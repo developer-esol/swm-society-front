@@ -11,7 +11,7 @@ export const useCart = () => {
   const { data: cart, refetch: refetchCart } = useQuery({
     queryKey: QUERY_KEYS.cart.all,
     queryFn: () => cartService.getCart(),
-    initialData: { items: [], totalItems: 0, totalPrice: 0 },
+    initialData: { items: [], totalItems: 0 },
   });
 
   const getCart = useCallback(() => {

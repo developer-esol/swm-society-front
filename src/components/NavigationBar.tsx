@@ -72,9 +72,9 @@ export const NavigationBar: React.FC = () => {
     };
 
     const storyItems = activeBrands.map(b => {
-        const isProjectZero = b.brandName.toLowerCase().includes('project zero');
-        const route = isProjectZero ? '/project-zero-story' : `${b.route.replace(/\/$/, '')}-story`;
-        return { name: b.brandName, path: route };
+        const isProjectZero = (b.brandName ?? '').toLowerCase().includes('project zero');
+        const route = isProjectZero ? '/project-zero-story' : `${(b.route ?? '').replace(/\/$/, '')}-story`;
+        return { name: b.brandName ?? '', path: route };
     });
 
     return (
@@ -107,7 +107,7 @@ export const NavigationBar: React.FC = () => {
                     {/* Desktop Navigation */}
                     <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center', gap: 2 }}>
                         <NavLink to="/" label="Home" />
-                            <DropdownMenu label="Shop" items={activeBrands.map(b => ({ name: b.brandName, path: `/shop?collection=${encodeURIComponent(b.brandName)}` }))} />
+                            <DropdownMenu label="Shop" items={activeBrands.map(b => ({ name: b.brandName ?? '', path: `/shop?collection=${encodeURIComponent(b.brandName ?? '')}` }))} />
                             <DropdownMenu label="Our Story" items={storyItems} />
                         <NavLink to="/community" label="Community" />
                     </Box>

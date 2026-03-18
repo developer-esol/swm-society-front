@@ -220,7 +220,7 @@ const UserRoleEditModal = ({ open, user, roles, onClose, onSave }: UserRoleEditM
                   bgcolor: colors.button.primaryHover,
                 },
                 '&:disabled': {
-                  bgcolor: colors.button.disabled,
+                  bgcolor: colors.button.primaryDisabled,
                   color: colors.text.disabled,
                 },
               }}

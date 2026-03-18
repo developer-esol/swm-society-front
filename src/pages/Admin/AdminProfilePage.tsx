@@ -14,20 +14,17 @@ import {
   DialogContent,
   DialogActions,
 } from '@mui/material'
-import { Edit as EditIcon, Camera as CameraIcon, Lock as LockIcon } from '@mui/icons-material'
+import { Camera as CameraIcon, Lock as LockIcon } from '@mui/icons-material'
 import { useAdminProfile } from '../../hooks/admin/useAdminProfile'
 import { authService } from '../../api/services/authService'
 import { colors } from '../../theme'
 import AdminBreadcrumbs from '../../components/Admin/AdminBreadcrumbs'
 
 const AdminProfilePage: React.FC = () => {
-  const { profile, isLoading, error, updateProfile, updateProfilePicture, changePassword } = useAdminProfile()
+  const { profile, isLoading, error, updateProfile, updateProfilePicture } = useAdminProfile()
   const [isEditing, setIsEditing] = useState(false)
   const [passwordDialogOpen, setPasswordDialogOpen] = useState(false)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
-  const [currentPassword, setCurrentPassword] = useState('')
-  const [newPassword, setNewPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
 
   const [editData, setEditData] = useState({
     firstName: profile?.firstName || '',
@@ -81,7 +78,7 @@ const AdminProfilePage: React.FC = () => {
 
   const handleChangePassword = async () => {
     try {
-      const result = await authService.requestPasswordReset(profile!.email)
+      await authService.requestPasswordReset(profile!.email)
       setSuccessMessage('Password reset link sent to your email!')
       setPasswordDialogOpen(false)
       setTimeout(() => setSuccessMessage(null), 5000)

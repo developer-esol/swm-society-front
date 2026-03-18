@@ -8,13 +8,12 @@ type UpdateQtyInput = { stockId: string; quantity: number };
 
 export function useCartQuery() {
   const queryClient = useQueryClient();
-  const { user, isAuthenticated, isInitialized } = useAuthStore();
+  const { user, isAuthenticated } = useAuthStore();
   const userId = user?.id || localStorage.getItem('userId') || undefined;
 
   console.log('[useCartQuery] ========================================');
   console.log('[useCartQuery] Initializing cart for user:', userId);
   console.log('[useCartQuery] Authenticated:', isAuthenticated);
-  console.log('[useCartQuery] Auth Initialized:', isInitialized);
   console.log('[useCartQuery] Token:', localStorage.getItem('authToken') ? '✅ Present' : '❌ Missing');
   console.log('[useCartQuery] ========================================');
 

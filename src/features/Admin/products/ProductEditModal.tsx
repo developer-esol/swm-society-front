@@ -71,7 +71,7 @@ const ProductEditModal = ({ open, product, onClose, onSave }: ProductEditModalPr
       borderColor: colors.border.default,
     },
     '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-      borderColor: colors.primary?.main || colors.border.default,
+      borderColor: colors.button.primary || colors.border.default,
       borderWidth: '2px',
     },
     '& .MuiSelect-select': {
@@ -81,7 +81,7 @@ const ProductEditModal = ({ open, product, onClose, onSave }: ProductEditModalPr
     '& .MuiInputLabel-root': {
       color: colors.text.primary,
       '&.Mui-focused': {
-        color: colors.primary?.main || colors.text.primary,
+        color: colors.button.primary || colors.text.primary,
       },
     },
   }
@@ -207,7 +207,7 @@ const ProductEditModal = ({ open, product, onClose, onSave }: ProductEditModalPr
                     borderColor: colors.border.default,
                   },
                   '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                    borderColor: colors.primary?.main || '#1976d2',
+                    borderColor: colors.button.primary || '#1976d2',
                     borderWidth: '2px',
                   },
                   '& .MuiSelect-select': {
@@ -218,7 +218,7 @@ const ProductEditModal = ({ open, product, onClose, onSave }: ProductEditModalPr
                   '& .MuiInputLabel-root': {
                     color: '#000000',
                     '&.Mui-focused': {
-                      color: colors.primary?.main || '#1976d2',
+                      color: colors.button.primary || '#1976d2',
                     },
                   },
                 }}

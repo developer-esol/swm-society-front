@@ -24,7 +24,7 @@ export const useCommunity = () => {
   }, [])
 
   const getPaginated = useCallback(
-    async (page: number = 1, limit: number = 6): Promise<CommunityPost[]> => {
+    async (_page: number = 1, limit: number = 6): Promise<CommunityPost[]> => {
       try {
         // Use getRecent for paginated-like behavior
         return await communityService.getRecent(limit)

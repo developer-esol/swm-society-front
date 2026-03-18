@@ -244,14 +244,6 @@ const CheckoutPageComponent: React.FC = () => {
     formik.setFieldValue(field, processedValue);
   };
 
-  const handleCardNumberChange = (value: string) => {
-    handleInputChange('cardNumber', value);
-  };
-
-  const handleCVVChange = (value: string) => {
-    handleInputChange('cvv', value);
-  };
-
   // Show loading state while fetching cart
   if (cartLoading) {
     return (

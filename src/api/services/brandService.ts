@@ -6,11 +6,11 @@ export const brandService = {
   async getBrands(): Promise<Brand[]> {
     try {
       // Try to get brands from API
-      const data = await apiClient.get<any[]>('/brands?page=1&limit=10');
+      const data = await apiClient.get<any>('/brands?page=1&limit=10');
       const brands = Array.isArray(data) ? data : data.brands || [];
       
       // Transform backend response to match Brand interface
-      const transformedBrands = brands.map(brand => {
+      const transformedBrands = brands.map((brand: any) => {
         // Hardcoded image URLs for specific brands
         let imageUrl = '';
         const brandName = brand.brandName || brand.name || brand.brand_name || '';
@@ -27,6 +27,7 @@ export const brandService = {
 
         return {
           id: brand.id?.toString() || brand._id?.toString(),
+          name: brandName || 'Unknown Brand',
           brandName: brandName || 'Unknown Brand',
           description: brand.description || '',
           url: imageUrl,
@@ -41,6 +42,7 @@ export const brandService = {
       return [
         {
           id: "1",
+          name: "Nike",
           brandName: "Nike",
           description: "Just Do It",
           url: "/nike.jpg",

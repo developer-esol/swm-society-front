@@ -10,7 +10,7 @@ interface CommunitySpotlightSectionProps {
   onLikeUpdate?: () => void;
 }
 
-export const CommunitySpotlightSection: React.FC<CommunitySpotlightSectionProps> = ({ posts, onLike, onLikeUpdate }) => {
+export const CommunitySpotlightSection: React.FC<CommunitySpotlightSectionProps> = ({ posts, onLike: _onLike, onLikeUpdate }) => {
   if (posts.length === 0) {
     return null;
   }

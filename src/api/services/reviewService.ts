@@ -113,7 +113,7 @@ export const reviewService = {
     const externalId = review.userId || currentUser.id;
     
     // Convert Spring Boot numeric ID to NestJS UUID
-    const nestJsUserId = await getNestJsUserUuid(externalId);
+    const nestJsUserId = await getNestJsUserUuid(externalId ?? '');
     console.log('[ReviewService] createReview - externalId:', externalId, '→ UUID:', nestJsUserId);
     
     const payload: Record<string, unknown> = {

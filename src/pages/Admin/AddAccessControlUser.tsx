@@ -78,7 +78,7 @@ const AddAccessControlUser: React.FC = () => {
       email: '',
       password: '',
       confirmPassword: '',
-      role: '',
+      role: '' as 'Super Admin' | 'Manager' | 'User',
     },
     validationSchema: addAccessControlUserValidationSchema,
     onSubmit: async (values) => {

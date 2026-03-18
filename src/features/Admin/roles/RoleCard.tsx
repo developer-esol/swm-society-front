@@ -75,7 +75,7 @@ const RoleCard: React.FC<RoleCardProps> = ({ role, onEdit, onDelete }) => {
                 fontWeight: 500,
               }}
             >
-              {role.usersCount || 0} users
+              {(role as any).usersCount || 0} users
             </Box>
             <Box
               sx={{

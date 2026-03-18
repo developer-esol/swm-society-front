@@ -1,5 +1,5 @@
 import { apiClient, authApiClient } from '../../apiClient'
-import type { CustomerLoyaltyData, LoyaltyTransaction } from '../../../types/Admin/loyalty'
+import type { CustomerLoyaltyData, LoyaltyTransaction, LoyaltyTransactionType } from '../../../types/Admin/loyalty'
 
 class AdminLoyaltyService {
 
@@ -142,7 +142,7 @@ class AdminLoyaltyService {
               return {
                 id: t.id || String(Date.now()),
                 date: t.earnedAt || t.createdAt || new Date().toISOString(),
-                type: isEarned ? 'earned' : 'redeemed',
+                type: (isEarned ? 'earned' : 'redeemed') as LoyaltyTransactionType,
                 points: Math.abs(points),
                 orderId: t.source || t.orderId || '—',
                 description: t.description || (isEarned ? 'Points Earned' : 'Discount Redeemed'),

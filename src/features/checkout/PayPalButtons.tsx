@@ -77,7 +77,7 @@ export const PayPalButtonsComponent: React.FC<PayPalButtonsComponentProps> = ({
           label: 'paypal',
         }}
         onClick={handleOnClick}
-        createOrder={async (data, actions) => {
+        createOrder={async (_data, actions) => {
           console.log('[PayPal] Creating PayPal order (backend preferred):', { amount, currency });
 
           // Validate amount
@@ -121,6 +121,7 @@ export const PayPalButtonsComponent: React.FC<PayPalButtonsComponentProps> = ({
           // Fallback to client-side order creation
           try {
             return actions.order.create({
+              intent: 'CAPTURE' as const,
               purchase_units: [{
                 amount: {
                   currency_code: currency,
@@ -163,7 +164,7 @@ export const PayPalButtonsComponent: React.FC<PayPalButtonsComponentProps> = ({
             }
 
             // Fallback: capture via client SDK
-            const details = await actions.order.capture();
+            const details = await actions.order!.capture();
             console.log('[PayPal] Payment captured by PayPal (client):', details);
 
             onSuccess({

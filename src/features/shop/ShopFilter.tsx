@@ -32,7 +32,7 @@ export const ShopFilter: React.FC<FilterProps> = ({
   setSortBy,
   allSizes,
   allColors,
-  clearAllFilters,
+  clearAllFilters: _clearAllFilters,
 }) => {
   const toggleSize = (size: string) => {
     setSelectedSizes(

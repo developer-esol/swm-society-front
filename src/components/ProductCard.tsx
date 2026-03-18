@@ -10,7 +10,7 @@ interface ProductCardProps {
 export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   return (
     <Card
-      component={Link}
+      component={Link as any}
       to="/product"
       state={{ product }}
       sx={{

@@ -34,7 +34,7 @@ const validationSchema = Yup.object().shape({
 
 export const ShareYourStyle: React.FC<ShareYourStyleProps> = ({ onPostSuccess }) => {
   const [showPostForm, setShowPostForm] = useState(false);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [, setPreviewUrl] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const { user, isAuthenticated } = useAuthStore();

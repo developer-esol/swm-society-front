@@ -19,7 +19,7 @@ export const useAdminRoles = () => {
       let users: Array<{ id: string; role?: string }> = []
       try {
         const fetched = await userService.getAll()
-        users = fetched.map((u) => ({ id: u.id, role: u.role }))
+        users = fetched.map((u) => ({ id: u.id, role: u.role != null ? String(u.role) : undefined }))
       } catch (err) {
         console.warn('useAdminRoles - failed to fetch users for role counts', err)
       }
@@ -66,7 +66,7 @@ export const useAdminRoles = () => {
     try {
       const success = await rolesService.delete(id)
       if (success) {
-        setRoles((prev) => prev.filter((role) => role.id !== id))
+        setRoles((prev) => prev.filter((role) => String(role.id) !== id))
       }
     } catch (error) {
       console.error('Failed to delete role:', error)
@@ -77,7 +77,7 @@ export const useAdminRoles = () => {
     try {
       const updated = await rolesService.update(id, updatedRole)
       if (updated) {
-        setRoles((prev) => prev.map((role) => (role.id === id ? updated : role)))
+        setRoles((prev) => prev.map((role) => (String(role.id) === id ? updated : role)))
       }
     } catch (error) {
       console.error('Failed to update role:', error)
@@ -86,7 +86,11 @@ export const useAdminRoles = () => {
 
   const handleCreateRole = useCallback(async (newRole: Omit<Role, 'id'>) => {
     try {
-      const created = await rolesService.create(newRole)
+      const created = await rolesService.create({
+        name: newRole.name,
+        description: newRole.description,
+        permissionIds: newRole.permissions.map((p) => p.id),
+      })
       setRoles((prev) => [...prev, created])
       return created
     } catch (error) {

@@ -39,7 +39,7 @@ export const useAdminSales = () => {
         (order) =>
           order.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
           order.userId.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          order.contactEmail?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          (order as any).contactEmail?.toLowerCase().includes(searchQuery.toLowerCase()) ||
           order.items.some(item => item.productName.toLowerCase().includes(searchQuery.toLowerCase()))
       )
     }
@@ -47,7 +47,7 @@ export const useAdminSales = () => {
     // Apply date range filter
     if (fromDate || toDate) {
       filtered = filtered.filter((order) => {
-        const orderDate = new Date(order.date || order.createdAt)
+        const orderDate = new Date((order as any).date || order.createdAt)
         if (fromDate) {
           const from = new Date(fromDate)
           if (orderDate < from) return false

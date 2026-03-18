@@ -12,6 +12,7 @@ interface LoginResponse {
   data: {
     accessToken?: string;
     refreshToken?: string;
+    token?: string;
     tokenType?: string;
     expiresIn?: number;
     user?: {

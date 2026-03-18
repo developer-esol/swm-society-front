@@ -6,7 +6,8 @@ export type {
   UpdateProductData, 
   Stock,
   CreateStockData,
-  ProductDetailsResponse
+  ProductDetailsResponse,
+  CreateProductResponse
 } from './product';
 export type { Review, ReviewInput, ReviewsResponse, CreateReviewData, UpdateReviewData } from './review';
 export type { CommunityPost } from './community';

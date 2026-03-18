@@ -1,5 +1,6 @@
 import { apiClient } from '../apiClient';
-import type { Product, ProductFilters, CreateProductData, UpdateProductData } from '../../types';
+import type { Product, ProductFilters, CreateProductData, UpdateProductData, CreateProductResponse } from '../../types';
+import type { Brand } from '../../types/brand';
 import { brandService } from './brandService';
 
 export const productsService = {
@@ -14,7 +15,7 @@ export const productsService = {
       // Create brandId -> brandName lookup map
       const brandMap = new Map<string, string>();
       brands.forEach(brand => {
-        brandMap.set(brand.id, brand.brandName);
+        brandMap.set(brand.id, brand.brandName ?? '');
       });
       
       // Fetch from actual database API only

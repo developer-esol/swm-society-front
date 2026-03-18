@@ -65,7 +65,7 @@ const PermissionLevels = () => {
     )
   }
 
-  const handleSelectAll = (category: string) => {
+  const _handleSelectAll = (category: string) => {
     const categoryPermissions = allPermissions
       .filter((p) => p.resource === category)
       .map((p) => p.id)

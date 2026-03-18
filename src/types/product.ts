@@ -6,6 +6,7 @@ export interface Product {
   description: string;
   price: number;
   image?: string;
+  imageUrl?: string;
   imageurl?: string;
   inStock: boolean;
   isActive: boolean;

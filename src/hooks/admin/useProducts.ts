@@ -3,7 +3,7 @@ import { getAdminProducts, searchProducts, deleteProduct } from '../../api/servi
 import type { AdminProduct } from '../../types/Admin'
 
 export const useProducts = () => {
-  const [products, setProducts] = useState<AdminProduct[]>(getAdminProducts())
+  const [products, setProducts] = useState<AdminProduct[]>([])
   const [searchQuery, setSearchQuery] = useState('')
 
   const filteredProducts = useMemo(

@@ -65,7 +65,7 @@ const AdminStock = () => {
         id: stock.id,
         itemId: stock.id,
         productName: product?.name || 'Unknown Product',
-        brandName: product?.brandName || product?.brand || '',
+        brandName: product?.brandName || '',
         color: stock.color,
         size: stock.size,
         quantity: stock.quantity,
@@ -75,10 +75,10 @@ const AdminStock = () => {
     })
 
     // Filter by brand if brand query param exists
-    const brandNames = getBrandName(brandFilter)
+    const brandNames = getBrandName(brandFilter ?? null)
     if (brandNames) {
       items = items.filter(item => {
-        const itemBrandName = item.brandName?.toLowerCase() || ''
+        const itemBrandName = (item.brandName as string)?.toLowerCase() || ''
         return brandNames.some(brandName => 
           itemBrandName.includes(brandName.toLowerCase())
         )
@@ -203,7 +203,7 @@ const AdminStock = () => {
         <AdminBreadcrumbs 
           items={[
             { label: 'Dashboard', to: '/admin' },
-            { label: getBrandDisplayName(brandFilter) || 'Stock', to: `/admin/${brandFilter}/stock` }
+            { label: getBrandDisplayName(brandFilter ?? null) || 'Stock', to: `/admin/${brandFilter ?? ''}/stock` }
           ]} 
         />
         <Typography
@@ -215,7 +215,7 @@ const AdminStock = () => {
             fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' },
           }}
         >
-          {getBrandDisplayName(brandFilter)} Stock
+          {getBrandDisplayName(brandFilter ?? null)} Stock
         </Typography>
 
         {/* Search Box with Add Button */}

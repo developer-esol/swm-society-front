@@ -34,7 +34,7 @@ interface ProductDetailsPageComponentProps {
 
 export const ProductDetailsPageComponent: React.FC<ProductDetailsPageComponentProps> = ({ productId }) => {
   const navigate = useNavigate();
-  const { addItem, removeItem, isInWishlist } = useWishlist();
+  const { addItem } = useWishlist();
   const { addItem: addToCart } = useCart();
 
   // State for product selection
@@ -230,7 +230,9 @@ export const ProductDetailsPageComponent: React.FC<ProductDetailsPageComponentPr
         const matchingKey = Object.keys(productData.colorImages).find(
           (key) => key.toLowerCase() === normalizedColor
         );
-        colorImage = matchingKey ? productData.colorImages[matchingKey] : undefined;
+        if (matchingKey) {
+          colorImage = productData.colorImages[matchingKey];
+        }
       }
     }
 

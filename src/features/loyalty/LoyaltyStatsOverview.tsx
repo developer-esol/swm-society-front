@@ -1,10 +1,9 @@
 import React from 'react';
-import { Box, Card, CardContent, Typography, Avatar } from '@mui/material';
+import { Box, Card, CardContent, Typography } from '@mui/material';
 import { TrendingUp, CardGiftcard, EmojiEvents } from '@mui/icons-material';
 import { colors } from '../../theme';
 import type { LoyaltyWallet, LeaderboardUser } from '../../types/loyalty';
 import { POINT_VALUE } from '../../configs/loyalty';
-import { useMemo } from 'react';
 
 interface LoyaltyStatsOverviewProps {
   loyaltyData: LoyaltyWallet;
@@ -260,7 +259,7 @@ export const LoyaltyStatsOverview: React.FC<LoyaltyStatsOverviewProps> = ({ loya
             {/* Leaderboard List */}
             {leaderboardUsers && leaderboardUsers.length > 0 ? (
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-                {leaderboardUsers.slice(0, 5).map((user, index) => {
+                {leaderboardUsers.slice(0, 5).map((user, _index) => {
                   const getRankIcon = (rank: number) => {
                     switch (rank) {
                       case 1: return '🥇';

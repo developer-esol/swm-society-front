@@ -1,4 +1,3 @@
-import { green } from '@mui/material/colors';
 import { createTheme } from '@mui/material/styles';
 
 // Custom color palette for reusable colors
